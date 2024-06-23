@@ -1,0 +1,6 @@
+@robot_project_v3.Server_HostAddress = http://localhost:5017
+
+GET {{robot_project_v3.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
