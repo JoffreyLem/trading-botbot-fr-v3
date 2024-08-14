@@ -1,0 +1,290 @@
+﻿using RobotAppLibrary.Api.Providers.Base;
+using RobotAppLibrary.Modeles;
+using RobotAppLibrary.TradingManager.Interfaces;
+using Serilog;
+
+namespace RobotAppLibrary.TradingManager;
+
+public class PositionHandler : IPositionHandler
+{
+    private AccountBalance _accountBalance = new();
+    private readonly IApiProviderBase _apiHandler;
+    private readonly ILogger _logger;
+    private readonly string _symbol;
+    private SymbolInfo _symbolInfo = null!;
+    private readonly ILotValueCalculator _lotValueCalculator;
+
+    public PositionHandler(ILogger logger, IApiProviderBase apiHandler, string symbol, string strategyId, ILotValueCalculator lotValueCalculator)
+    {
+        _logger = logger.ForContext<PositionHandler>();
+        _apiHandler = apiHandler;
+        _symbol = symbol;
+        StrategyId = strategyId;
+        _lotValueCalculator = lotValueCalculator;
+        Init();
+    }
+
+    private string StrategyId { get; init; }
+    public int DefaultSl { get; set; } = 20;
+    public int DefaultTp { get; set; } = 20;
+    public double Risque { get; set; } = 2;
+    public Position? PositionOpened { get; private set; }
+    public Position? PositionPending { get; private set; }
+    public Tick LastPrice { get; private set; } = new();
+    public bool PositionInProgress => PositionOpened is not null || PositionPending is not null;
+    public double MaxLot { get; private set; }
+    public event EventHandler<Position>? PositionOpenedEvent;
+    public event EventHandler<Position>? PositionUpdatedEvent;
+    public event EventHandler<Position>? PositionRejectedEvent;
+    public event EventHandler<Position>? PositionClosedEvent;
+
+    public async Task OpenPositionAsync(string symbol, TypeOperation typePosition, double volume = 0,
+        decimal sl = 0M,
+        decimal tp = 0M, double? risk = null, long? expiration = 0L)
+    {
+        try
+        {
+            var priceData = typePosition == TypeOperation.Buy
+                ? LastPrice.Ask.GetValueOrDefault()
+                : LastPrice.Bid.GetValueOrDefault();
+            sl = sl != 0
+                ? Math.Round(sl, _symbolInfo.Precision)
+                : CalculateStopLoss(DefaultSl, typePosition);
+            tp = tp != 0
+                ? Math.Round(tp, _symbolInfo.Precision)
+                : CalculateTakeProfit(DefaultTp, typePosition);
+            volume = volume != 0 ? Math.Round(volume, 2) : CalculatePositionSize(priceData, sl, risk);
+          
+            var positionModele = new Position()
+            {
+                Symbol = symbol,
+                Id = Guid.NewGuid().ToString(),
+                Spread = LastPrice.Spread,
+                OpenPrice = priceData,
+                StopLoss = sl,
+                TakeProfit = tp,
+                Volume = volume,
+                StrategyId = StrategyId,
+            };
+            PositionPending = positionModele;
+            _logger.Information("Send position to handler {@Position}", positionModele);
+            await _apiHandler.OpenPositionAsync(positionModele, LastPrice.Bid.GetValueOrDefault());
+        }
+        catch (Exception e)
+        {
+            PositionPending = null;
+            _logger.Error(e, "Error on open position");
+        }
+    }
+
+    private double CalculatePositionSize(decimal entryPrice, decimal stopLossPrice, double? risk = null)
+    {
+        var riskValue = risk ?? Risque;
+        
+        var riskMoney = riskValue / 100 * _accountBalance.Equity.GetValueOrDefault();
+        double positionSize;
+
+        if (_symbolInfo.Category == Category.Forex)
+        {
+            positionSize = CalculateForexPositionSize(entryPrice, stopLossPrice, riskMoney);
+        }
+        else
+        {
+            positionSize = CalculateOtherPositionSize(entryPrice, stopLossPrice, riskMoney);
+        }
+
+        if (positionSize < _symbolInfo.LotMin)
+        {
+            return _symbolInfo.LotMin.GetValueOrDefault();
+        }
+
+        return Math.Round(Math.Min(positionSize, MaxLot), 2);
+    }
+    
+    private double CalculateForexPositionSize(decimal entryPrice, decimal stopLossPrice, double riskMoney)
+    {
+        var pipsRisk = Math.Abs(entryPrice - stopLossPrice) / Convert.ToDecimal(_symbolInfo.TickSize);
+        var riskValue = pipsRisk * (decimal)_lotValueCalculator.PipValueStandard;
+        var positionSizeByRisk = riskMoney / (double)riskValue;
+        var maxPositionSizeByMargin = _accountBalance.Equity.GetValueOrDefault() / _lotValueCalculator.MarginPerLot;
+
+        return Math.Min(positionSizeByRisk, maxPositionSizeByMargin) - 0.01;
+    }
+
+    private double CalculateOtherPositionSize(decimal entryPrice, decimal stopLossPrice, double riskMoney)
+    {
+        var stopLossPoints = Math.Abs(entryPrice - stopLossPrice);
+        var lossPerStopLoss = _lotValueCalculator.PipValueStandard * (double)stopLossPoints;
+        var positionSizeByRisk = riskMoney / lossPerStopLoss;
+        var maxPositionSizeByMargin = _accountBalance.Equity.GetValueOrDefault() / _lotValueCalculator.MarginPerLot;
+
+        return Math.Min(positionSizeByRisk, maxPositionSizeByMargin);
+    }
+
+
+    public async Task UpdatePositionAsync(Position position)
+    {
+        try
+        {
+            if (position.StatusPosition is not StatusPosition.Close)
+                if (PositionOpened?.StopLoss != position.StopLoss ||
+                    PositionOpened?.TakeProfit != position.TakeProfit)
+                {
+                    _logger.Information("Send position {Id} for update", position.Id);
+                    position.StopLoss = Math.Round(position.StopLoss, _symbolInfo.Precision);
+                    position.TakeProfit = Math.Round(position.TakeProfit, _symbolInfo.Precision);
+                    var priceData = position.TypePosition == TypeOperation.Buy ? LastPrice.Ask : LastPrice.Bid;
+                    await _apiHandler.UpdatePositionAsync(priceData.GetValueOrDefault(), position);
+                }
+        }
+        catch (Exception e)
+        {
+            _logger.Error(e, "Position {Id} can't be update", position.Id);
+        }
+    }
+
+    public async Task ClosePositionAsync(Position position)
+    {
+        try
+        {
+            if (position.StatusPosition is not StatusPosition.Close)
+            {
+                _logger.Information("Send position {Id} to handler for close", position.Id);
+                var closeprice = position.TypePosition == TypeOperation.Buy ? LastPrice.Ask : LastPrice.Bid;
+                position.StatusPosition = StatusPosition.Close;
+                await _apiHandler.ClosePositionAsync(closeprice.GetValueOrDefault(), position);
+            }
+        }
+        catch (Exception e)
+        {
+            position.StatusPosition = StatusPosition.Open;
+            _logger.Error(e, "Position {PositionId} close error api", position.Id);
+        }
+    }
+
+
+    public decimal CalculateStopLoss(decimal pips, TypeOperation positionType)
+    {
+        if (_symbolInfo.Precision > 1) pips *= (decimal)_symbolInfo.TickSize;
+
+
+        switch (positionType)
+        {
+            case TypeOperation.Buy:
+                return Math.Round(LastPrice.Bid.GetValueOrDefault() - pips, _symbolInfo.Precision);
+            case TypeOperation.Sell:
+                return Math.Round(LastPrice.Ask.GetValueOrDefault() + pips, _symbolInfo.Precision);
+            default:
+                throw new ArgumentException("Invalid position type");
+        }
+    }
+
+
+    public decimal CalculateTakeProfit(decimal pips, TypeOperation positionType)
+    {
+        if (_symbolInfo.Precision > 1) pips *= (decimal)_symbolInfo.TickSize;
+
+        switch (positionType)
+        {
+            case TypeOperation.Buy:
+                return Math.Round(LastPrice.Ask.GetValueOrDefault() + pips, _symbolInfo.Precision);
+            case TypeOperation.Sell:
+                return Math.Round(LastPrice.Bid.GetValueOrDefault() - pips, _symbolInfo.Precision);
+            default:
+                throw new ArgumentException("Invalid position type");
+        }
+    }
+
+    private void Init()
+    {
+        _symbolInfo = _apiHandler.GetSymbolInformationAsync(_symbol).Result;
+        LastPrice = _apiHandler.GetTickPriceAsync(_symbol).Result;
+        _apiHandler.TickEvent += ApiHandlerOnTickEvent;
+        _apiHandler.PositionOpenedEvent += ApiHandlerOnPositionOpenedEvent;
+        _apiHandler.PositionUpdatedEvent += ApiHandlerOnPositionUpdatedEvent;
+        _apiHandler.PositionRejectedEvent += ApiHandlerOnPositionRejectedEvent;
+        _apiHandler.PositionClosedEvent += ApiHandlerOnPositionClosedEvent;
+        _apiHandler.NewBalanceEvent += ApiHandlerOnNewBalanceEvent;
+
+        var currentPosition = _apiHandler.GetOpenedTradesAsync(StrategyId).Result;
+
+        if (currentPosition is not null)
+        {
+            _apiHandler.RestoreSession(currentPosition);
+            PositionOpened = currentPosition;
+        }
+        
+        _accountBalance =  _apiHandler.GetBalanceAsync().GetAwaiter().GetResult();
+        UpdateMaxLot();
+    }
+
+
+    private void ApiHandlerOnTickEvent(object? sender, Tick e)
+    {
+        if (e.Symbol == _symbol) LastPrice = e;
+    }
+
+    private void ApiHandlerOnPositionOpenedEvent(object? sender, Position e)
+    {
+        if (e.PositionStrategyReferenceId == PositionPending?.PositionStrategyReferenceId)
+        {
+            PositionOpened = e;
+            e.StatusPosition = StatusPosition.Open;
+            PositionPending = null;
+            _logger.Information("Position opened : {EId}", e);
+            PositionOpenedEvent?.Invoke(this, e);
+        }
+    }
+    
+    private void ApiHandlerOnNewBalanceEvent(object? sender, AccountBalance e)
+    {
+        _accountBalance = e;
+        UpdateMaxLot();
+    }
+
+    private void UpdateMaxLot()
+    {
+        MaxLot = Math.Round(_accountBalance.Balance / _lotValueCalculator.MarginPerLot, 2);
+    }
+
+    private void ApiHandlerOnPositionRejectedEvent(object? sender, Position e)
+    {
+        if (e.PositionStrategyReferenceId == PositionPending?.PositionStrategyReferenceId)
+        {
+            PositionPending = null;
+            _logger.Information("Position rejected : {EId}", e.Id);
+            e.StatusPosition = StatusPosition.Rejected;
+            PositionRejectedEvent?.Invoke(this, e);
+        }
+    }
+
+
+    private void ApiHandlerOnPositionUpdatedEvent(object? sender, Position e)
+    {
+        if (PositionOpened is not null && e.PositionStrategyReferenceId == PositionOpened?.PositionStrategyReferenceId)
+        {
+            PositionOpened.Profit = e.Profit;
+            PositionOpened.StopLoss = e.StopLoss;
+            PositionOpened.TakeProfit = e.TakeProfit;
+            _logger.Debug("Position updated : {EId}", e.Id);
+            PositionUpdatedEvent?.Invoke(this, e);
+        }
+    }
+
+
+    private void ApiHandlerOnPositionClosedEvent(object? sender, Position e)
+    {
+        if (PositionOpened is not null && PositionOpened?.PositionStrategyReferenceId == e.PositionStrategyReferenceId)
+        {
+            _logger.Information("Position Closed : {@EId}", e);
+            PositionClosedEvent?.Invoke(this, e);
+            PositionOpened = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        _apiHandler.NewBalanceEvent -= ApiHandlerOnNewBalanceEvent;
+        _lotValueCalculator.Dispose();
+    }
+}

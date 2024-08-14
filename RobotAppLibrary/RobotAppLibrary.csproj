@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\RobotAppLibrary.Api\RobotAppLibrary.Api.csproj" />
+      <ProjectReference Include="..\RobotAppLibrary.Modeles\RobotAppLibrary.Modeles.csproj" />
+      <ProjectReference Include="..\RobotAppLibrary.Utils\RobotAppLibrary.Utils.csproj" />
+    </ItemGroup>
+
+</Project>
