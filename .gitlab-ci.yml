@@ -1,0 +1,64 @@
+image: mcr.microsoft.com/dotnet/sdk:8.0
+variables:
+  STACK_NAME: robot-app
+
+stages:
+  - test
+  - build
+  - deploy
+
+test:
+  stage: test
+  cache:
+    key: install-cache
+    paths:
+      - ~/.nuget/packages/
+      - node_modules/
+  before_script:
+    - apt-get update && apt-get install -y curl
+    - curl -sL https://deb.nodesource.com/setup_20.x | bash -
+    - apt-get install -y nodejs
+    - dotnet restore
+    - cd robot-project-v3.client
+    - npm install    
+  script:
+    - dotnet build --no-restore
+    - dotnet test --no-build --no-restore
+
+create_docker_image:
+  stage: build
+  variables:
+    GIT_STRATEGY: none
+  image: docker:latest
+  cache:
+    key: docker-cache
+    paths:
+      - /var/lib/docker
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build --build-arg DATABASE_CA_CERTIFICATE=${DATABASE_CA_CERTIFICATE} -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+  needs: ["test"]
+  dependencies:
+    - test
+  only:
+    - main
+
+deploy_with_compose:
+  stage: deploy
+  image: docker/compose:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker-compose -f docker-compose.yml up -d
+  only:
+    - main
+  needs: ["create_docker_image"]
+  dependencies:
+    - create_docker_image
+  environment:
+    name: production
+    url: https://robot.botbot.fr

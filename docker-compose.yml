@@ -1,0 +1,21 @@
+version: '3.7'
+services:
+  robot-app:
+    image: registry.gitlab.com/tradingbot3941224/robotapp:latest
+    restart: always
+    networks:
+      - bot
+    ports:
+      - "127.0.0.1:7000:7000"
+    environment:
+      - SmtpSettings__Host=smtp.gmail.com
+      - SmtpSettings__Port=587
+      - SmtpSettings__EnableSsl=true
+      - SmtpSettings__User=botbotProject@gmail.com
+      - SmtpSettings__Password=${SMTP_PASSWORD}
+      - SmtpSettings__DefaultEmail=lemery.joffrey@outlook.fr
+      - ConnectionStrings__DefaultConnection=server=mariadb_ssl;Database=robot;Uid=admin;Pwd=${DATABASE_PASSWORD};sslmode=required;
+      - Seq__ApiKey=${SEQ_APIKEY}
+networks:
+  bot:
+    external: true
