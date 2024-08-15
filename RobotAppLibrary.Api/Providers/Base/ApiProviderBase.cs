@@ -4,9 +4,12 @@ using RobotAppLibrary.Api.Modeles;
 using RobotAppLibrary.Api.Providers.Exceptions;
 using RobotAppLibrary.Modeles;
 using Serilog;
+
 [assembly: InternalsVisibleTo("RobotAppLibrary")]
+
 namespace RobotAppLibrary.Api.Providers.Base;
 
+//TODO : test des states event avec les order ?
 public abstract class ApiProviderBase : IApiProviderBase
 {
     internal readonly List<Position> CachePosition = [];
@@ -30,13 +33,13 @@ public abstract class ApiProviderBase : IApiProviderBase
     public TimeSpan PingInterval { get; }
 
     public string Name => GetType().Name;
-    
-    public abstract ApiProviderEnum ApiProviderName { get; }
 
     internal ICommandExecutor CommandExecutor { get; }
 
+    public abstract ApiProviderEnum ApiProviderName { get; }
+
     public List<SymbolInfo> AllSymbols { get; set; } = new();
-    public AccountBalance AccountBalance { get; } = new AccountBalance();
+    public AccountBalance AccountBalance { get; } = new();
     public event EventHandler? Connected;
     public event EventHandler? Disconnected;
     public event EventHandler<Tick>? TickEvent;
@@ -59,7 +62,12 @@ public abstract class ApiProviderBase : IApiProviderBase
             CommandExecutor.ExecuteSubscribeProfitsCommandStreaming();
             CommandExecutor.ExecuteSubscribeNewsCommandStreaming();
             CommandExecutor.ExecuteSubscribeKeepAliveCommandStreaming();
-            void TimerCallback(object? _) => PingAsync().GetAwaiter().GetResult();
+
+            void TimerCallback(object? _)
+            {
+                PingAsync().GetAwaiter().GetResult();
+            }
+
             _pingTimer = new Timer(TimerCallback, null, 0, PingInterval.Ticks / TimeSpan.TicksPerMillisecond);
         }
         catch (Exception e)
@@ -181,10 +189,7 @@ public abstract class ApiProviderBase : IApiProviderBase
     {
         try
         {
-            if (AllSymbols is { Count: >= 1 })
-            {
-                return AllSymbols.First(x => x.Symbol == symbol);
-            }
+            if (AllSymbols is { Count: >= 1 }) return AllSymbols.First(x => x.Symbol == symbol);
 
             return await CommandExecutor.ExecuteSymbolCommand(symbol);
         }
@@ -350,7 +355,7 @@ public abstract class ApiProviderBase : IApiProviderBase
             switch (obj.StatusPosition)
             {
                 case StatusPosition.Pending:
-                    //TODO : Faire quoi ici ??
+                    //TODO : jsp quoi faire encore ici ??
                     break;
                 case StatusPosition.Rejected:
                     OnPositionRejectedEvent(obj);
@@ -391,8 +396,9 @@ public abstract class ApiProviderBase : IApiProviderBase
             if (posSelected is not null)
             {
                 posSelected.Profit = e.Profit;
-                posSelected.StopLoss = e.StopLoss != posSelected.StopLoss ? e.StopLoss : posSelected.StopLoss;
-                posSelected.TakeProfit = e.TakeProfit != posSelected.TakeProfit ? e.TakeProfit : posSelected.TakeProfit;
+                posSelected.StopLoss = (e.StopLoss != posSelected.StopLoss && e.StopLoss is not 0) ? e.StopLoss : posSelected.StopLoss;
+                posSelected.TakeProfit = (e.TakeProfit != posSelected.TakeProfit && e.TakeProfit is not 0) ? e.TakeProfit : posSelected.TakeProfit;
+                posSelected.StatusPosition = StatusPosition.Updated;
                 PositionUpdatedEvent?.Invoke(this, posSelected);
             }
         }
@@ -407,7 +413,12 @@ public abstract class ApiProviderBase : IApiProviderBase
             {
                 posSelected.Opened = true;
                 posSelected.Order = e.Order;
-                PositionOpenedEvent?.Invoke(this, e);
+                posSelected.DateOpen = e.DateOpen;
+                posSelected.StopLoss = e.StopLoss;
+                posSelected.TakeProfit = e.TakeProfit;
+                posSelected.StatusPosition = StatusPosition.Open;
+                posSelected.OpenPrice = e.OpenPrice;
+                PositionOpenedEvent?.Invoke(this, posSelected);
             }
         }
     }
@@ -420,10 +431,11 @@ public abstract class ApiProviderBase : IApiProviderBase
             if (posSelected is not null)
             {
                 CachePosition.Remove(posSelected);
+                posSelected.Opened = false;
+                posSelected.StatusPosition = StatusPosition.Rejected;
                 PositionRejectedEvent?.Invoke(this, posSelected);
             }
         }
-     
     }
 
     protected virtual void OnPositionClosedEvent(Position? e)
@@ -434,7 +446,15 @@ public abstract class ApiProviderBase : IApiProviderBase
             if (posSelected is not null)
             {
                 CachePosition.Remove(posSelected);
-                PositionClosedEvent?.Invoke(this, e);
+                posSelected.StatusPosition = StatusPosition.Close;
+                posSelected.Profit = e.Profit;
+                posSelected.StopLoss = e.StopLoss;
+                posSelected.TakeProfit = e.TakeProfit;
+                posSelected.DateClose = e.DateClose;
+                posSelected.ClosePrice = e.ClosePrice;
+                posSelected.ReasonClosed = e.ReasonClosed;
+                posSelected.Opened = false;
+                PositionClosedEvent?.Invoke(this, posSelected);
             }
         }
     }

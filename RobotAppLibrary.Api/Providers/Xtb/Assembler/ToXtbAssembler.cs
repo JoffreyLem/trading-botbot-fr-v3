@@ -115,8 +115,8 @@ public static class ToXtbAssembler
                 throw new ArgumentException("Periode code n'existe pas");
         }
     }
-    
-    
+
+
     public static DateTime SetDateTimeForChart(Timeframe tf)
     {
         DateTime dateTime;

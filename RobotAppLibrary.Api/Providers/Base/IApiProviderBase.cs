@@ -29,8 +29,10 @@ public interface IApiProviderBase : IDisposable
     public Task<SymbolInfo> GetSymbolInformationAsync(string symbol);
     public Task<TradeHourRecord> GetTradingHoursAsync(string symbol);
     public Task<List<Candle>> GetChartAsync(string symbol, Timeframe timeframe);
+
     public Task<List<Candle>> GetChartByDateAsync(string symbol, Timeframe periodCodeStr, DateTime start,
         DateTime end);
+
     public Task<Tick> GetTickPriceAsync(string symbol);
     public Task<Position> OpenPositionAsync(Position position, decimal price);
     public Task UpdatePositionAsync(decimal price, Position position);

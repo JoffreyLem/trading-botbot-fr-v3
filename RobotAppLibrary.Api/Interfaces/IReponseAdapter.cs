@@ -1,5 +1,4 @@
 using RobotAppLibrary.Api.Modeles;
-using RobotAppLibrary.Api.Providers.Xtb.Modeles;
 using RobotAppLibrary.Modeles;
 
 namespace RobotAppLibrary.Api.Interfaces;
@@ -27,11 +26,11 @@ public interface IReponseAdapter
 
     Tick AdaptTickRecordStreaming(string input);
 
-    Position? AdaptTradeRecordStreaming(string input);
+    Position AdaptTradeRecordStreaming(string input);
 
     AccountBalance AdaptBalanceRecordStreaming(string input);
 
-    Position? AdaptTradeStatusRecordStreaming(string input);
+    Position AdaptTradeStatusRecordStreaming(string input);
 
     Position AdaptProfitRecordStreaming(string input);
 

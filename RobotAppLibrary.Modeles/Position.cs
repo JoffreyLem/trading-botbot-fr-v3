@@ -1,16 +1,15 @@
 ﻿using System.ComponentModel;
 
-
 namespace RobotAppLibrary.Modeles;
 
 public class Position
 {
     public Position()
     {
-        
     }
-    
-    public Position(string? strategyId, string? symbol, TypeOperation typePosition, decimal? spread, decimal openPrice, decimal stopLoss, decimal takeProfit, double volume)
+
+    public Position(string? strategyId, string? symbol, TypeOperation typePosition, decimal? spread, decimal openPrice,
+        decimal stopLoss, decimal takeProfit, double volume)
     {
         Id = Guid.NewGuid().ToString();
         StrategyId = strategyId;
@@ -35,19 +34,19 @@ public class Position
     public DateTime DateOpen { get; set; }
     public decimal? ClosePrice { get; set; }
     public DateTime? DateClose { get; set; }
-    public ReasonClosed? ReasonClosed { get; set; }
+    public ReasonClosed? ReasonClosed { get; set; } = null;
     public decimal StopLoss { get; set; }
     public decimal TakeProfit { get; set; }
     public double Volume { get; set; }
     public decimal Pips => ClosePrice != 0 ? Math.Abs(OpenPrice - ClosePrice.GetValueOrDefault()) : 0;
     public StatusPosition StatusPosition { get; set; }
-    public bool Opened { get; set; } = false;
-    
+    public bool Opened { get; set; }
+
     public Position Clone()
     {
         return new Position
         {
-            Id = Id, 
+            Id = Id,
             StrategyId = StrategyId,
             Symbol = Symbol,
             TypePosition = TypePosition,
@@ -83,7 +82,8 @@ public enum StatusPosition
     Accepted,
     Pending,
     Close,
-    Rejected
+    Rejected,
+    Unknow
 }
 
 public enum TypeOperation

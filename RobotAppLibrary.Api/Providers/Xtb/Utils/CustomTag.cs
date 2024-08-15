@@ -1,5 +1,5 @@
-﻿
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
+
 [assembly: InternalsVisibleTo("RobotAppLibrary.Tests")]
 
 namespace RobotAppLibrary.Api.Providers.Xtb.Utils;

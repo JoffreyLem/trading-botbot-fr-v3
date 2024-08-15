@@ -1,47 +1,54 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>robot_project_v3.Server</RootNamespace>
-    <UserSecretsId>88e9fb9d-eac5-4e7c-8627-699c5c08e5d5</UserSecretsId>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <SpaRoot>..\robot-project-v3.client</SpaRoot>
-    <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
-    <SpaProxyServerUrl>https://localhost:5173</SpaProxyServerUrl>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>robot_project_v3.Server</RootNamespace>
+        <UserSecretsId>88e9fb9d-eac5-4e7c-8627-699c5c08e5d5</UserSecretsId>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <SpaRoot>..\robot-project-v3.client</SpaRoot>
+        <SpaProxyLaunchCommand>npm run dev</SpaProxyLaunchCommand>
+        <SpaProxyServerUrl>https://localhost:5173</SpaProxyServerUrl>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="13.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
-      <Version>8.*-*</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.20.1" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
-    <PackageReference Include="Serilog" Version="4.0.1" />
-    <PackageReference Include="Serilog.AspNetCore" Version="8.0.1" />
-    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
-    <PackageReference Include="Serilog.Exceptions" Version="8.4.0"/>
-    <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
-    <PackageReference Include="Serilog.Formatting.Elasticsearch" Version="10.0.0" />
-    <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.2" />
-    <PackageReference Include="Serilog.Sinks.Async" Version="2.0.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="10.0.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
-    <PackageReference Include="Serilog.Sinks.Seq" Version="8.0.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="AutoMapper" Version="13.0.1"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8"/>
+        <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
+            <Version>8.0.8</Version>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Identity.Web" Version="3.0.1"/>
+        <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.21.0"/>
+        <PackageReference Include="Serilog.Enrichers.CorrelationId" Version="3.0.1" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.0"/>
+        <PackageReference Include="Serilog" Version="4.0.1"/>
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.2"/>
+        <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1"/>
+        <PackageReference Include="Serilog.Exceptions" Version="8.4.0"/>
+        <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0"/>
+        <PackageReference Include="Serilog.Formatting.Elasticsearch" Version="10.0.0"/>
+        <PackageReference Include="Serilog.Settings.Configuration" Version="8.0.2"/>
+        <PackageReference Include="Serilog.Sinks.Async" Version="2.0.0"/>
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0"/>
+        <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="10.0.0"/>
+        <PackageReference Include="Serilog.Sinks.File" Version="6.0.0"/>
+        <PackageReference Include="Serilog.Sinks.Seq" Version="8.0.0"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\robot-project-v3.client\robot-project-v3.client.esproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
-    <ProjectReference Include="..\robot-project-v3.Database\robot-project-v3.Database.csproj" />
-    <ProjectReference Include="..\robot-project-v3.Mail\robot-project-v3.Mail.csproj" />
-    <ProjectReference Include="..\RobotAppLibrary.Api\RobotAppLibrary.Api.csproj" />
-    <ProjectReference Include="..\RobotAppLibrary.StrategyDynamicCompiler\RobotAppLibrary.StrategyDynamicCompiler.csproj" />
-    <ProjectReference Include="..\RobotAppLibrary\RobotAppLibrary.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\robot-project-v3.client\robot-project-v3.client.esproj">
+            <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+        </ProjectReference>
+        <ProjectReference Include="..\robot-project-v3.Database\robot-project-v3.Database.csproj"/>
+        <ProjectReference Include="..\robot-project-v3.Mail\robot-project-v3.Mail.csproj"/>
+        <ProjectReference Include="..\RobotAppLibrary.Api\RobotAppLibrary.Api.csproj"/>
+        <ProjectReference Include="..\RobotAppLibrary.StrategyDynamicCompiler\RobotAppLibrary.StrategyDynamicCompiler.csproj"/>
+        <ProjectReference Include="..\RobotAppLibrary\RobotAppLibrary.csproj"/>
+    </ItemGroup>
 
 </Project>

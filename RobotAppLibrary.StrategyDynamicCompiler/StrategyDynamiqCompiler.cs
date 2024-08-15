@@ -12,13 +12,13 @@ public static class StrategyDynamiqCompiler
     {
         sourceCode = EnsureUsingDirective(sourceCode);
         var syntaxTree = CSharpSyntaxTree.ParseText(sourceCode);
-        
+
         var dependencyContext = DependencyContext.Default;
         var runtimeAssemblies = dependencyContext.RuntimeLibraries
             .SelectMany(library => library.GetDefaultAssemblyNames(dependencyContext))
             .Select(Assembly.Load)
             .Select(assembly => MetadataReference.CreateFromFile(assembly.Location)).ToList();
-        
+
         var systemRuntimeLocation = Assembly.Load(new AssemblyName("System")).Location;
         runtimeAssemblies.Add(MetadataReference.CreateFromFile(systemRuntimeLocation));
 
@@ -53,13 +53,10 @@ public static class StrategyDynamiqCompiler
             ? $"{namespaceDeclaration.Name}.{firstClass.Identifier.ValueText}"
             : firstClass.Identifier.ValueText;
     }
-    
+
     private static string EnsureUsingDirective(string sourceCode, string namespaceName = "System")
     {
-        if (!sourceCode.StartsWith($"using {namespaceName};"))
-        {
-            sourceCode = $"using {namespaceName};\n{sourceCode}";
-        }
+        if (!sourceCode.StartsWith($"using {namespaceName};")) sourceCode = $"using {namespaceName};\n{sourceCode}";
         return sourceCode;
     }
 }

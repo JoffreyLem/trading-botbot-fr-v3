@@ -48,7 +48,8 @@ public class FromXtbToRobotAssemblerTests
     [InlineData(1, StatusPosition.Pending)]
     [InlineData(3, StatusPosition.Accepted)]
     [InlineData(4, StatusPosition.Rejected)]
-    public void ToTradeStatusFromTradeStatusStreaming_ShouldReturnExpectedStatusPosition(long statusCode, StatusPosition expectedStatusPosition)
+    public void ToTradeStatusFromTradeStatusStreaming_ShouldReturnExpectedStatusPosition(long statusCode,
+        StatusPosition expectedStatusPosition)
     {
         var result = FromXtbToRobotAssembler.ToTradeStatusFromTradeStatusStreaming(statusCode);
         result.Should().Be(expectedStatusPosition);
@@ -69,7 +70,8 @@ public class FromXtbToRobotAssemblerTests
     [InlineData(2, StatusPosition.Close)]
     [InlineData(3, StatusPosition.Updated)]
     [InlineData(4, StatusPosition.Close)]
-    public void ToTradeStatusFromTradeStreaming_ShouldReturnExpectedStatusPosition(long statusCode, StatusPosition expectedStatusPosition)
+    public void ToTradeStatusFromTradeStreaming_ShouldReturnExpectedStatusPosition(long statusCode,
+        StatusPosition expectedStatusPosition)
     {
         var result = FromXtbToRobotAssembler.ToTradeStatusFromTradeStreaming(statusCode);
         result.Should().Be(expectedStatusPosition);
@@ -91,7 +93,8 @@ public class FromXtbToRobotAssemblerTests
     [InlineData("Other comment", ReasonClosed.Closed)]
     [InlineData(null, ReasonClosed.Closed)]
     [InlineData("", ReasonClosed.Closed)]
-    public void ComputeCommentReasonClosed_ShouldReturnExpectedReasonClosed(string comment, ReasonClosed? expectedReasonClosed)
+    public void ComputeCommentReasonClosed_ShouldReturnExpectedReasonClosed(string comment,
+        ReasonClosed? expectedReasonClosed)
     {
         var result = FromXtbToRobotAssembler.ComputeCommentReasonClosed(comment);
         result.Should().Be(expectedReasonClosed);

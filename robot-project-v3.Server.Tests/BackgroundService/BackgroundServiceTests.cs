@@ -9,12 +9,12 @@ namespace robot_project_v3.Server.Tests.BackgroundService;
 
 public class BotBackgroundServiceTests
 {
-    private readonly Channel<CommandeBaseApiAbstract> _channelApi;
-    private readonly Channel<CommandeBaseStrategyAbstract> _channelStrategy;
-    private readonly Mock<ILogger> _mockLogger;
-    private readonly Mock<ICommandHandler> _mockCommandHandler;
     private readonly BotBackgroundService _botBackgroundService;
     private readonly CancellationTokenSource _cancellationTokenSource;
+    private readonly Channel<CommandeBaseApiAbstract> _channelApi;
+    private readonly Channel<CommandeBaseStrategyAbstract> _channelStrategy;
+    private readonly Mock<ICommandHandler> _mockCommandHandler;
+    private readonly Mock<ILogger> _mockLogger;
 
     public BotBackgroundServiceTests()
     {

@@ -1,8 +1,8 @@
 ﻿using System.Threading.Channels;
 using robot_project_v3.Server.Command.Api;
-using robot_project_v3.Server.Dto.Response;
+using robot_project_v3.Server.Dto;
 using RobotAppLibrary.Api.Providers;
-using RobotAppLibrary.Modeles;
+using ILogger = Serilog.ILogger;
 
 namespace robot_project_v3.Server.Services;
 
@@ -18,13 +18,13 @@ public interface IApiProviderService
 
     Task<List<string>> GetListProvider();
 
-    Task<List<SymbolInfo>> GetAllSymbol();
+    Task<List<SymbolInfoDto>> GetAllSymbol();
 }
 
-public class ApiProviderService(ChannelWriter<CommandeBaseApiAbstract> channelApiWriter, Serilog.ILogger logger)
+public class ApiProviderService(ChannelWriter<CommandeBaseApiAbstract> channelApiWriter, ILogger logger)
     : IApiProviderService
 {
-    private readonly Serilog.ILogger _logger = logger.ForContext<ApiProviderService>();
+    private readonly ILogger _logger = logger.ForContext<ApiProviderService>();
 
     public async Task Connect(ConnectDto connectDto)
     {
@@ -32,7 +32,7 @@ public class ApiProviderService(ChannelWriter<CommandeBaseApiAbstract> channelAp
         {
             ConnectDto = connectDto
         };
-        
+
         await channelApiWriter.WriteAsync(connecCommand);
         await connecCommand.ResponseSource.Task;
     }
@@ -69,7 +69,7 @@ public class ApiProviderService(ChannelWriter<CommandeBaseApiAbstract> channelAp
         return Task.FromResult(Enum.GetNames(typeof(ApiProviderEnum)).ToList());
     }
 
-    public async Task<List<SymbolInfo>> GetAllSymbol()
+    public async Task<List<SymbolInfoDto>> GetAllSymbol()
     {
         var getAllSymbolCommand = new GetAllSymbolCommand();
 

@@ -9,6 +9,7 @@ public interface IEmailService
 {
     Task SendEmail(string subject, string body);
 }
+
 public class EmailService : IEmailService
 {
     private readonly ILogger _logger;

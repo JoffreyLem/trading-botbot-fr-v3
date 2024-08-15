@@ -1,16 +1,13 @@
 ﻿using System.Globalization;
 using System.Reflection;
 using System.Text.Json;
+using FluentAssertions;
 using RobotAppLibrary.Api.Providers.Exceptions;
 using RobotAppLibrary.Api.Providers.Xtb;
 using RobotAppLibrary.Api.Providers.Xtb.Modeles;
 using RobotAppLibrary.Modeles;
 
 namespace RobotAppLibrary.Tests.Api.Providers.Xtb;
-
-using Xunit;
-using FluentAssertions;
-
 
 public class XtbAdapterTests
 {
@@ -20,7 +17,7 @@ public class XtbAdapterTests
     public void AdaptAllSymbolsResponse_ShouldReturnCorrectList_WhenReturnDataIsValid()
     {
         // Arrange
-        string jsonResponse = @"{
+        var jsonResponse = @"{
             ""returnData"": [
                 {
                     ""categoryName"": ""FX"",
@@ -56,7 +53,7 @@ public class XtbAdapterTests
         symbolInfo.TickSize.Should().Be(0.00001);
         symbolInfo.Leverage.Should().Be(100.0);
     }
-    
+
     [Fact]
     public void AdaptCalendarResponse_ShouldReturnExpectedCalendarEvents()
     {
@@ -115,8 +112,8 @@ public class XtbAdapterTests
             Period = "May"
         });
     }
-    
-    
+
+
     [Fact]
     public void AdaptFullChartResponse_ShouldReturnExpectedCandles()
     {
@@ -171,8 +168,8 @@ public class XtbAdapterTests
             Volume = 150
         });
     }
-    
-    
+
+
     [Fact]
     public void AdaptRangeChartResponse_ShouldReturnExpectedCandles()
     {
@@ -227,7 +224,7 @@ public class XtbAdapterTests
             Volume = 150
         });
     }
-    
+
     [Fact]
     public void AdaptLogOutResponse_ShouldReturnEmptyString()
     {
@@ -240,8 +237,8 @@ public class XtbAdapterTests
         // Assert
         result.Should().BeEmpty();
     }
-    
-    
+
+
     [Fact]
     public void AdaptBalanceAccountResponse_ShouldReturnExpectedAccountBalance()
     {
@@ -272,7 +269,7 @@ public class XtbAdapterTests
             Balance = 11500.0
         });
     }
-    
+
     [Fact]
     public void AdaptNewsResponse_ShouldReturnExpectedNews()
     {
@@ -294,7 +291,7 @@ public class XtbAdapterTests
                                        ]
                                    }
                            """;
-        
+
         // Act
         var result = _xtbAdapter.AdaptNewsResponse(jsonResponse);
 
@@ -313,17 +310,17 @@ public class XtbAdapterTests
             Title = "Second news title"
         });
     }
-    
+
     [Fact]
     public void AdaptCurrentUserDataResponse_ThrowsNotImplementedException()
     {
         // Arrange
-        var jsonResponse = "{ /* your JSON here */ }";     
-        
+        var jsonResponse = "{ /* your JSON here */ }";
+
         // Act & Assert
         Assert.Throws<NotImplementedException>(() => _xtbAdapter.AdaptCurrentUserDataResponse(jsonResponse));
     }
-    
+
     [Fact]
     public void AdaptCurrentUserDataResponse_AlwaysThrowsNotImplementedException()
     {
@@ -347,7 +344,7 @@ public class XtbAdapterTests
         // Assert
         result.Should().BeTrue();
     }
-    
+
     [Fact]
     public void AdaptSymbolResponse_ValidJsonResponse_AdaptsCorrectly()
     {
@@ -375,17 +372,17 @@ public class XtbAdapterTests
         // Assert
         result.Should().NotBeNull();
         result.Category.Should().Be(Category.Forex);
-        result.ContractSize.Should().Be(100000); 
-        result.Currency.Should().Be("USD"); 
-        result.CurrencyProfit.Should().Be("USD"); 
-        result.LotMin.Should().Be(0.01); 
-        result.Precision.Should().Be(5); 
-        result.Symbol.Should().Be("EURUSD"); 
-        result.TickSize.Should().Be(0.00001); 
-        result.Leverage.Should().Be(100.0); 
+        result.ContractSize.Should().Be(100000);
+        result.Currency.Should().Be("USD");
+        result.CurrencyProfit.Should().Be("USD");
+        result.LotMin.Should().Be(0.01);
+        result.Precision.Should().Be(5);
+        result.Symbol.Should().Be("EURUSD");
+        result.TickSize.Should().Be(0.00001);
+        result.Leverage.Should().Be(100.0);
     }
-    
-    
+
+
     [Fact]
     public void AdaptTickResponse_ValidJsonResponse_AdaptsCorrectly()
     {
@@ -414,9 +411,10 @@ public class XtbAdapterTests
         result.Ask.Should().Be((decimal?)1.11743);
         result.Bid.Should().Be((decimal?)1.11723);
         // Assuming TimeStamp is converted correctly
-        result.Date.Should().Be(DateTime.Parse("2021-08-03T13:28:05.590", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal));
+        result.Date.Should().Be(DateTime.Parse("2021-08-03T13:28:05.590", CultureInfo.InvariantCulture,
+            DateTimeStyles.AdjustToUniversal));
     }
-    
+
     [Fact]
     public void AdaptTradesHistoryResponse_ShouldReturnExpectedPositions()
     {
@@ -454,17 +452,18 @@ public class XtbAdapterTests
         // Assert
         var expectedPosition = new Position
         {
-            Order = "1|2|1", 
+            Order = "1|2|1",
             StrategyId = "someReference",
             Id = "id",
             Symbol = "symbol_name",
-            TypePosition = TypeOperation.Buy, 
+            TypePosition = TypeOperation.Buy,
             StatusPosition = StatusPosition.Close,
             Profit = 1000.5m,
             OpenPrice = 1.234m,
-            DateOpen = new DateTime(2021, 7, 29, 20, 0, 0, DateTimeKind.Utc), 
+            DateOpen = new DateTime(2021, 7, 29, 20, 0, 0, DateTimeKind.Utc),
             ClosePrice = 1.456m,
-            DateClose = new DateTime(2021, 7, 29, 21, 0, 0, DateTimeKind.Utc), // The date for 1627592400000 in milliseconds
+            DateClose = new DateTime(2021, 7, 29, 21, 0, 0,
+                DateTimeKind.Utc), // The date for 1627592400000 in milliseconds
             ReasonClosed = ReasonClosed.Closed,
             StopLoss = 1.23m,
             TakeProfit = 1.45m,
@@ -473,8 +472,8 @@ public class XtbAdapterTests
 
         result.First().Should().BeEquivalentTo(expectedPosition);
     }
-    
-    
+
+
     [Fact]
     public void AdaptTradesOpenedTradesResponse_ShouldReturnExpectedPositions()
     {
@@ -512,17 +511,18 @@ public class XtbAdapterTests
         // Assert
         var expectedPosition = new Position
         {
-            Order = "1|2|1", 
+            Order = "1|2|1",
             StrategyId = "someReference",
             Id = "id",
             Symbol = "symbol_name",
-            TypePosition = TypeOperation.Buy, 
+            TypePosition = TypeOperation.Buy,
             StatusPosition = StatusPosition.Open,
             Profit = 1000.5m,
             OpenPrice = 1.234m,
-            DateOpen = new DateTime(2021, 7, 29, 20, 0, 0, DateTimeKind.Utc), 
+            DateOpen = new DateTime(2021, 7, 29, 20, 0, 0, DateTimeKind.Utc),
             ClosePrice = 1.456m,
-            DateClose = new DateTime(2021, 7, 29, 21, 0, 0, DateTimeKind.Utc), // The date for 1627592400000 in milliseconds
+            DateClose = new DateTime(2021, 7, 29, 21, 0, 0,
+                DateTimeKind.Utc), // The date for 1627592400000 in milliseconds
             ReasonClosed = ReasonClosed.Closed,
             StopLoss = 1.23m,
             TakeProfit = 1.45m,
@@ -531,7 +531,7 @@ public class XtbAdapterTests
 
         result.Should().BeEquivalentTo(expectedPosition);
     }
-    
+
     [Fact]
     public void AdaptTradingHoursResponse_ParsesValidJson_ShouldReturnTradeHourRecord()
     {
@@ -552,14 +552,15 @@ public class XtbAdapterTests
         Assert.Equal(TimeSpan.Zero, record.From);
         Assert.Equal(TimeSpan.Parse("22:00:00.0010000"), record.To);
     }
-    
-    
+
+
     [Fact]
     public void AdaptTradingHoursResponse_ShouldReturnTradeHourRecord_GivenValidJson()
     {
         // Arrange
         var adapter = new XtbAdapter();
-        var jsonResponse = "{ \"returnData\": [ { \"trading\": [ { \"day\": 1, \"fromT\": 63000000, \"toT\": 63000000 } ] } ] }";
+        var jsonResponse =
+            "{ \"returnData\": [ { \"trading\": [ { \"day\": 1, \"fromT\": 63000000, \"toT\": 63000000 } ] } ] }";
 
         // Act
         var result = adapter.AdaptTradingHoursResponse(jsonResponse);
@@ -573,8 +574,8 @@ public class XtbAdapterTests
         record.From.Should().Be(new TimeSpan(15, 30, 0));
         record.To.Should().Be(new TimeSpan(15, 30, 0));
     }
-    
-    
+
+
     [Theory]
     [InlineData("{\"returnData\": {\"order\": 123456}}", "123456|123456|123456")]
     public void AdaptOpenTradeResponse_ShouldReturnExpectedPosition(string jsonResponse, string expectedOrder)
@@ -607,7 +608,7 @@ public class XtbAdapterTests
     public void AdaptCloseTradeResponse_ShouldReturnExpectedPosition(string jsonResponse, string expectedOrder)
     {
         // Arrange
-    
+
 
         // Act
         var result = _xtbAdapter.AdaptCloseTradeResponse(jsonResponse);
@@ -615,9 +616,9 @@ public class XtbAdapterTests
         // Assert
         result.Order.Should().Be(expectedOrder);
     }
-    
-    
-     [Fact]
+
+
+    [Fact]
     public void AdaptTradeRecordStreaming_ShouldReturnExpectedPosition_Open()
     {
         // Arrange
@@ -769,8 +770,8 @@ public class XtbAdapterTests
             Id = "trade123"
         });
     }
-    
-    
+
+
     [Fact]
     public void AdaptTickRecordStreaming_ShouldReturnExpectedTick()
     {
@@ -801,8 +802,8 @@ public class XtbAdapterTests
             Date = DateTimeOffset.FromUnixTimeMilliseconds(1625097600000).UtcDateTime
         });
     }
-    
-    
+
+
     [Fact]
     public void AdaptBalanceRecordStreaming_ShouldReturnExpectedAccountBalance()
     {
@@ -833,16 +834,20 @@ public class XtbAdapterTests
             Balance = 11500.0
         });
     }
-    
+
     [Theory]
     [InlineData("{\"data\": {\"order\": 123456, \"requestStatus\": 0}}", "123456|123456|123456", StatusPosition.Close)]
-    [InlineData("{\"data\": {\"order\": 123456, \"requestStatus\": 1}}", "123456|123456|123456", StatusPosition.Pending)]
-    [InlineData("{\"data\": {\"order\": 123456, \"requestStatus\": 3}}", "123456|123456|123456", StatusPosition.Accepted)]
-    [InlineData("{\"data\": {\"order\": 123456, \"requestStatus\": 4}}", "123456|123456|123456", StatusPosition.Rejected)]
-    public void AdaptTradeStatusRecordStreaming_ShouldReturnExpectedPosition(string jsonResponse, string expectedOrder, StatusPosition expectedStatusPosition)
+    [InlineData("{\"data\": {\"order\": 123456, \"requestStatus\": 1}}", "123456|123456|123456",
+        StatusPosition.Pending)]
+    [InlineData("{\"data\": {\"order\": 123456, \"requestStatus\": 3}}", "123456|123456|123456",
+        StatusPosition.Accepted)]
+    [InlineData("{\"data\": {\"order\": 123456, \"requestStatus\": 4}}", "123456|123456|123456",
+        StatusPosition.Rejected)]
+    public void AdaptTradeStatusRecordStreaming_ShouldReturnExpectedPosition(string jsonResponse, string expectedOrder,
+        StatusPosition expectedStatusPosition)
     {
         // Arrange
-     
+
 
         // Act
         var result = _xtbAdapter.AdaptTradeStatusRecordStreaming(jsonResponse);
@@ -851,7 +856,7 @@ public class XtbAdapterTests
         result.Order.Should().Be(expectedOrder);
         result.StatusPosition.Should().Be(expectedStatusPosition);
     }
-    
+
     [Fact]
     public void AdaptProfitRecordStreaming_ShouldReturnExpectedPosition()
     {
@@ -865,7 +870,7 @@ public class XtbAdapterTests
                 ""profit"": 150.25
             }
         }";
-        
+
         // Act
         var result = _xtbAdapter.AdaptProfitRecordStreaming(jsonResponse);
 
@@ -873,11 +878,12 @@ public class XtbAdapterTests
         result.Should().BeEquivalentTo(new Position
         {
             Order = "123456|654321|789012",
-            Profit = 150.25m
+            Profit = 150.25m,
+            StatusPosition = StatusPosition.Updated,
         });
     }
-    
-    
+
+
     [Fact]
     public void AdaptNewsRecordStreaming_ShouldReturnExpectedNews()
     {
@@ -902,7 +908,7 @@ public class XtbAdapterTests
             Title = "Breaking news title"
         });
     }
-    
+
     [Fact]
     public void AdaptCandleRecordStreaming_ShouldThrowNotImplementedException()
     {
@@ -918,14 +924,14 @@ public class XtbAdapterTests
                 ""volume"": 1000
             }
         }";
-   
+
         // Act
         Action act = () => _xtbAdapter.AdaptCandleRecordStreaming(jsonResponse);
 
         // Assert
         act.Should().Throw<NotImplementedException>();
     }
-    
+
     [Fact]
     public void AdaptLoginResponse_ShouldReturnExpectedLoginResponse()
     {
@@ -961,7 +967,7 @@ public class XtbAdapterTests
         // Assert
         act.Should().Throw<ApiProvidersException>().WithMessage("Can't get the stream session id");
     }
-    
+
     [Fact]
     public void CheckApiStatus_ShouldBehaveAsExpected()
     {
@@ -970,7 +976,7 @@ public class XtbAdapterTests
         {
             ""status"": true
         }";
-   
+
         var methodInfo = typeof(XtbAdapter).GetMethod("CheckApiStatus", BindingFlags.NonPublic | BindingFlags.Instance);
 
         using var doc = JsonDocument.Parse(jsonResponse);
@@ -981,7 +987,7 @@ public class XtbAdapterTests
         // Assert
         act.Should().NotThrow();
     }
-    
+
     [Fact]
     public void CheckApiStatus_ShouldThrowExceptionWhenStatusIsNotOk()
     {
@@ -990,7 +996,7 @@ public class XtbAdapterTests
         {
             ""status"": false
         }";
-    
+
         var methodInfo = typeof(XtbAdapter).GetMethod("CheckApiStatus", BindingFlags.NonPublic | BindingFlags.Instance);
 
         using var doc = JsonDocument.Parse(jsonResponse);
@@ -1001,5 +1007,4 @@ public class XtbAdapterTests
         // Assert
         act.Should().Throw<TargetInvocationException>().WithInnerException<ApiProvidersException>();
     }
- 
 }

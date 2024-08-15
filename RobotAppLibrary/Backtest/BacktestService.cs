@@ -7,34 +7,31 @@ using RobotAppLibrary.Modeles;
 using RobotAppLibrary.Modeles.Attribute;
 using RobotAppLibrary.Strategy;
 using Serilog;
-using Skender.Stock.Indicators;
 
 namespace RobotAppLibrary.Backtest;
 
 public class BacktestService(IApiProviderBase apiProvider, StrategyImplementationBase strategyImplementationBase)
 {
-    private Func<decimal, TypeOperation, decimal> CalculateStopLossFunc = null!;
-    private Func<decimal, TypeOperation, decimal> CalculateTakeProfitFunc = null!;
-    
-    private StrategyImplementationBase _strategyImplementationBase { get; set; } = strategyImplementationBase;
-
     private readonly ILogger _logger;
-    
-    private List<IIndicator> _mainIndicatorList = new();
 
-    private Dictionary<Timeframe, List<IIndicator>> _secondaryIndicatorList = new();
-    
-    private ChartForBacktest MainChart { get; set; }
-    
-    private Dictionary<Timeframe, ChartForBacktest> _secondaryChartList = new Dictionary<Timeframe, ChartForBacktest>();
+    private readonly List<IIndicator> _mainIndicatorList = new();
 
     private PositionHandlerBacktest _positionHandler;
 
+    private readonly Dictionary<Timeframe, ChartForBacktest> _secondaryChartList = new();
+
+    private readonly Dictionary<Timeframe, List<IIndicator>> _secondaryIndicatorList = new();
+    private readonly Func<decimal, TypeOperation, decimal> CalculateStopLossFunc = null!;
+    private readonly Func<decimal, TypeOperation, decimal> CalculateTakeProfitFunc = null!;
+
     private string Symbol;
-    
+
+    private StrategyImplementationBase _strategyImplementationBase { get; } = strategyImplementationBase;
+
+    private ChartForBacktest MainChart { get; set; }
+
     public void RunBacktest()
     {
-
         var tempChartMain = SaveAndClearList(MainChart);
         var tempChartList = SaveAndClearDictionary(_secondaryChartList);
         var tempMainListIndicator = SaveAndClearList(_mainIndicatorList);
@@ -58,19 +55,16 @@ public class BacktestService(IApiProviderBase apiProvider, StrategyImplementatio
         return tempList;
     }
 
-    private Dictionary<TKey, TValue> SaveAndClearDictionary<TKey, TValue>(Dictionary<TKey, TValue> dictionary) where TValue : IList where TKey : notnull
+    private Dictionary<TKey, TValue> SaveAndClearDictionary<TKey, TValue>(Dictionary<TKey, TValue> dictionary)
+        where TValue : IList where TKey : notnull
     {
         var tempDict = new Dictionary<TKey, TValue>(dictionary);
-        foreach (var value in dictionary.Values)
-        {
-            value.Clear();
-        }
+        foreach (var value in dictionary.Values) value.Clear();
         return tempDict;
     }
 
     private void HandleBacktestProcess()
     {
-       
     }
 
     private void HandleSecondaryIndicatorList(Dictionary<Timeframe, List<IIndicator>> indicatorsSecondaryTemp)
@@ -102,7 +96,6 @@ public class BacktestService(IApiProviderBase apiProvider, StrategyImplementatio
     private void HandleSecondaryChartList(Dictionary<Timeframe, ChartForBacktest> tempChartList, Candle candle)
     {
         foreach (var (key, value) in tempChartList)
-        {
             while (value.Count > 0)
             {
                 var biggerCandle = value[0];
@@ -116,10 +109,9 @@ public class BacktestService(IApiProviderBase apiProvider, StrategyImplementatio
                     break;
                 }
             }
-        }
     }
 
- 
+
     private void InitStrategyImplementation()
     {
         _strategyImplementationBase.Logger = _logger;
@@ -129,7 +121,7 @@ public class BacktestService(IApiProviderBase apiProvider, StrategyImplementatio
         _positionHandler.DefaultSl = _strategyImplementationBase.DefaultSl;
         _positionHandler.DefaultTp = _strategyImplementationBase.DefaultTp;
     }
-    
+
     private Task OpenPosition(TypeOperation typePosition, decimal sl = 0,
         decimal tp = 0, double volume = 0, double risk = 0, long expiration = 0)
     {
@@ -140,34 +132,30 @@ public class BacktestService(IApiProviderBase apiProvider, StrategyImplementatio
     private async Task Init()
     {
         InitStrategyImplementation();
-       await  InitChart();
-       InitIndicator();
-        
+        await InitChart();
+        InitIndicator();
     }
 
     private async Task InitChart()
     {
-        var chartFields = _strategyImplementationBase.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
+        var chartFields = _strategyImplementationBase.GetType()
+            .GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
             .Where(f => typeof(IChart).IsAssignableFrom(f.FieldType)).ToList();
-        
+
         foreach (var fieldInfo in chartFields)
         {
             var timeframeAttribute = fieldInfo.GetCustomAttribute<TimeframeAttribute>();
 
-            var chart =(ChartForBacktest)(await apiProvider.GetChartAsync(Symbol, timeframeAttribute!.Timeframe)) ;
-        
+            var chart = (ChartForBacktest)await apiProvider.GetChartAsync(Symbol, timeframeAttribute!.Timeframe);
+
             if (fieldInfo.GetCustomAttribute<MainChartAttribute>() != null)
-            {
                 MainChart = chart;
-            } 
             else
-            {
                 _secondaryChartList.Add(timeframeAttribute.Timeframe, chart);
-            }
         }
     }
 
-    
+
     private void InitIndicator()
     {
         var indicators = _strategyImplementationBase.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance)
@@ -177,10 +165,11 @@ public class BacktestService(IApiProviderBase apiProvider, StrategyImplementatio
         {
             if (fieldInfo.GetValue(_strategyImplementationBase) is not IIndicator indicator)
             {
-                indicator = Activator.CreateInstance(fieldInfo.FieldType) as IIndicator ?? throw new InvalidOperationException();
+                indicator = Activator.CreateInstance(fieldInfo.FieldType) as IIndicator ??
+                            throw new InvalidOperationException();
                 fieldInfo.SetValue(_strategyImplementationBase, indicator);
             }
-            
+
             if (fieldInfo.GetCustomAttribute<TimeframeAttribute>() is { Timeframe: var timeframe })
             {
                 if (!_secondaryIndicatorList.TryGetValue(timeframe, out var value))
@@ -199,24 +188,20 @@ public class BacktestService(IApiProviderBase apiProvider, StrategyImplementatio
 
         UpdateIndicator();
     }
-    
+
     private void UpdateIndicator()
     {
         try
         {
             void UpdateIndicators(List<IIndicator> indicators, List<Candle> candles)
             {
-                Parallel.ForEach(indicators, indicator =>
-                {
-                    indicator.UpdateIndicator(candles);
-                });
+                Parallel.ForEach(indicators, indicator => { indicator.UpdateIndicator(candles); });
             }
 
             var mainCandles = GetLastCandlesAsList(MainChart, 1000);
             UpdateIndicators(_mainIndicatorList, mainCandles);
 
             foreach (var keyValuePair in _secondaryIndicatorList)
-            {
                 if (_secondaryChartList.TryGetValue(keyValuePair.Key, out var secondaryChart))
                 {
                     var secondaryCandles = GetLastCandlesAsList(secondaryChart, 1000);
@@ -224,30 +209,23 @@ public class BacktestService(IApiProviderBase apiProvider, StrategyImplementatio
                 }
                 else
                 {
-                    var aggregatedCandles =((IChartAggregate) MainChart).AggregateChart(keyValuePair.Key).ToList();
+                    var aggregatedCandles = ((IChartAggregate)MainChart).AggregateChart(keyValuePair.Key).ToList();
                     UpdateIndicators(keyValuePair.Value, aggregatedCandles);
                 }
-            }
         }
         catch (Exception e)
         {
             throw new StrategyException("Impossible de mettre à jour les indicateurs", e);
         }
     }
-    
+
     private List<Candle> GetLastCandlesAsList(ChartForBacktest candles, int count)
     {
-        int candleCount = candles.Count;
-        if (candleCount <= count)
-        {
-            return [..candles];
-        }
-        
+        var candleCount = candles.Count;
+        if (candleCount <= count) return [..candles];
+
         var result = new List<Candle>(count);
-        for (int i = candleCount - count; i < candleCount; i++)
-        {
-            result.Add(candles[i]);
-        }
+        for (var i = candleCount - count; i < candleCount; i++) result.Add(candles[i]);
 
         return result;
     }
@@ -255,8 +233,5 @@ public class BacktestService(IApiProviderBase apiProvider, StrategyImplementatio
 
     public void StartBacktest()
     {
-        
     }
-    
-    
 }

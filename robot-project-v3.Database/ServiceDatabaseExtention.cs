@@ -4,7 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using robot_project_v3.Database.DbContext;
 using robot_project_v3.Database.Repositories;
-
 using Serilog;
 
 namespace robot_project_v3.Database;

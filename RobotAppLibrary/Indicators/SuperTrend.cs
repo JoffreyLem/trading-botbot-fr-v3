@@ -10,9 +10,8 @@ public sealed class SuperTrend : BaseIndicator<SuperTrendResult>
 {
     public SuperTrend()
     {
-      
     }
-    
+
     public SuperTrend(int loopBackPeriodRequested = 14)
     {
         LoopBackPeriod = loopBackPeriodRequested;

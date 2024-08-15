@@ -10,10 +10,9 @@ public class PivotPoint : BaseIndicator<PivotPointsResult>
 {
     public PivotPoint()
     {
-        
     }
-    
-    public PivotPoint(PeriodSize periodSize, PivotPointType type )
+
+    public PivotPoint(PeriodSize periodSize, PivotPointType type)
     {
         PeriodSize = periodSize;
         PivotPointType = type;

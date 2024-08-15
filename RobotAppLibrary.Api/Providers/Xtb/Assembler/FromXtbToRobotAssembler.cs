@@ -9,15 +9,9 @@ public static class FromXtbToRobotAssembler
 
     public static Category GetCategory(string? symbol)
     {
-        if (string.IsNullOrEmpty(symbol))
-        {
-            return Category.Unknow;
-        }
+        if (string.IsNullOrEmpty(symbol)) return Category.Unknow;
 
-        if (CategoryCache.TryGetValue(symbol, out var cachedCategory))
-        {
-            return cachedCategory;
-        }
+        if (CategoryCache.TryGetValue(symbol, out var cachedCategory)) return cachedCategory;
 
         var category = symbol switch
         {

@@ -10,9 +10,8 @@ public sealed class FractalBandIndicator : BaseIndicator<FcbResult>
 {
     public FractalBandIndicator()
     {
-        
     }
-    
+
     public FractalBandIndicator(int loopBackPeriodRequested)
     {
         LoopBackPeriod = loopBackPeriodRequested;

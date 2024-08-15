@@ -15,6 +15,7 @@ public interface ICommandCreatorXtb : ICommandCreator
 {
     public string? StreamingSessionId { get; set; }
 }
+
 public class CommandCreatorXtb : ICommandCreatorXtb
 {
     private string? _streamingSessionId;
@@ -66,7 +67,7 @@ public class CommandCreatorXtb : ICommandCreatorXtb
         {
             symbol,
             period = ToXtbAssembler.ToPeriodCode(timeframe),
-            start =  ToXtbAssembler.SetDateTimeForChart(timeframe).ConvertToUnixTime()
+            start = ToXtbAssembler.SetDateTimeForChart(timeframe).ConvertToUnixTime()
         });
 
         var fullJson = $"{{\"arguments\": {{\"info\": {chartLastInfoRecordJson}}}}}";
@@ -538,7 +539,6 @@ public class CommandCreatorXtb : ICommandCreatorXtb
     }
 
 
-
     private string CreateTradeTransactionCommand(Position position, decimal price, long? typeCode)
     {
         using var stream = new MemoryStream();
@@ -546,7 +546,8 @@ public class CommandCreatorXtb : ICommandCreatorXtb
 
         var order = position.Order?.Split('|');
 
-        if (order is null) throw new ApiProvidersException($"Order is not defined in {position}");
+        if (order is null && typeCode != TRADE_TRANSACTION_TYPE.ORDER_OPEN.Code)
+            throw new ApiProvidersException($"Order is not defined in {position}");
 
         writer.WriteStartObject();
         writer.WriteStartObject("tradeTransInfo");

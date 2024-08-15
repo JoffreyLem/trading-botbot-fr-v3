@@ -20,7 +20,7 @@ public class XtbAdapter : IReponseAdapter
         var returnData = ReturnData(doc);
 
         var symbolRecords = new List<SymbolInfo>();
-        
+
         var symbolElements = returnData.EnumerateArray();
 
         symbolRecords.AddRange(symbolElements.Select(symbolElement => new SymbolInfo
@@ -40,7 +40,6 @@ public class XtbAdapter : IReponseAdapter
     }
 
 
-
     public List<CalendarEvent> AdaptCalendarResponse(string jsonResponse)
     {
         using var doc = JsonDocument.Parse(jsonResponse);
@@ -52,7 +51,7 @@ public class XtbAdapter : IReponseAdapter
 
         if (returnData is { ValueKind: JsonValueKind.Array })
             calendarList.AddRange(returnData.EnumerateArray()
-                .Select(calendarElement => new CalendarEvent()
+                .Select(calendarElement => new CalendarEvent
                 {
                     Time = DateTimeOffset.FromUnixTimeMilliseconds(calendarElement.GetProperty("time").GetInt64())
                         .DateTime,
@@ -76,10 +75,11 @@ public class XtbAdapter : IReponseAdapter
         var returnData = ReturnData(doc);
 
         var dataRecordsList = new List<Candle>();
-        
+
         var digits = returnData.GetProperty("digits").GetInt32();
-        dataRecordsList.AddRange(returnData.GetProperty("rateInfos").EnumerateArray().Select(recordElement => MapCandle(recordElement, digits)));
-        
+        dataRecordsList.AddRange(returnData.GetProperty("rateInfos").EnumerateArray()
+            .Select(recordElement => MapCandle(recordElement, digits)));
+
         dataRecordsList.Sort((c1, c2) => c1.Date.CompareTo(c2.Date));
 
         return dataRecordsList;
@@ -117,7 +117,7 @@ public class XtbAdapter : IReponseAdapter
         var data = new List<News>();
 
         data.AddRange(returnData.EnumerateArray().Select(MapNews));
-        
+
         return data;
     }
 
@@ -167,7 +167,6 @@ public class XtbAdapter : IReponseAdapter
 
         var quotation = returnData.GetProperty("quotations").EnumerateArray().First();
         return MapTick(quotation);
-     
     }
 
     public List<Position> AdaptTradesHistoryResponse(string jsonResponse, string positionReference)
@@ -180,7 +179,9 @@ public class XtbAdapter : IReponseAdapter
         var listPosition = new List<Position>();
 
 
-        listPosition.AddRange(from recordElement in returnData.EnumerateArray() where recordElement.GetProperty("customComment").GetString().Contains(positionReference) select MapPosition(recordElement));
+        listPosition.AddRange(from recordElement in returnData.EnumerateArray()
+            where recordElement.GetProperty("customComment").GetString().Contains(positionReference)
+            select MapPosition(recordElement));
 
         return listPosition;
     }
@@ -192,7 +193,9 @@ public class XtbAdapter : IReponseAdapter
         CheckApiStatus(doc);
         var returnData = ReturnData(doc);
 
-        var listPosition = (from recordElement in returnData.EnumerateArray() where recordElement.GetProperty("customComment").GetString().Contains(positionId) select MapPosition(recordElement)).ToList();
+        var listPosition = (from recordElement in returnData.EnumerateArray()
+            where recordElement.GetProperty("customComment").GetString().Contains(positionId)
+            select MapPosition(recordElement)).ToList();
 
         return listPosition.FirstOrDefault();
     }
@@ -204,9 +207,9 @@ public class XtbAdapter : IReponseAdapter
         CheckApiStatus(doc);
         var tradeHourRecord = new TradeHourRecord();
         var returnData = ReturnData(doc);
-        
+
         var firstData = returnData.EnumerateArray().First();
-        
+
         foreach (var tradingElement in firstData.GetProperty("trading").EnumerateArray())
             tradeHourRecord.HoursRecords.Add(new TradeHourRecord.HoursRecordData
             {
@@ -226,9 +229,9 @@ public class XtbAdapter : IReponseAdapter
     {
         using var doc = JsonDocument.Parse(jsonResponse);
         CheckApiStatus(doc);
-        
+
         var returnData = ReturnData(doc);
-        
+
         return MapPositionTrasaction(returnData);
     }
 
@@ -261,7 +264,7 @@ public class XtbAdapter : IReponseAdapter
         return MapTick(data);
     }
 
-    public Position? AdaptTradeRecordStreaming(string input)
+    public Position AdaptTradeRecordStreaming(string input)
     {
         using var doc = JsonDocument.Parse(input);
 
@@ -297,6 +300,10 @@ public class XtbAdapter : IReponseAdapter
                 if (type == 1)
                     position.StatusPosition = StatusPosition.Pending;
                 else if (type == 0) position.StatusPosition = StatusPosition.Open;
+                else
+                {
+                    position.StatusPosition = StatusPosition.Unknow;
+                }
             }
 
             position.Profit = recordElement.TryGetProperty("profit", out var profit) &&
@@ -323,7 +330,7 @@ public class XtbAdapter : IReponseAdapter
 
             position.StrategyId = dataSplit[0];
             position.Id = dataSplit[1];
-          
+
             return position;
         }
 
@@ -365,7 +372,8 @@ public class XtbAdapter : IReponseAdapter
         return new Position
         {
             Order = $"{order}|{order2}|{positionId}",
-            Profit = data.GetProperty("profit").GetDecimal()
+            Profit = data.GetProperty("profit").GetDecimal(),
+            StatusPosition = StatusPosition.Updated
         };
     }
 
@@ -496,7 +504,7 @@ public class XtbAdapter : IReponseAdapter
     {
         decimal? ask = jsonElement.TryGetProperty("ask", out var askProp) ? askProp.GetDecimal() : null;
         decimal? bid = jsonElement.TryGetProperty("bid", out var bidProp) ? bidProp.GetDecimal() : null;
-        jsonElement.TryGetProperty("symbol", out var symbolProp) ;
+        jsonElement.TryGetProperty("symbol", out var symbolProp);
         decimal? askVolume = jsonElement.TryGetProperty("askVolume", out var askVolumeProp)
             ? askVolumeProp.GetDecimal()
             : null;
@@ -523,25 +531,18 @@ public class XtbAdapter : IReponseAdapter
 
     private static JsonElement ReturnData(JsonDocument doc, JsonValueKind? expectedValueKind = null)
     {
-        
         var root = doc.RootElement;
 
-        if (root.ValueKind == JsonValueKind.Undefined )
-        {
-            throw new ApiProvidersException("Json value kind unknow");
-        }
+        if (root.ValueKind == JsonValueKind.Undefined) throw new ApiProvidersException("Json value kind unknow");
 
         if (root.TryGetProperty("returnData", out var returnDataProperty))
         {
-            if ((expectedValueKind is not null && returnDataProperty.ValueKind != expectedValueKind))
-            {
+            if (expectedValueKind is not null && returnDataProperty.ValueKind != expectedValueKind)
                 throw new ApiProvidersException("Return data value kind unknow");
-            }
             return returnDataProperty;
         }
 
         throw new ApiProvidersException("The json does not contain return data");
-
     }
 
 

@@ -3,36 +3,27 @@ using RobotAppLibrary.Modeles;
 
 namespace RobotAppLibrary.TradingManager;
 
-public interface IStrategyResult 
+public interface IStrategyResult
 {
     GlobalResults GlobalResults { get; set; }
-  
+
     int LooseStreak { get; set; }
     double ToleratedDrawnDown { get; set; }
     bool SecureControlPosition { get; set; }
-    public event EventHandler<EventTreshold>? ResultTresholdEvent;
 
     public EventTreshold? Treshold { get; set; }
+    public event EventHandler<EventTreshold>? ResultTresholdEvent;
 }
 
 public class StrategyResult : IStrategyResult
 {
     private readonly IApiProviderBase _apiProviderBase;
-    
+
     private readonly string _positionReference;
 
+    private readonly ResultCalculator _resultCalculator = new();
+
     private AccountBalance _accountBalance = null!;
-
-    private readonly ResultCalculator _resultCalculator = new ResultCalculator();
-    public GlobalResults GlobalResults { get; set; } = new GlobalResults();
-
-    public int LooseStreak { get; set; } = 10;
-    public double ToleratedDrawnDown { get; set; } = 10;
-    public bool SecureControlPosition { get; set; }
-    
-    public event EventHandler<EventTreshold>? ResultTresholdEvent;
-    
-    public EventTreshold? Treshold { get; set; }
 
     public StrategyResult(IApiProviderBase apiProviderBase, string positionReference)
     {
@@ -40,6 +31,16 @@ public class StrategyResult : IStrategyResult
         _positionReference = positionReference;
         Init();
     }
+
+    public GlobalResults GlobalResults { get; set; } = new();
+
+    public int LooseStreak { get; set; } = 10;
+    public double ToleratedDrawnDown { get; set; } = 10;
+    public bool SecureControlPosition { get; set; }
+
+    public event EventHandler<EventTreshold>? ResultTresholdEvent;
+
+    public EventTreshold? Treshold { get; set; }
 
     private void Init()
     {
@@ -52,29 +53,26 @@ public class StrategyResult : IStrategyResult
             GlobalResults.Positions.AddRange(listPositions);
 
             GlobalResults.Result = _resultCalculator.CalculateResults(GlobalResults.Positions);
-            
+
             var groupedPositions = GlobalResults.Positions
                 .GroupBy(p =>
                 {
                     var date = p.DateClose.GetValueOrDefault();
                     return new DateTime(date.Year, date.Month, 1);
                 })
-                .Select(g => new 
+                .Select(g => new
                 {
-                    Date = g.Key, 
+                    Date = g.Key,
                     Positions = g.ToList()
                 }).ToList();
-            
-            foreach (var groupedResult in groupedPositions.Select(positionGrouped => new MonthlyResult()
+
+            foreach (var groupedResult in groupedPositions.Select(positionGrouped => new MonthlyResult
                      {
                          Date = positionGrouped.Date,
                          Result = _resultCalculator.CalculateResults(positionGrouped.Positions),
                          Positions = positionGrouped.Positions
                      }))
-            {
                 GlobalResults.MonthlyResults.Add(groupedResult);
-            }
-
         }
     }
 
@@ -89,25 +87,25 @@ public class StrategyResult : IStrategyResult
 
     private void UpdateResult(Position position)
     {
-        
         GlobalResults.Positions.Add(position);
-     
+
         GlobalResults.Result = _resultCalculator.CalculateResults(GlobalResults.Positions);
-        
+
         var posDate = position.DateClose.GetValueOrDefault();
-        var selectedGroupedResult = GlobalResults.MonthlyResults.FirstOrDefault(x => x.Date.Year == posDate.Year && x.Date.Month == posDate.Month);
+        var selectedGroupedResult =
+            GlobalResults.MonthlyResults.FirstOrDefault(x =>
+                x.Date.Year == posDate.Year && x.Date.Month == posDate.Month);
 
         if (selectedGroupedResult is null)
         {
-            var groupedResult = new MonthlyResult()
+            var groupedResult = new MonthlyResult
             {
                 Date = new DateTime(posDate.Year, posDate.Month, 1),
                 Result = _resultCalculator.CalculateResults([position])
-
             };
-            
+
             groupedResult.Positions.Add(position);
-            
+
             GlobalResults.MonthlyResults.Add(groupedResult);
         }
         else
@@ -116,14 +114,14 @@ public class StrategyResult : IStrategyResult
             selectedGroupedResult.Result = _resultCalculator.CalculateResults(selectedGroupedResult.Positions);
         }
     }
-    
+
     private void TresholdCheck()
     {
         CheckDrawnDownTreshold();
         CheckLooseStreakTreshold();
         CheckProfitFactorTreshold();
     }
-    
+
 
     private void CheckDrawnDownTreshold()
     {
@@ -131,11 +129,7 @@ public class StrategyResult : IStrategyResult
         var drawDownTheorique = _accountBalance.Balance * (ToleratedDrawnDown / 100);
 
         if (drawndown > 0 && drawndown >= (decimal)drawDownTheorique)
-        {
-         
             ResultTresholdEvent?.Invoke(this, EventTreshold.Drowdown);
-        }
-            
     }
 
     private void CheckLooseStreakTreshold()
@@ -147,7 +141,6 @@ public class StrategyResult : IStrategyResult
             Treshold = EventTreshold.LooseStreak;
             ResultTresholdEvent?.Invoke(this, EventTreshold.LooseStreak);
         }
-            
     }
 
     private void CheckProfitFactorTreshold()
@@ -159,6 +152,4 @@ public class StrategyResult : IStrategyResult
             ResultTresholdEvent?.Invoke(this, EventTreshold.Profitfactor);
         }
     }
-
-
 }

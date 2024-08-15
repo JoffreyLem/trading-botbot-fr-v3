@@ -4,10 +4,10 @@ namespace RobotAppLibrary.Modeles;
 
 public class Candle : CandleProperties
 {
-    public List<Tick> Ticks { get; set; } = new List<Tick>();
+    public List<Tick> Ticks { get; set; } = new();
     public decimal BidVolume { get; set; }
     public decimal AskVolume { get; set; }
-    
+
     public override string ToString()
     {
         return $"Date: {Date:yyyy-MM-dd HH:mm:ss}\n" +

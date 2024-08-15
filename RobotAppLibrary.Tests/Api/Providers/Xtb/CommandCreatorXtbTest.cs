@@ -1,10 +1,7 @@
-﻿using RobotAppLibrary.Api.Modeles;
-using RobotAppLibrary.Api.Providers.Xtb;
-using RobotAppLibrary.Api.Providers.Xtb.Utils;
-using System;
-using System.Text.Json;
-using Xunit;
+﻿using System.Text.Json;
 using FluentAssertions;
+using RobotAppLibrary.Api.Modeles;
+using RobotAppLibrary.Api.Providers.Xtb;
 using RobotAppLibrary.Api.Providers.Xtb.Assembler;
 using RobotAppLibrary.Api.Providers.Xtb.Code;
 using RobotAppLibrary.Modeles;
@@ -21,7 +18,10 @@ public class CommandCreatorXtbTests
         var commandCreator = new CommandCreatorXtb();
 
         // Act
-        Action act = () => { var id = commandCreator.StreamingSessionId; };
+        var act = () =>
+        {
+            var id = commandCreator.StreamingSessionId;
+        };
 
         // Assert
         act.Should().Throw<ArgumentException>()
@@ -96,7 +96,7 @@ public class CommandCreatorXtbTests
         arguments.GetProperty("appId").GetString().Should().Be("botbot");
         arguments.GetProperty("appName").GetString().Should().Be("botbot");
     }
-    
+
     [Fact]
     public void CreateFullChartCommand_ShouldReturnExpectedJsonString()
     {
@@ -117,8 +117,8 @@ public class CommandCreatorXtbTests
         var arguments = doc.RootElement.GetProperty("arguments");
         var info = arguments.GetProperty("info");
         info.GetProperty("symbol").GetString().Should().Be(symbol);
-        info.GetProperty("period").GetInt64().Should().BeCloseTo(expectedPeriodCode,2);
-        info.GetProperty("start").GetInt64().Should().BeCloseTo(expectedStartUnixTime,2);
+        info.GetProperty("period").GetInt64().Should().BeCloseTo(expectedPeriodCode, 2);
+        info.GetProperty("start").GetInt64().Should().BeCloseTo(expectedStartUnixTime, 2);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class CommandCreatorXtbTests
         info.GetProperty("start").GetInt64().Should().Be(expectedStartUnixTime);
         info.GetProperty("end").GetInt64().Should().Be(expectedEndUnixTime);
     }
-    
+
     [Fact]
     public void CreateLogOutCommand_ShouldReturnExpectedJsonString()
     {
@@ -282,7 +282,7 @@ public class CommandCreatorXtbTests
         arguments.GetProperty("start").GetInt64().Should().Be(expectedStartUnixTime);
         arguments.GetProperty("end").GetInt64().Should().Be(expectedEndUnixTime);
     }
-    
+
     [Fact]
     public void CreateTradesOpenedTradesCommand_ShouldReturnExpectedJsonString()
     {
@@ -316,8 +316,8 @@ public class CommandCreatorXtbTests
         var symbols = arguments.GetProperty("symbols");
         symbols[0].GetString().Should().Be(symbol);
     }
-    
-    
+
+
     [Fact]
     public void CreateOpenTradeCommande_ShouldReturnExpectedJsonString()
     {
@@ -332,7 +332,7 @@ public class CommandCreatorXtbTests
             Symbol = "EURUSD",
             Volume = 1000,
             StrategyId = "strategy123",
-            Id = "1",
+            Id = "1"
         };
         var price = 1.2345m;
 
@@ -343,7 +343,8 @@ public class CommandCreatorXtbTests
         using var doc = ValidateCommandJson(actualJson, "tradeTransaction");
 
         var tradeTransInfo = doc.RootElement.GetProperty("arguments").GetProperty("tradeTransInfo");
-        tradeTransInfo.GetProperty("cmd").GetInt64().Should().Be(ToXtbAssembler.ToTradeOperationCode(position.TypePosition));
+        tradeTransInfo.GetProperty("cmd").GetInt64().Should()
+            .Be(ToXtbAssembler.ToTradeOperationCode(position.TypePosition));
         tradeTransInfo.GetProperty("type").GetInt64().Should().Be(TRADE_TRANSACTION_TYPE.ORDER_OPEN.Code);
         tradeTransInfo.GetProperty("price").GetDecimal().Should().Be(price);
         tradeTransInfo.GetProperty("sl").GetDecimal().Should().Be(position.StopLoss);
@@ -355,7 +356,7 @@ public class CommandCreatorXtbTests
         tradeTransInfo.GetProperty("expiration").GetInt64().Should().Be(0);
     }
 
-    
+
     [Fact]
     public void CreateUpdateTradeCommande_ShouldReturnExpectedJsonString()
     {
@@ -368,8 +369,7 @@ public class CommandCreatorXtbTests
             StopLoss = 1.1000m,
             TakeProfit = 1.2000m,
             Symbol = "EURUSD",
-            Volume = 1000,
-         
+            Volume = 1000
         };
         var price = 1.2345m;
 
@@ -380,7 +380,8 @@ public class CommandCreatorXtbTests
         using var doc = ValidateCommandJson(actualJson, "tradeTransaction");
 
         var tradeTransInfo = doc.RootElement.GetProperty("arguments").GetProperty("tradeTransInfo");
-        tradeTransInfo.GetProperty("cmd").GetInt64().Should().Be(ToXtbAssembler.ToTradeOperationCode(position.TypePosition));
+        tradeTransInfo.GetProperty("cmd").GetInt64().Should()
+            .Be(ToXtbAssembler.ToTradeOperationCode(position.TypePosition));
         tradeTransInfo.GetProperty("type").GetInt64().Should().Be(TRADE_TRANSACTION_TYPE.ORDER_MODIFY.Code);
         tradeTransInfo.GetProperty("price").GetDecimal().Should().Be(price);
         tradeTransInfo.GetProperty("sl").GetDecimal().Should().Be(position.StopLoss);
@@ -391,7 +392,7 @@ public class CommandCreatorXtbTests
         tradeTransInfo.GetProperty("customComment").GetString().Should().Be(position.PositionStrategyReferenceId);
         tradeTransInfo.GetProperty("expiration").GetInt64().Should().Be(0);
     }
-    
+
     [Fact]
     public void CreateCloseTradeCommande_ShouldReturnExpectedJsonString()
     {
@@ -404,7 +405,7 @@ public class CommandCreatorXtbTests
             StopLoss = 1.1000m,
             TakeProfit = 1.2000m,
             Symbol = "EURUSD",
-            Volume = 1000,
+            Volume = 1000
         };
         var price = 1.2345m;
 
@@ -415,7 +416,8 @@ public class CommandCreatorXtbTests
         using var doc = ValidateCommandJson(actualJson, "tradeTransaction");
 
         var tradeTransInfo = doc.RootElement.GetProperty("arguments").GetProperty("tradeTransInfo");
-        tradeTransInfo.GetProperty("cmd").GetInt64().Should().Be(ToXtbAssembler.ToTradeOperationCode(position.TypePosition));
+        tradeTransInfo.GetProperty("cmd").GetInt64().Should()
+            .Be(ToXtbAssembler.ToTradeOperationCode(position.TypePosition));
         tradeTransInfo.GetProperty("type").GetInt64().Should().Be(TRADE_TRANSACTION_TYPE.ORDER_CLOSE.Code);
         tradeTransInfo.GetProperty("price").GetDecimal().Should().Be(price);
         tradeTransInfo.GetProperty("sl").GetDecimal().Should().Be(position.StopLoss);
@@ -736,7 +738,6 @@ public class CommandCreatorXtbTests
         root.GetProperty("streamSessionId").GetString().Should().Be("test-session");
     }
 
-    
 
     private JsonDocument ValidateCommandJson(string json, string expectedCommandName)
     {

@@ -2,10 +2,10 @@
 
 public interface IConnectorBase : IConnectionEvent
 {
+    bool IsConnected { get; }
     void Dispose();
     Task ConnectAsync();
     Task SendAsync(string messageToSend);
     Task<string> ReceiveAsync(CancellationToken cancellationToken = default);
     void Close();
-     bool IsConnected { get;  }
 }

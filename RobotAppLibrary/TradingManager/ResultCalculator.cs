@@ -45,14 +45,13 @@ public class ResultCalculator
             CalculateDrawdowns(positions, result);
 
             return result;
-
         }
         catch (Exception e)
         {
             throw new ResultException("Error on calculating result", e);
         }
     }
-    
+
     private void CalculateDrawdowns(List<Position> positions, Result result)
     {
         if (positions.Count > 1 && positions.Any(p => p.Profit < 0))
@@ -65,19 +64,13 @@ public class ResultCalculator
             foreach (var position in orderedPositions)
             {
                 var profit = position.Profit;
-                if (profit > peakValue)
-                {
-                    peakValue = profit;
-                }
+                if (profit > peakValue) peakValue = profit;
 
                 var drawdown = peakValue - profit;
 
                 // Only consider negative drawdowns
                 lastDrawdown = drawdown;
-                if (drawdown > drawdownMax)
-                {
-                    drawdownMax = drawdown;
-                }
+                if (drawdown > drawdownMax) drawdownMax = drawdown;
             }
 
             result.Drawndown = lastDrawdown;
@@ -89,11 +82,4 @@ public class ResultCalculator
             result.DrawndownMax = 0;
         }
     }
-
-
-
-
-
-
-
 }

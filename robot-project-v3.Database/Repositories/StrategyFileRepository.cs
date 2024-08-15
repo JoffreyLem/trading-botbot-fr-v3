@@ -14,6 +14,7 @@ public interface IStrategyFileRepository
     Task UpdateAsync(StrategyFile strategyFile);
     Task DeleteAsync(int id);
 }
+
 public class StrategyFileRepository(IServiceScopeFactory scopeFactory) : IStrategyFileRepository
 {
     public async Task<List<StrategyFile>> GetAllAsync()

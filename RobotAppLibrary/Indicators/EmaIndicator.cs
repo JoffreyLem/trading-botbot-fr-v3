@@ -8,12 +8,10 @@ namespace RobotAppLibrary.Indicators;
 [ExcludeFromCodeCoverage]
 public sealed class EmaIndicator : BaseIndicator<EmaResult>
 {
-
     public EmaIndicator()
     {
-        
     }
-    
+
     public EmaIndicator(int loopBackPeriodRequested)
     {
         LoopBackPeriod = loopBackPeriodRequested;

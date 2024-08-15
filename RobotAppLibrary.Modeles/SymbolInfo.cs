@@ -14,15 +14,16 @@ public sealed class SymbolInfo
     ///     Currency profit
     /// </summary>
     public string? CurrencyProfit { get; set; }
+
     public double? LotMin { get; set; }
     public int Precision { get; set; }
     public required string Symbol { get; set; }
     public required double TickSize { get; set; }
+
     /// <summary>
     ///     In percentage
     /// </summary>
     public double Leverage { get; set; }
-
 }
 
 public enum Category

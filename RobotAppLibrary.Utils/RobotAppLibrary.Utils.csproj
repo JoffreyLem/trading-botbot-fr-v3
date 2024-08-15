@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\RobotAppLibrary.Modeles\RobotAppLibrary.Modeles.csproj" />
+        <ProjectReference Include="..\RobotAppLibrary.Modeles\RobotAppLibrary.Modeles.csproj"/>
     </ItemGroup>
 
 </Project>

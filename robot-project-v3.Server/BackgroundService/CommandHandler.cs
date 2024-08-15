@@ -6,8 +6,7 @@ using robot_project_v3.Mail;
 using robot_project_v3.Server.Command;
 using robot_project_v3.Server.Command.Api;
 using robot_project_v3.Server.Command.Strategy;
-using robot_project_v3.Server.Dto.Enum;
-using robot_project_v3.Server.Dto.Response;
+using robot_project_v3.Server.Dto;
 using robot_project_v3.Server.Hubs;
 using RobotAppLibrary.Api.Modeles;
 using RobotAppLibrary.Api.Providers;
@@ -29,16 +28,27 @@ public interface ICommandHandler
     Task Shutdown();
 }
 
-public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContext, ILogger logger, IMapper mapper, IEmailService _emailService)
+public class CommandHandler(
+    IHubContext<HubInfoClient, IHubInfoClient> hubContext,
+    ILogger logger,
+    IMapper mapper,
+    IEmailService _emailService)
     : ICommandHandler
 {
     private readonly ILogger _logger = logger.ForContext<CommandHandler>();
+    private readonly IMapper _mapper = mapper;
 
     private readonly Dictionary<string, IStrategyBase> _strategyList = new();
     private readonly Dictionary<string, CustomLoadContext> _strategyListContext = new();
-    
-    private  IApiProviderBase? _apiProviderBase;
-    private readonly IMapper _mapper = mapper;
+
+    private IApiProviderBase? _apiProviderBase;
+
+
+    public async Task Shutdown()
+    {
+        if (_apiProviderBase is not null) await _apiProviderBase.DisconnectAsync();
+    }
+
     #region API
 
     public async Task HandleApiCommand(CommandeBaseApiAbstract command)
@@ -65,7 +75,7 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
                 throw new CommandException("Internal error");
         }
     }
-    
+
     private void GetTypeHandler(GetTypeProviderCommand getTypeHandlerCommand)
     {
         CheckApiHandlerNotNull();
@@ -73,15 +83,15 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
         _logger.Information("Api handler type is {Data}", data);
         getTypeHandlerCommand.ResponseSource.SetResult(data);
     }
-    
+
     private async Task GetAllSymbol(GetAllSymbolCommand command)
     {
         CheckApiHandlerNotNull();
-        var symbols = await _apiProviderBase!.GetAllSymbolsAsync();
+        var symbols = _mapper.Map<List<SymbolInfoDto>>(await _apiProviderBase!.GetAllSymbolsAsync());
 
         command.ResponseSource.SetResult(symbols);
     }
-    
+
     private void IsConnected(IsConnectedCommand isConnectedCommand)
     {
         if (_apiProviderBase is null || !(bool)_apiProviderBase?.IsConnected())
@@ -89,14 +99,14 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
         else
             isConnectedCommand.ResponseSource.SetResult(true);
     }
-    
+
     private async Task Disconnect(DisconnectCommand command)
     {
         CheckApiHandlerNotNull();
         await _apiProviderBase!.DisconnectAsync();
         //_apiProviderBase.Connected -= ApiHandlerBaseOnConnected;
         _apiProviderBase.Disconnected -= ApiHandlerBaseOnDisconnected;
-        _apiProviderBase.NewBalanceEvent -= ApiProviderBaseOnNewBalanceEvent ;
+        _apiProviderBase.NewBalanceEvent -= ApiProviderBaseOnNewBalanceEvent;
         _apiProviderBase.Dispose();
         _apiProviderBase = null;
 
@@ -105,7 +115,7 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
 
     private async void ApiProviderBaseOnNewBalanceEvent(object? sender, AccountBalance e)
     {
-        var balanceDto = new AccountBalanceDto()
+        var balanceDto = new AccountBalanceDto
         {
             Balance = e.Balance,
             Credit = e.Credit,
@@ -121,20 +131,21 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
     private async Task Connect(ApiConnectCommand command)
     {
         _logger.Information("Init handler to type {Enum}", command.ConnectDto.HandlerEnum);
-        _apiProviderBase = ApiProviderFactory.GetApiHandler(command.ConnectDto.HandlerEnum.GetValueOrDefault(), _logger);
+        _apiProviderBase =
+            ApiProviderFactory.GetApiHandler(command.ConnectDto.HandlerEnum.GetValueOrDefault(), _logger);
         var credentials = new Credentials
         {
             User = command.ConnectDto.User,
             Password = command.ConnectDto.Pwd
         };
         await _apiProviderBase.ConnectAsync(credentials);
-        _apiProviderBase.Connected += (_, _) => {};
+        _apiProviderBase.Connected += (_, _) => { };
         _apiProviderBase.Disconnected += ApiHandlerBaseOnDisconnected;
         _apiProviderBase.NewBalanceEvent += ApiProviderBaseOnNewBalanceEvent;
 
         command.ResponseSource.SetResult(new AcknowledgementResponse());
     }
-    
+
     private async void ApiHandlerBaseOnDisconnected(object? sender, EventArgs e)
     {
         try
@@ -158,7 +169,7 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
             _logger.Fatal(ex, "Can't close strategy after api disconnection");
         }
     }
-    
+
     private void CheckApiHandlerNotNull()
     {
         if (_apiProviderBase is null) throw new CommandException("The Api handler is not connected");
@@ -198,7 +209,7 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
                 _logger.Information("Strategy command processed {@Command}", setCanRunCommand);
                 break;
             case GetChartCommand getChartCommandRequest:
-                 GetChart(getChartCommandRequest, GetStrategyById(getChartCommandRequest.Id));
+                GetChart(getChartCommandRequest, GetStrategyById(getChartCommandRequest.Id));
                 _logger.Information("Strategy command processed {@Command}", getChartCommandRequest);
                 break;
             case GetAllStrategyCommand getAllStrategyCommandRequest:
@@ -206,11 +217,12 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
                 _logger.Information("Strategy command processed {@Command}", getAllStrategyCommandRequest);
                 break;
             case RunStrategyBacktestCommand runStrategyBacktestCommand:
-                RunBackTest(runStrategyBacktestCommand,GetStrategyById(runStrategyBacktestCommand.Id));
+                RunBackTest(runStrategyBacktestCommand, GetStrategyById(runStrategyBacktestCommand.Id));
                 _logger.Information("Api command processed {@Command}", runStrategyBacktestCommand);
                 break;
             case GetBacktestResultCommand strategyResultBacktestCommand:
-                GetStrategyBacktestResult(strategyResultBacktestCommand,GetStrategyById(strategyResultBacktestCommand.Id));
+                GetStrategyBacktestResult(strategyResultBacktestCommand,
+                    GetStrategyById(strategyResultBacktestCommand.Id));
                 _logger.Information("Api command processed {@Command}", strategyResultBacktestCommand);
                 break;
 
@@ -219,8 +231,8 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
                 throw new CommandException("Internal error");
         }
     }
-    
-    
+
+
     private (StrategyImplementationBase, CustomLoadContext) GenerateStrategy(StrategyFile strategyFileDto)
     {
         var sourceCode = Encoding.UTF8.GetString(strategyFileDto.Data);
@@ -237,32 +249,28 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
 
         return ((StrategyImplementationBase)instance, context);
     }
-    
+
     private async void StrategyBaseOnPositionRejectedEvent(object? sender, RobotEvent<Position> e)
     {
         var posDto = _mapper.Map<PositionDto>(e.EventField);
-        posDto.PositionState = PositionStateEnum.Rejected;
         await hubContext.Clients.All.ReceivePosition(posDto);
     }
 
     private async void StrategyBaseOnPositionClosedEvent(object? sender, RobotEvent<Position> e)
     {
         var posDto = _mapper.Map<PositionDto>(e.EventField);
-        posDto.PositionState = PositionStateEnum.Closed;
         await hubContext.Clients.All.ReceivePosition(posDto);
     }
 
     private async void StrategyBaseOnPositionUpdatedEvent(object? sender, RobotEvent<Position> e)
     {
         var posDto = _mapper.Map<PositionDto>(e.EventField);
-        posDto.PositionState = PositionStateEnum.Updated;
         await hubContext.Clients.All.ReceivePosition(posDto);
     }
 
     private async void StrategyBaseOnPositionOpenedEvent(object? sender, RobotEvent<Position> e)
     {
         var posDto = _mapper.Map<PositionDto>(e.EventField);
-        posDto.PositionState = PositionStateEnum.Opened;
         await hubContext.Clients.All.ReceivePosition(posDto);
     }
 
@@ -277,24 +285,25 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
         var tickDto = _mapper.Map<TickDto>(e.EventField);
         await hubContext.Clients.All.ReceiveTick(tickDto);
     }
-    
+
     private void StrategyBaseOnStrategyDisabled(object? sender, RobotEvent<string> e)
     {
         _logger.Warning("{Message}, send email to user", e.EventField);
         _emailService.SendEmail("Strategy disabled", e.EventField).GetAwaiter().GetResult();
-   
+
         //StrategyDisabled?.Invoke(this, new RobotEvent<string>(e.EventField, e.Id));
     }
 
-    
+
     private void InitStrategy(InitStrategyCommand initStrategyCommandDto)
     {
         try
         {
             var strategyImplementation = GenerateStrategy(initStrategyCommandDto.StrategyFileDto);
             var istrategySerrvice = new StrategyServiceFactory();
-            var strategyBase = new StrategyBase(initStrategyCommandDto.Symbol, strategyImplementation.Item1, _apiProviderBase,
-                logger,istrategySerrvice);
+            var strategyBase = new StrategyBase(initStrategyCommandDto.Symbol, strategyImplementation.Item1,
+                _apiProviderBase,
+                logger, istrategySerrvice);
 
             strategyBase.TickEvent += StrategyBaseOnTickEvent;
             strategyBase.CandleEvent += StrategyBaseOnCandleEvent;
@@ -314,19 +323,19 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
             throw;
         }
     }
-    
+
     private void GetStrategyInfo(GetStrategyInfoCommand getStrategyInfoCommand, IStrategyBase strategy)
     {
         getStrategyInfoCommand.ResponseSource.SetResult(_mapper.Map<StrategyInfoDto>(strategy));
     }
-    
+
     private IStrategyBase GetStrategyById(string id)
     {
         if (_strategyList.TryGetValue(id, out var strategyBase))
             return strategyBase;
         throw new CommandException($"The strategy {id} is not initialized");
     }
-    
+
     private async Task CloseStrategy(CloseStrategyCommand closeStrategyCommand, IStrategyBase strategy)
     {
         await strategy.DisableStrategy(StrategyReasonDisabled.User);
@@ -340,15 +349,15 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
 
     private void GetStrategyResult(GetStrategyResultCommand strategyResultRequest, IStrategyBase strategy)
     {
-        var globalResultDto = new GlobalResultsDto()
+        var globalResultDto = new GlobalResultsDto
         {
-            Result = _mapper.Map<ResultDto>(strategy.Results),
+            Result = _mapper.Map<ResultDto>(strategy.Results.Result),
             Positions = _mapper.Map<List<PositionDto>>(strategy.Results.Positions.ToList()),
             MonthlyResults = _mapper.Map<List<MonthlyResultDto>>(strategy.Results.MonthlyResults)
         };
         strategyResultRequest.ResponseSource.SetResult(globalResultDto);
     }
-    
+
     private void GetOpenedPosition(GetOpenedPositionCommand command, IStrategyBase strategy)
     {
         var listPositionsDto = new List<PositionDto>();
@@ -361,13 +370,13 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
 
         command.ResponseSource.SetResult(listPositionsDto);
     }
-    
+
     private void SetCanRun(SetCanRunCommand setCanRunCommand, IStrategyBase strategy)
     {
         strategy.CanRun = setCanRunCommand.Bool;
         setCanRunCommand.ResponseSource.SetResult(new AcknowledgementResponse());
     }
-    
+
     private void GetChart(GetChartCommand chartCommandRequest, IStrategyBase strategy)
     {
         var candles = strategy.Chart.Select(x => new CandleDto
@@ -382,7 +391,7 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
         chartCommandRequest.ResponseSource.SetResult(candles);
     }
 
-    
+
     private void GetAllStrategy(GetAllStrategyCommand getAllStrategyCommandRequest)
     {
         var response = new List<StrategyInfoDto>();
@@ -398,28 +407,21 @@ public class CommandHandler(IHubContext<HubInfoClient, IHubInfoClient> hubContex
                 var strategyInfoDto = _mapper.Map<StrategyInfoDto>(strategy);
                 response.Add(strategyInfoDto);
             }
+
             getAllStrategyCommandRequest.ResponseSource.SetResult(response);
         }
     }
-    
+
     private void RunBackTest(RunStrategyBacktestCommand runStrategyBacktestCommand, IStrategyBase strategy)
     {
         // TODO : a implémenter plus tard
     }
-    
+
     private void GetStrategyBacktestResult(GetBacktestResultCommand strategyResultBacktestCommand,
         IStrategyBase strategy)
     {
         // TODO : Reimplémenter
     }
 
-
     #endregion
-
-  
-
-    public async Task Shutdown()
-    {
-        if (_apiProviderBase is not null) await _apiProviderBase.DisconnectAsync();
-    }
 }

@@ -1,6 +1,6 @@
 image: mcr.microsoft.com/dotnet/sdk:8.0
 variables:
-  STACK_NAME: robot-app
+  STACK_NAME: robot-app-v2
 
 stages:
   - test
@@ -20,7 +20,7 @@ test:
     - apt-get install -y nodejs
     - dotnet restore
     - cd robot-project-v3.client
-    - npm install    
+    - npm install
   script:
     - dotnet build --no-restore
     - dotnet test --no-build --no-restore
@@ -40,7 +40,7 @@ create_docker_image:
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
     - docker push $CI_REGISTRY_IMAGE:latest
-  needs: ["test"]
+  needs: [ "test" ]
   dependencies:
     - test
   only:
@@ -56,9 +56,9 @@ deploy_with_compose:
     - docker-compose -f docker-compose.yml up -d
   only:
     - main
-  needs: ["create_docker_image"]
+  needs: [ "create_docker_image" ]
   dependencies:
     - create_docker_image
   environment:
     name: production
-    url: https://robot.botbot.fr
+    url: https://robot-v2.botbot.fr

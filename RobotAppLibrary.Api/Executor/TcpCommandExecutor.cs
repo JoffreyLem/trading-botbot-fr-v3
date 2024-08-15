@@ -11,7 +11,7 @@ public class TcpCommandExecutor : ICommandExecutor
     protected readonly IReponseAdapter ResponseAdapter;
     protected readonly ITcpConnector TcpClient;
     protected readonly ITcpStreamingConnector TcpStreamingClient;
-    
+
     protected TcpCommandExecutor(ITcpConnector tcpClient, ITcpStreamingConnector tcpStreamingClient,
         ICommandCreator commandCreator, IReponseAdapter responseAdapter)
     {

@@ -8,12 +8,10 @@ namespace RobotAppLibrary.Indicators;
 [ExcludeFromCodeCoverage]
 public sealed class Slope : BaseIndicator<SlopeResult>
 {
-
     public Slope()
     {
-        
     }
-    
+
     public Slope(int loopBackPeriodRequested)
     {
         LoopBackPeriod = loopBackPeriodRequested;

@@ -10,9 +10,8 @@ public sealed class BollingerBand : BaseIndicator<BollingerBandsResult>
 {
     public BollingerBand()
     {
-        
     }
-    
+
     public BollingerBand(int loopBackPeriodRequested)
     {
         LoopBackPeriod = loopBackPeriodRequested;
@@ -21,7 +20,6 @@ public sealed class BollingerBand : BaseIndicator<BollingerBandsResult>
     public override int LoopBackPeriod { get; set; } = 20;
 
 
-    
     protected override IEnumerable<BollingerBandsResult> Update(List<Candle> data)
     {
         return data.GetBollingerBands(LoopBackPeriod);

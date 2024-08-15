@@ -8,12 +8,10 @@ namespace RobotAppLibrary.Indicators;
 [ExcludeFromCodeCoverage]
 public sealed class HeikiAshiIndicator : BaseIndicator<HeikinAshiResult>
 {
-
     public HeikiAshiIndicator()
     {
-        
     }
-    
+
     public HeikiAshiIndicator(int loopBackPeriodRequested)
     {
         LoopBackPeriod = loopBackPeriodRequested;

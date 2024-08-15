@@ -10,8 +10,8 @@ public sealed class ForceIndex : BaseIndicator<ForceIndexResult>
 {
     public ForceIndex()
     {
-        
     }
+
     public ForceIndex(int loopBackPeriodRequested)
     {
         LoopBackPeriod = loopBackPeriodRequested;

@@ -18,12 +18,12 @@ internal class TcpCommandExecutorTest(
 public class TcpCommandExecutorTests
 {
     private const string CommandMock = "CommandMock";
-    
-    private readonly Mock<ITcpConnector> _tcpConnectorMock;
-    private readonly Mock<ITcpStreamingConnector> _tcpStreamingConnectorMock;
     private readonly Mock<ICommandCreator> _commandCreatorMock;
     private readonly Mock<IReponseAdapter> _responseAdapterMock;
     private readonly TcpCommandExecutor _tcpCommandExecutor;
+
+    private readonly Mock<ITcpConnector> _tcpConnectorMock;
+    private readonly Mock<ITcpStreamingConnector> _tcpStreamingConnectorMock;
 
     public TcpCommandExecutorTests()
     {
@@ -72,8 +72,8 @@ public class TcpCommandExecutorTests
     {
         // Arrange
         var eventInvoked = false;
-        var tickRecord = new Tick(); 
-        _tcpCommandExecutor.TickRecordReceived += (tick) => eventInvoked = true;
+        var tickRecord = new Tick();
+        _tcpCommandExecutor.TickRecordReceived += tick => eventInvoked = true;
 
         // Act
         _tcpStreamingConnectorMock.Raise(m => m.TickRecordReceived += null, tickRecord);
@@ -87,8 +87,8 @@ public class TcpCommandExecutorTests
     {
         // Arrange
         var eventInvoked = false;
-        var tradeRecord = new Position(); 
-        _tcpCommandExecutor.TradeRecordReceived += (trade) => eventInvoked = true;
+        var tradeRecord = new Position();
+        _tcpCommandExecutor.TradeRecordReceived += trade => eventInvoked = true;
 
         // Act
         _tcpStreamingConnectorMock.Raise(m => m.TradeRecordReceived += null, tradeRecord);
@@ -102,8 +102,8 @@ public class TcpCommandExecutorTests
     {
         // Arrange
         var eventInvoked = false;
-        var balanceRecord = new AccountBalance(); 
-        _tcpCommandExecutor.BalanceRecordReceived += (balance) => eventInvoked = true;
+        var balanceRecord = new AccountBalance();
+        _tcpCommandExecutor.BalanceRecordReceived += balance => eventInvoked = true;
 
         // Act
         _tcpStreamingConnectorMock.Raise(m => m.BalanceRecordReceived += null, balanceRecord);
@@ -117,8 +117,8 @@ public class TcpCommandExecutorTests
     {
         // Arrange
         var eventInvoked = false;
-        var profitRecord = new Position(); 
-        _tcpCommandExecutor.ProfitRecordReceived += (profit) => eventInvoked = true;
+        var profitRecord = new Position();
+        _tcpCommandExecutor.ProfitRecordReceived += profit => eventInvoked = true;
 
         // Act
         _tcpStreamingConnectorMock.Raise(m => m.ProfitRecordReceived += null, profitRecord);
@@ -133,7 +133,7 @@ public class TcpCommandExecutorTests
         // Arrange
         var eventInvoked = false;
         var newsRecord = new News();
-        _tcpCommandExecutor.NewsRecordReceived += (news) => eventInvoked = true;
+        _tcpCommandExecutor.NewsRecordReceived += news => eventInvoked = true;
 
         // Act
         _tcpStreamingConnectorMock.Raise(m => m.NewsRecordReceived += null, newsRecord);
@@ -161,8 +161,8 @@ public class TcpCommandExecutorTests
     {
         // Arrange
         var eventInvoked = false;
-        var candleRecord = new Candle(); 
-        _tcpCommandExecutor.CandleRecordReceived += (candle) => eventInvoked = true;
+        var candleRecord = new Candle();
+        _tcpCommandExecutor.CandleRecordReceived += candle => eventInvoked = true;
 
         // Act
         _tcpStreamingConnectorMock.Raise(m => m.CandleRecordReceived += null, candleRecord);
@@ -170,12 +170,12 @@ public class TcpCommandExecutorTests
         // Assert
         eventInvoked.Should().BeTrue();
     }
-    
-     [Fact]
+
+    [Fact]
     public async Task ExecuteLoginCommand_ShouldConnectAndSendCommand()
     {
         // Arrange
-        var credentials = new Credentials(); 
+        var credentials = new Credentials();
         _commandCreatorMock.Setup(m => m.CreateLoginCommand(credentials)).Returns(CommandMock);
         _tcpConnectorMock.Setup(m => m.ConnectAsync()).Returns(Task.CompletedTask);
         _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(CommandMock, It.IsAny<bool>())).Returns(Task.FromResult(""));
@@ -187,7 +187,7 @@ public class TcpCommandExecutorTests
         // Assert
         _tcpConnectorMock.Verify(m => m.ConnectAsync(), Times.Once);
         _commandCreatorMock.Verify(m => m.CreateLoginCommand(credentials), Times.Once);
-        _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(CommandMock,true), Times.Once);
+        _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(CommandMock, true), Times.Once);
         _tcpStreamingConnectorMock.Verify(m => m.ConnectAsync(), Times.Once);
     }
 
@@ -195,7 +195,7 @@ public class TcpCommandExecutorTests
     public async Task ExecuteLogoutCommand_ShouldSendLogoutCommand()
     {
         // Arrange
-        var commandMock = "command"; 
+        var commandMock = "command";
         _commandCreatorMock.Setup(m => m.CreateLogOutCommand()).Returns(commandMock);
         _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(commandMock, It.IsAny<bool>())).Returns(Task.FromResult(""));
 
@@ -212,8 +212,8 @@ public class TcpCommandExecutorTests
     public async Task ExecuteAllSymbolsCommand_ShouldReturnListOfSymbols()
     {
         // Arrange
-        var command = "command"; 
-        var response = "response"; 
+        var command = "command";
+        var response = "response";
         var symbols = new List<SymbolInfo>();
 
         _commandCreatorMock.Setup(m => m.CreateAllSymbolsCommand()).Returns(command);
@@ -229,8 +229,8 @@ public class TcpCommandExecutorTests
         _responseAdapterMock.Verify(m => m.AdaptAllSymbolsResponse(response), Times.Once);
         result.Should().BeEquivalentTo(symbols);
     }
-    
-     [Fact]
+
+    [Fact]
     public async Task ExecuteCalendarCommand_ShouldReturnCalendarEvents()
     {
         // Arrange
@@ -402,10 +402,10 @@ public class TcpCommandExecutorTests
         // Arrange
         var command = "Command"; // Remplacez par votre classe réelle de commande
         var response = "response"; // Remplacez par votre type de réponse réelle
-        var symbolInfo = new SymbolInfo()
+        var symbolInfo = new SymbolInfo
         {
             Symbol = "symbol",
-            TickSize = 1,
+            TickSize = 1
         }; // Remplacez par votre classe réelle de symbol info
         var symbol = "symbol";
 

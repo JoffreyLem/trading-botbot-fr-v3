@@ -22,9 +22,9 @@ public class LotValueCalculator : ILotValueCalculator
 
     private readonly IApiProviderBase _apiHandler;
     private readonly ILogger? _logger;
+    private bool _disposed;
     private string? _secondarySymbolAccount;
     private Tick _tickPriceMain = new();
-    private bool _disposed;
 
     public LotValueCalculator(IApiProviderBase apiHandler, ILogger? logger, string symbol)
     {
@@ -42,16 +42,22 @@ public class LotValueCalculator : ILotValueCalculator
     public double MarginPerLot { get; private set; }
     public Tick? TickPriceSecondary { get; private set; }
 
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
     private async Task InitAsync(string symbol)
     {
         SymbolInfo = await _apiHandler.GetSymbolInformationAsync(symbol);
-        _tickPriceMain = await _apiHandler.GetTickPriceAsync(SymbolInfo.Symbol ?? throw new InvalidOperationException("Symbol is not defined"));
+        _tickPriceMain =
+            await _apiHandler.GetTickPriceAsync(SymbolInfo.Symbol ??
+                                                throw new InvalidOperationException("Symbol is not defined"));
 
-        if ((SymbolInfo.Category == Category.Forex && !SymbolInfo.Symbol.Contains(BaseSymbolAccount)) || 
+        if ((SymbolInfo.Category == Category.Forex && !SymbolInfo.Symbol.Contains(BaseSymbolAccount)) ||
             (SymbolInfo.Category != Category.Forex && SymbolInfo.CurrencyProfit != BaseSymbolAccount))
-        {
             await SubscribeSecondaryPriceAsync();
-        }
 
         SymbolSwitch();
         _apiHandler.TickEvent += ApiHandlerOnTickEvent;
@@ -124,7 +130,9 @@ public class LotValueCalculator : ILotValueCalculator
         _logger?.Debug("New lot value forex : {Lot}", PipValueStandard);
 
         var leverageRatio = SymbolInfo.Leverage != 0 ? 100 / SymbolInfo.Leverage : 0;
-        MarginPerLot = leverageRatio > 0 ? SymbolInfo.Leverage * StandardLotSize / 100 : PipValueStandard * StandardLotSize;
+        MarginPerLot = leverageRatio > 0
+            ? SymbolInfo.Leverage * StandardLotSize / 100
+            : PipValueStandard * StandardLotSize;
 
         _logger?.Debug("Required margin per standard lot: {MarginPerLot}", MarginPerLot);
     }
@@ -148,7 +156,8 @@ public class LotValueCalculator : ILotValueCalculator
         try
         {
             var allSymbols = _apiHandler.GetAllSymbolsAsync().Result;
-            var selectedSymbol = allSymbols.FirstOrDefault(x => x.Symbol.StartsWith(symbol1) && x.Symbol.EndsWith(symbol2));
+            var selectedSymbol =
+                allSymbols.FirstOrDefault(x => x.Symbol.StartsWith(symbol1) && x.Symbol.EndsWith(symbol2));
             return selectedSymbol?.Symbol ?? throw new Exception($"No matching symbol for {symbol1} : {symbol2}");
         }
         catch (Exception e)
@@ -170,11 +179,5 @@ public class LotValueCalculator : ILotValueCalculator
         }
 
         _disposed = true;
-    }
-
-    public void Dispose()
-    {
-        Dispose(true);
-        GC.SuppressFinalize(this);
     }
 }

@@ -7,13 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Destructurama.Attributed" Version="4.0.0" />
-      <PackageReference Include="Serilog" Version="4.0.0" />
+        <PackageReference Include="Destructurama.Attributed" Version="4.0.0"/>
+        <PackageReference Include="Serilog" Version="4.0.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\RobotAppLibrary.Modeles\RobotAppLibrary.Modeles.csproj" />
-      <ProjectReference Include="..\RobotAppLibrary.Utils\RobotAppLibrary.Utils.csproj" />
+        <ProjectReference Include="..\RobotAppLibrary.Modeles\RobotAppLibrary.Modeles.csproj"/>
+        <ProjectReference Include="..\RobotAppLibrary.Utils\RobotAppLibrary.Utils.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -2,8 +2,7 @@ using RobotAppLibrary.Modeles;
 
 namespace RobotAppLibrary.TradingManager.Interfaces;
 
-
-public interface IPositionHandlerBase 
+public interface IPositionHandlerBase
 {
     int DefaultSl { get; set; }
     int DefaultTp { get; set; }
@@ -31,5 +30,4 @@ public interface IPositionHandlerEvent
 
 public interface IPositionHandler : IPositionHandlerBase, IPositionHandlerEvent, IDisposable
 {
-
 }

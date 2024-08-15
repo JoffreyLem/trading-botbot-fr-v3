@@ -15,14 +15,14 @@ internal class TestApiHandler(ICommandExecutor commandExecutor, ILogger logger, 
     : ApiProviderBase(commandExecutor, logger, pingInterval)
 {
     public override ApiProviderEnum ApiProviderName { get; }
-};
+}
 
 public class ApiProviderBaseTest
 {
+    private readonly TestApiHandler _apiHandler;
     private readonly Mock<ICommandExecutor> _mockCommandExecutor;
     private readonly Mock<ILogger> _mockLogger;
     private readonly TimeSpan _pingInterval;
-    private readonly TestApiHandler _apiHandler;
 
     public ApiProviderBaseTest()
     {
@@ -34,43 +34,6 @@ public class ApiProviderBaseTest
         _apiHandler = new TestApiHandler(_mockCommandExecutor.Object, _mockLogger.Object, _pingInterval);
     }
 
-
-    #region Constructor Test
-
-    [Fact]
-    public void Constructor_ShouldInitializeProperties()
-    {
-        // Arrange
-        var handler = _apiHandler;
-
-        // Act
-        var name = handler.Name;
-
-        // Assert
-        name.Should().Be("TestApiHandler");
-      
-        handler.AllSymbols.Should().BeEmpty();
-        handler.AccountBalance.Should().NotBeNull();
-        handler.PingInterval.Should().Be(_pingInterval);
-    }
-
-    [Fact]
-    public void Constructor_ShouldSetUpEventHandlers()
-    {
-        // Arrange
-        var handler = _apiHandler;
-
-        // Act & Assert
-        _mockCommandExecutor.VerifyAdd(m => m.BalanceRecordReceived += It.IsAny<Action<AccountBalance>>(), Times.Once);
-        _mockCommandExecutor.VerifyAdd(m => m.NewsRecordReceived += It.IsAny<Action<News>>(), Times.Once);
-        _mockCommandExecutor.VerifyAdd(m => m.TickRecordReceived += It.IsAny<Action<Tick>>(), Times.Once);
-        _mockCommandExecutor.VerifyAdd(m => m.TradeRecordReceived += It.IsAny<Action<Position>>(), Times.Once);
-        _mockCommandExecutor.VerifyAdd(m => m.ProfitRecordReceived += It.IsAny<Action<Position>>(), Times.Once);
-        _mockCommandExecutor.VerifyAdd(m => m.Disconnected += It.IsAny<EventHandler>(), Times.Once);
-    }
-
-    #endregion
-    
     #region Balance event
 
     [Fact]
@@ -106,6 +69,58 @@ public class ApiProviderBaseTest
 
     #endregion
 
+    #region OnDisconnected
+
+    [Fact]
+    public void Test_OnDisconnectedEvent()
+    {
+        var caller = false;
+        _apiHandler.Disconnected += (sender, args) => caller = true;
+
+        _mockCommandExecutor.Raise(x => x.Disconnected += null, this, EventArgs.Empty);
+
+        caller.Should().BeTrue();
+    }
+
+    #endregion
+
+
+    #region Constructor Test
+
+    [Fact]
+    public void Constructor_ShouldInitializeProperties()
+    {
+        // Arrange
+        var handler = _apiHandler;
+
+        // Act
+        var name = handler.Name;
+
+        // Assert
+        name.Should().Be("TestApiHandler");
+
+        handler.AllSymbols.Should().BeEmpty();
+        handler.AccountBalance.Should().NotBeNull();
+        handler.PingInterval.Should().Be(_pingInterval);
+    }
+
+    [Fact]
+    public void Constructor_ShouldSetUpEventHandlers()
+    {
+        // Arrange
+        var handler = _apiHandler;
+
+        // Act & Assert
+        _mockCommandExecutor.VerifyAdd(m => m.BalanceRecordReceived += It.IsAny<Action<AccountBalance>>(), Times.Once);
+        _mockCommandExecutor.VerifyAdd(m => m.NewsRecordReceived += It.IsAny<Action<News>>(), Times.Once);
+        _mockCommandExecutor.VerifyAdd(m => m.TickRecordReceived += It.IsAny<Action<Tick>>(), Times.Once);
+        _mockCommandExecutor.VerifyAdd(m => m.TradeRecordReceived += It.IsAny<Action<Position>>(), Times.Once);
+        _mockCommandExecutor.VerifyAdd(m => m.ProfitRecordReceived += It.IsAny<Action<Position>>(), Times.Once);
+        _mockCommandExecutor.VerifyAdd(m => m.Disconnected += It.IsAny<EventHandler>(), Times.Once);
+    }
+
+    #endregion
+
     #region connect
 
     [Fact]
@@ -128,8 +143,8 @@ public class ApiProviderBaseTest
         _mockCommandExecutor.Verify(x => x.ExecutePingCommand(), Times.Between(0, 1, Range.Inclusive));
         _mockCommandExecutor.Verify(x => x.ExecutePingCommandStreaming(), Times.Between(0, 1, Range.Inclusive));
     }
-    
-    
+
+
     [Fact]
     public async void Test_Connect_Async_Exception()
     {
@@ -142,22 +157,6 @@ public class ApiProviderBaseTest
         // Assert
 
         await act.Should().ThrowAsync<ApiProvidersException>();
-
-    }
-
-    #endregion
-
-    #region OnDisconnected
-
-    [Fact]
-    public void Test_OnDisconnectedEvent()
-    {
-        var caller = false;
-        _apiHandler.Disconnected += (sender, args) => caller = true;
-
-        _mockCommandExecutor.Raise(x => x.Disconnected += null, this, EventArgs.Empty);
-
-        caller.Should().BeTrue();
     }
 
     #endregion
@@ -294,7 +293,7 @@ public class ApiProviderBaseTest
     }
 
     #endregion
-    
+
     #region GetCalendar
 
     [Fact]
@@ -350,12 +349,12 @@ public class ApiProviderBaseTest
             new()
             {
                 Symbol = "test",
-                TickSize = 1,
+                TickSize = 1
             },
             new()
             {
                 Symbol = "test",
-                TickSize = 1,
+                TickSize = 1
             }
         };
         // Assuming AllSymbols is a property or field that can be manipulated for the test
@@ -380,12 +379,12 @@ public class ApiProviderBaseTest
             new()
             {
                 Symbol = "test",
-                TickSize = 1,
+                TickSize = 1
             },
             new()
             {
-               Symbol = "test",
-               TickSize = 1,
+                Symbol = "test",
+                TickSize = 1
             }
         };
         // Set the cache with already retrieved symbols
@@ -416,7 +415,7 @@ public class ApiProviderBaseTest
     }
 
     #endregion
-    
+
     #region GetCurrentTradesAsync
 
     [Fact]
@@ -499,7 +498,7 @@ public class ApiProviderBaseTest
     {
         // Arrange
         var symbol = "testSymbol";
-        var expectedSymbolInfo = new SymbolInfo { Symbol = symbol, TickSize = 1, };
+        var expectedSymbolInfo = new SymbolInfo { Symbol = symbol, TickSize = 1 };
         _apiHandler.AllSymbols = new List<SymbolInfo> { expectedSymbolInfo };
 
         // Act
@@ -516,7 +515,7 @@ public class ApiProviderBaseTest
     {
         // Arrange
         var symbol = "testSymbol";
-        var expectedSymbolInfo = new SymbolInfo { Symbol = symbol, TickSize = 1, };
+        var expectedSymbolInfo = new SymbolInfo { Symbol = symbol, TickSize = 1 };
         _apiHandler.AllSymbols = new List<SymbolInfo>(); // Cache is empty
         _mockCommandExecutor.Setup(x => x.ExecuteSymbolCommand(symbol))
             .ReturnsAsync(expectedSymbolInfo);
@@ -606,7 +605,8 @@ public class ApiProviderBaseTest
 
         // Assert
         candles.Should().BeEquivalentTo(expectedCandles);
-        _mockCommandExecutor.Verify(x => x.ExecuteFullChartCommand(timeframe, It.IsAny<DateTime>(), symbol), Times.Once);
+        _mockCommandExecutor.Verify(x => x.ExecuteFullChartCommand(timeframe, It.IsAny<DateTime>(), symbol),
+            Times.Once);
     }
 
     [Fact]
@@ -622,7 +622,8 @@ public class ApiProviderBaseTest
         Func<Task> act = async () => await _apiHandler.GetChartAsync(symbol, timeframe);
         await act.Should().ThrowAsync<ApiProvidersException>();
 
-        _mockCommandExecutor.Verify(x => x.ExecuteFullChartCommand(timeframe, It.IsAny<DateTime>(), symbol), Times.Once);
+        _mockCommandExecutor.Verify(x => x.ExecuteFullChartCommand(timeframe, It.IsAny<DateTime>(), symbol),
+            Times.Once);
     }
 
     #endregion
@@ -952,26 +953,43 @@ public class ApiProviderBaseTest
         var caller = false;
         var position = new Position
         {
-            StatusPosition = StatusPosition.Open,
             StrategyId = "1",
-            Id = "1"
+            Id = "1",
+            DateOpen = new DateTime(2022,01,01),
+            StopLoss = 1,
+            TakeProfit = 1,
+            OpenPrice = 100,
         };
 
         _mockCommandExecutor.Setup(x => x.ExecuteOpenTradeCommand(It.IsAny<Position>(), It.IsAny<decimal>()))
             .ReturnsAsync(new Position
             {
                 StrategyId = "1",
-                Id = "1"
+                Id = "1",
+                Order = "orderTest",
             });
 
-        await _apiHandler.OpenPositionAsync(new Position(), 1);
+        await _apiHandler.OpenPositionAsync(new Position()
+        {
+            StrategyId = "1",
+            Id = "1"
+        }, 1);
 
 
-        _apiHandler.PositionOpenedEvent += (sender, position1) => caller = true;
+        _apiHandler.PositionOpenedEvent += (sender, position1) =>
+        {
+            caller = true;
+            position1.StatusPosition.Should().Be(StatusPosition.Open);
+            position1.Opened.Should().BeTrue();
+            position1.DateOpen.Should().Be(new DateTime(2022, 01, 01));
+            position1.StopLoss.Should().Be(1);
+            position1.TakeProfit.Should().Be(1);
+            position1.OpenPrice.Should().Be(100);
+        };
 
 
         // Act
-        _mockCommandExecutor.Raise(x => x.TradeRecordReceived += null, position);
+         _mockCommandExecutor.Raise(x => x.TradeRecordReceived += null, position);
 
         // Assert
         caller.Should().BeTrue();
@@ -982,26 +1000,26 @@ public class ApiProviderBaseTest
     {
         // Arrange
         await Test_PositionState_Open();
-        
+
         var caller = false;
         var position = new Position
         {
-            StatusPosition = StatusPosition.Updated,
             StrategyId = "1",
             Id = "1",
             Profit = 10,
             StopLoss = 11,
             TakeProfit = 12,
+            StatusPosition = StatusPosition.Updated,
         };
-        
+
         _apiHandler.PositionUpdatedEvent += (sender, position1) =>
         {
             position1.Profit.Should().Be(10);
-            position.StopLoss.Should().Be(11);
-            position.TakeProfit.Should().Be(12);
+            position1.StopLoss.Should().Be(11);
+            position1.TakeProfit.Should().Be(12);
             caller = true;
         };
-        
+
         // Act
         _mockCommandExecutor.Raise(x => x.TradeRecordReceived += null, position);
 
@@ -1010,11 +1028,44 @@ public class ApiProviderBaseTest
     }
     
     [Fact]
+    public async void Test_PositionState_Update_no_sltp_update()
+    {
+        // Arrange
+        await Test_PositionState_Open();
+
+        var caller = false;
+        var position = new Position
+        {
+            StrategyId = "1",
+            Id = "1",
+            Profit = 10,
+            StopLoss = 0,
+            TakeProfit = 0,
+            StatusPosition = StatusPosition.Updated
+        };
+
+        _apiHandler.PositionUpdatedEvent += (sender, position1) =>
+        {
+            position1.Profit.Should().Be(10);
+            position1.StopLoss.Should().Be(1);
+            position1.TakeProfit.Should().Be(1);
+            position1.StatusPosition.Should().Be(StatusPosition.Updated);
+            caller = true;
+        };
+
+        // Act
+        _mockCommandExecutor.Raise(x => x.TradeRecordReceived += null, position);
+
+        // Assert
+        caller.Should().BeTrue();
+    }
+
+    [Fact]
     public async void Test_PositionState_Update_WithProfit()
     {
         // Arrange
         await Test_PositionState_Open();
-        
+
         var caller = false;
         var position = new Position
         {
@@ -1023,15 +1074,15 @@ public class ApiProviderBaseTest
             Id = "1",
             Profit = 10,
             StopLoss = 11,
-            TakeProfit = 12,
+            TakeProfit = 12
         };
-        
+
         _apiHandler.PositionUpdatedEvent += (sender, position1) =>
         {
             position1.Profit.Should().Be(10);
             caller = true;
         };
-        
+
         // Act
         _mockCommandExecutor.Raise(x => x.ProfitRecordReceived += null, position);
 
@@ -1047,14 +1098,23 @@ public class ApiProviderBaseTest
         var caller = false;
         var position = new Position
         {
-            StatusPosition = StatusPosition.Close,
             StrategyId = "1",
-            Id = "1"
+            Id = "1",
+            DateClose = new DateTime(2022,01,01),
+            Profit = 10,
+            StatusPosition = StatusPosition.Close,
+            
         };
-        
-        _apiHandler.PositionClosedEvent += (sender, position1) => caller = true;
 
-        
+        _apiHandler.PositionClosedEvent += (sender, position1) =>
+        {
+            caller = true;
+            position1.StatusPosition.Should().Be(StatusPosition.Close);
+            position1.DateClose = new DateTime(2022, 01, 01);
+            position1.Profit = 10;
+        };
+
+
         // Act
         _mockCommandExecutor.Raise(x => x.TradeRecordReceived += null, position);
 
@@ -1074,9 +1134,14 @@ public class ApiProviderBaseTest
             StrategyId = "1",
             Id = "1"
         };
-        
-        _apiHandler.PositionRejectedEvent += (sender, position1) => caller = true;
-        
+
+        _apiHandler.PositionRejectedEvent += (sender, position1) =>
+        {
+            position1.Opened.Should().BeFalse();
+            position1.StatusPosition.Should().Be(StatusPosition.Rejected);
+            caller = true;
+        };
+
         // Act
         _mockCommandExecutor.Raise(x => x.TradeRecordReceived += null, position);
 
@@ -1085,5 +1150,4 @@ public class ApiProviderBaseTest
     }
 
     #endregion
-  
 }

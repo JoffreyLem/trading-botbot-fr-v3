@@ -10,9 +10,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FluentAssertions" Version="6.12.0" />
+        <PackageReference Include="FluentAssertions" Version="6.12.0"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
-        <PackageReference Include="Moq" Version="4.20.70" />
+        <PackageReference Include="Moq" Version="4.20.70"/>
         <PackageReference Include="xunit" Version="2.5.3"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="2.5.6">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -29,15 +29,15 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\RobotAppLibrary.Api\RobotAppLibrary.Api.csproj" />
-      <ProjectReference Include="..\RobotAppLibrary\RobotAppLibrary.csproj" />
+        <ProjectReference Include="..\RobotAppLibrary.Api\RobotAppLibrary.Api.csproj"/>
+        <ProjectReference Include="..\RobotAppLibrary\RobotAppLibrary.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Backtest\" />
-      <Folder Include="Factory\" />
-      <Folder Include="Hubs\" />
-      <Folder Include="Utils\" />
+        <Folder Include="Backtest\"/>
+        <Folder Include="Factory\"/>
+        <Folder Include="Hubs\"/>
+        <Folder Include="Utils\"/>
     </ItemGroup>
 
 </Project>

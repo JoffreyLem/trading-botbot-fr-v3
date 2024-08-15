@@ -3,16 +3,15 @@ namespace RobotAppLibrary.Modeles;
 public class GlobalResults
 {
     public Result? Result { get; set; }
-    public List<Position> Positions { get; set; } = new List<Position>();
-    public List<MonthlyResult> MonthlyResults { get; set; } = new List<MonthlyResult>();
+    public List<Position> Positions { get; set; } = new();
+    public List<MonthlyResult> MonthlyResults { get; set; } = new();
 }
-
 
 public class MonthlyResult
 {
+    public List<Position> Positions = new();
     public DateTime Date { get; set; }
     public Result? Result { get; set; }
-    public List<Position> Positions = new List<Position>();
 }
 
 public class Result
@@ -33,7 +32,7 @@ public class Result
     public double TotalPositionNegative { get; set; }
     public double TotalPositionPositive { get; set; }
     public double TotalPositions { get; set; }
-    
+
     public Result DeepCopy()
     {
         return new Result

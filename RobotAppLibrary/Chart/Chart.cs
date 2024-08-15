@@ -26,11 +26,11 @@ public interface IChartAggregate : IChartBase
 public interface IChart : IChartAggregate
 {
     Tick LastPrice { get; }
-    event Func<Tick, Task>? OnTickEvent;
-    event Func<Candle, Task>? OnCandleEvent;
-    
+
     public Candle LastCandle => this[^2];
     public Candle CurrentCandle => this.Last();
+    event Func<Tick, Task>? OnTickEvent;
+    event Func<Candle, Task>? OnCandleEvent;
 }
 
 public class Chart : List<Candle>, IChart
@@ -42,7 +42,7 @@ public class Chart : List<Candle>, IChart
     private TradeHourRecord _tradeHourRecord = new();
 
 
-    public Chart(IApiProviderBase apiHandler, ILogger logger, Timeframe timeframe, string symbol):base(2100)
+    public Chart(IApiProviderBase apiHandler, ILogger logger, Timeframe timeframe, string symbol) : base(2100)
     {
         _apiHandler = apiHandler;
         _timeframe = timeframe;
@@ -71,16 +71,12 @@ public class Chart : List<Candle>, IChart
             LastPrice = await _apiHandler.GetTickPriceAsync(_symbol);
             if (data is { Count: > 0 })
             {
-                foreach (var candle in data.TakeLast(2000))
-                {
-                    Add(candle);
-                }
+                foreach (var candle in data.TakeLast(2000)) Add(candle);
                 this.Validate();
             }
 
             _tradeHourRecord = await _apiHandler.GetTradingHoursAsync(_symbol);
             _logger.Information("Candle list {Timeframe} initialized {@Candle}", _timeframe, this.LastOrDefault());
-
         }
         catch (Exception e)
         {
@@ -96,14 +92,9 @@ public class Chart : List<Candle>, IChart
             var candleStartTimeTick = GetReferenceTime(tick.Date);
 
             if (Count == 0 || this[Count - 1].Date != candleStartTimeTick)
-            {
-                 AddNewCandle(candleStartTimeTick, tick);
-            }
+                AddNewCandle(candleStartTimeTick, tick);
             else
-            {
                 UpdateLast(tick);
-            
-            }
         }
     }
 
@@ -114,7 +105,7 @@ public class Chart : List<Candle>, IChart
 
     private void OnOnCandleEvent(Candle obj)
     {
-         OnCandleEvent?.Invoke(obj) ;
+        OnCandleEvent?.Invoke(obj);
     }
 
     private void AddNewCandle(DateTime dateTime, Tick tick)
@@ -134,10 +125,7 @@ public class Chart : List<Candle>, IChart
         candle.Ticks.Add(tick);
         Add(candle);
         OnOnCandleEvent(this.Last());
-        if (Count >= 2000)
-        {
-            RemoveAt(0);
-        }
+        if (Count >= 2000) RemoveAt(0);
     }
 
     private void UpdateLast(Tick tick)
@@ -155,18 +143,15 @@ public class Chart : List<Candle>, IChart
             last.High = last.Close;
         else if (last.Close <= last.Low)
             last.Low = last.Close;
-        
+
         OnOnTickEvent(tick);
     }
 
     private DateTime GetReferenceTime(DateTime utcTime)
     {
-        int timeframeValue = _timeframe.GetMinuteFromTimeframe();
+        var timeframeValue = _timeframe.GetMinuteFromTimeframe();
 
-        if (_timeframe < Timeframe.Daily)
-        {
-            return GetMinuteReference(utcTime, timeframeValue);
-        }
+        if (_timeframe < Timeframe.Daily) return GetMinuteReference(utcTime, timeframeValue);
         return _timeframe switch
         {
             Timeframe.Daily => GetDailyReference(utcTime),
@@ -178,8 +163,8 @@ public class Chart : List<Candle>, IChart
 
     private DateTime GetMinuteReference(DateTime utcTime, int timeframeMinutes)
     {
-        int totalMinutes = utcTime.Hour * 60 + utcTime.Minute;
-        int referenceMinute = (totalMinutes / timeframeMinutes) * timeframeMinutes;
+        var totalMinutes = utcTime.Hour * 60 + utcTime.Minute;
+        var referenceMinute = totalMinutes / timeframeMinutes * timeframeMinutes;
         return new DateTime(utcTime.Year, utcTime.Month, utcTime.Day, referenceMinute / 60, referenceMinute % 60, 0);
     }
 
@@ -190,8 +175,8 @@ public class Chart : List<Candle>, IChart
 
     private DateTime GetWeeklyReference(DateTime utcTime)
     {
-        int daysSinceMonday = ((int)utcTime.DayOfWeek + 6) % 7;
-        DateTime monday = utcTime.Date.AddDays(-daysSinceMonday);
+        var daysSinceMonday = ((int)utcTime.DayOfWeek + 6) % 7;
+        var monday = utcTime.Date.AddDays(-daysSinceMonday);
         return new DateTime(monday.Year, monday.Month, monday.Day, 0, 0, 0);
     }
 

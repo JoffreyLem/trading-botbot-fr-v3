@@ -1,12 +1,16 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using robot_project_v3.Server.Dto.Request;
-using robot_project_v3.Server.Dto.Response;
+using robot_project_v3.Server.Dto;
 using robot_project_v3.Server.Services;
 
 namespace robot_project_v3.Server.Controllers;
 
 [Route("api/[controller]")]
+[ProducesResponseType(typeof(ApiResponseError), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ApiResponseError), StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ApiResponseError), StatusCodes.Status403Forbidden)]
+[ProducesResponseType(typeof(ApiResponseError), StatusCodes.Status404NotFound)]
+[ProducesResponseType(typeof(ApiResponseError), StatusCodes.Status500InternalServerError)]
 [ApiController]
 [Authorize]
 public class StrategyController(IStrategyService strategyService) : ControllerBase
@@ -18,17 +22,13 @@ public class StrategyController(IStrategyService strategyService) : ControllerBa
         return Ok();
     }
 
-    [HttpGet("timeframes")]
-    public async Task<ActionResult<List<string>>> GetListTimeframes()
-    {
-        return await strategyService.GetListTimeframes();
-    }
 
     [HttpGet("all")]
-    public async Task<ActionResult<List<StrategyInfoDto>>> GetAllStrategy()
+    [ProducesResponseType(typeof(List<StrategyInfoDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllStrategy()
     {
         var data = await strategyService.GetAllStrategy();
-     
+
         return Ok(data);
     }
 
@@ -40,15 +40,17 @@ public class StrategyController(IStrategyService strategyService) : ControllerBa
     }
 
     [HttpGet("{id}/info")]
+    [ProducesResponseType(typeof(StrategyInfoDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<StrategyInfoDto>> GetStrategyInfo(string id)
     {
         return await strategyService.GetStrategyInfo(id);
     }
 
     [HttpGet("{id}/result")]
-    public async Task<ActionResult<GlobalResultsDto>> GetResult(string id)
+    [ProducesResponseType(typeof(GlobalResultsDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetResult(string id)
     {
-        return await strategyService.GetResult(id);
+        return Ok(await strategyService.GetResult(id));
     }
 
 
@@ -60,9 +62,10 @@ public class StrategyController(IStrategyService strategyService) : ControllerBa
     }
 
     [HttpGet("{id}/positions/opened")]
-    public async Task<ActionResult<List<PositionDto>>> GetOpenedPositions(string id)
+    [ProducesResponseType(typeof(List<PositionDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOpenedPositions(string id)
     {
-        return await strategyService.GetOpenedPositions(id);
+        return Ok(await strategyService.GetOpenedPositions(id));
     }
 
     [HttpPost("runBacktest/{id}")]
@@ -71,8 +74,8 @@ public class StrategyController(IStrategyService strategyService) : ControllerBa
     {
         return await strategyService.RunBackTest(id, backTestRequestDto);
     }
-    
-    
+
+
     [HttpGet("{id}/resultBacktest")]
     public async Task<ActionResult<BackTestDto>> GetResultBacktest(string id)
     {

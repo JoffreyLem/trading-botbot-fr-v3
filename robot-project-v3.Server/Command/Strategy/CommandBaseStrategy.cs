@@ -4,7 +4,7 @@ public abstract class CommandeBaseStrategyAbstract : CommandeBaseAbstract
 {
 }
 
-public class CommandBaseStrategy<T> : CommandeBaseStrategyAbstract 
+public class CommandBaseStrategy<T> : CommandeBaseStrategyAbstract
 {
     public TaskCompletionSource<T> ResponseSource { get; } = new();
 

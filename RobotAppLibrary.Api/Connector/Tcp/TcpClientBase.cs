@@ -13,21 +13,21 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
 {
     private readonly TcpClient _client = new();
 
+    private readonly int _port;
+
+    private readonly string _serverAddress;
+
+    private readonly TimeSpan _timeOutMilliSeconds = TimeSpan.FromMilliseconds(5000);
+
     protected readonly ILogger Logger;
 
     private StreamReader? _apiReadStream;
 
     private StreamWriter? _apiWriteStream;
 
-    protected TimeSpan CommandTimeSpanmeSpace = TimeSpan.FromMilliseconds(200);
-
-    private readonly int _port;
-
-    private readonly string _serverAddress;
-
     private SslStream? _stream;
 
-    private readonly TimeSpan _timeOutMilliSeconds = TimeSpan.FromMilliseconds(5000);
+    protected TimeSpan CommandTimeSpanmeSpace = TimeSpan.FromMilliseconds(200);
 
     protected TcpClientBase(string serverAddress, int port, ILogger logger)
     {
@@ -107,23 +107,17 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
 
     public async Task<string> ReceiveAsync(CancellationToken cancellationToken = default)
     {
-        var buffer = new char[8192];
         var result = new StringBuilder();
 
         try
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested &&
+                   await _apiReadStream.ReadLineAsync(cancellationToken) is { } line)
             {
-                var charsRead = await _apiReadStream!.ReadAsync(buffer, 0, buffer.Length);
-                if (charsRead == 0)
+                result.Append(line);
+
+                if (string.IsNullOrEmpty(line) && result.Length > 0 && result[^1] == '}')
                     break;
-
-                result.Append(buffer, 0, charsRead);
-
-                if (result is [.., _, '\n'] )
-                {
-                    return result.ToString().Trim();
-                }
             }
 
             return result.ToString();
@@ -139,9 +133,6 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
             throw new ApiCommunicationException("Disconnected from server: " + ex.Message, ex);
         }
     }
-
-
-
 
     public void Close()
     {

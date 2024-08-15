@@ -1,22 +1,25 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using robot_project_v3.Server.Dto.Response;
+using robot_project_v3.Server.Dto;
 using robot_project_v3.Server.Services;
 
 namespace robot_project_v3.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[ProducesResponseType(typeof(ApiResponseError), StatusCodes.Status400BadRequest)]
+[ProducesResponseType(typeof(ApiResponseError), StatusCodes.Status401Unauthorized)]
+[ProducesResponseType(typeof(ApiResponseError), StatusCodes.Status403Forbidden)]
+[ProducesResponseType(typeof(ApiResponseError), StatusCodes.Status404NotFound)]
+[ProducesResponseType(typeof(ApiResponseError), StatusCodes.Status500InternalServerError)]
 [Authorize]
 public class StrategyBuilderController(IStrategyBuilderService strategyBuilderService) : ControllerBase
 {
     [HttpPost]
-    public async Task<IActionResult> CreateNewStrategy([FromForm] IFormFile file)
+    [ProducesResponseType(typeof(StrategyCompilationResponseDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CreateNewStrategy(IFormFile file)
     {
-        if (file == null || file.Length == 0)
-        {
-            return BadRequest("Fichier vide ou non fourni.");
-        }
+        if (file == null || file.Length == 0) return BadRequest("Fichier vide ou non fourni.");
 
         string content;
         using (var reader = new StreamReader(file.OpenReadStream()))
@@ -29,6 +32,7 @@ public class StrategyBuilderController(IStrategyBuilderService strategyBuilderSe
     }
 
     [HttpGet("GetAll")]
+    [ProducesResponseType(typeof(List<StrategyFileDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllStrategyFile()
     {
         var strategies = await strategyBuilderService.GetAllStrategyFile();
@@ -36,6 +40,7 @@ public class StrategyBuilderController(IStrategyBuilderService strategyBuilderSe
     }
 
     [HttpGet("{id}")]
+    [ProducesResponseType(typeof(StrategyFileDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetStrategy(int id)
     {
         var strategies = await strategyBuilderService.GetStrategyFile(id);
@@ -50,24 +55,24 @@ public class StrategyBuilderController(IStrategyBuilderService strategyBuilderSe
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateStrategyFile([FromRoute] int id, [FromForm] IFormFile file)
+    [ProducesResponseType(typeof(StrategyCompilationResponseDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateStrategyFile([FromRoute] int id, IFormFile file)
     {
-        if (file == null || file.Length == 0)
-        {
-            return BadRequest("Fichier vide ou non fourni.");
-        }
+        if (file == null || file.Length == 0) return BadRequest("Fichier vide ou non fourni.");
 
         string content;
         using (var reader = new StreamReader(file.OpenReadStream()))
         {
             content = await reader.ReadToEndAsync();
         }
+
         var updatedStrategy = await strategyBuilderService.UpdateStrategyFile(id, content);
         return Ok(updatedStrategy);
     }
 
 
     [HttpGet("GetTemplate")]
+    [ProducesResponseType(typeof(StrategyFileDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTemplate()
     {
         var filePath = "Services/Templates/StrategyBaseTemplate.cs";

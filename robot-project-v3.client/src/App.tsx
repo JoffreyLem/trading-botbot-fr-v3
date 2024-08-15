@@ -1,56 +1,51 @@
-import { useEffect, useState } from 'react';
-import './App.css';
+import {
+  AuthenticatedTemplate,
+  UnauthenticatedTemplate,
+  useMsal,
+} from "@azure/msal-react";
+import React, { useEffect } from "react";
+import { Route, Routes } from "react-router-dom";
+import Layout from "./Layout.tsx";
 
-interface Forecast {
-    date: string;
-    temperatureC: number;
-    temperatureF: number;
-    summary: string;
-}
+import NotFound from "./pages/NotFound.tsx";
+import { AppProviders } from "./contexts/AppProviders.tsx";
+import Home from "./pages/Home/Home.tsx";
+import StrategyDetails from "./pages/StrategyDetails/StrategyDetails.tsx";
+import StrategyCreator from "./pages/StrategyCreator/StrategyCreator.tsx";
 
 function App() {
-    const [forecasts, setForecasts] = useState<Forecast[]>();
+  const { instance, accounts } = useMsal();
 
-    useEffect(() => {
-        populateWeatherData();
-    }, []);
-
-    const contents = forecasts === undefined
-        ? <p><em>Loading... Please refresh once the ASP.NET backend has started. See <a href="https://aka.ms/jspsintegrationreact">https://aka.ms/jspsintegrationreact</a> for more details.</em></p>
-        : <table className="table table-striped" aria-labelledby="tableLabel">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Temp. (C)</th>
-                    <th>Temp. (F)</th>
-                    <th>Summary</th>
-                </tr>
-            </thead>
-            <tbody>
-                {forecasts.map(forecast =>
-                    <tr key={forecast.date}>
-                        <td>{forecast.date}</td>
-                        <td>{forecast.temperatureC}</td>
-                        <td>{forecast.temperatureF}</td>
-                        <td>{forecast.summary}</td>
-                    </tr>
-                )}
-            </tbody>
-        </table>;
-
-    return (
-        <div>
-            <h1 id="tableLabel">Weather forecast</h1>
-            <p>This component demonstrates fetching data from the server.</p>
-            {contents}
-        </div>
-    );
-
-    async function populateWeatherData() {
-        const response = await fetch('weatherforecast');
-        const data = await response.json();
-        setForecasts(data);
+  useEffect(() => {
+    if (accounts.length === 0) {
+      instance.loginPopup().catch((e) => {
+        console.error(e);
+      });
     }
+  }, [instance, accounts]);
+
+  return (
+    <React.Fragment>
+      <AuthenticatedTemplate>
+        <AppProviders>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Home />} />
+              <Route path="/strategyCreator" element={<StrategyCreator />} />
+              <Route
+                path="/strategy/:strategyId"
+                element={<StrategyDetails />}
+              />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AppProviders>
+      </AuthenticatedTemplate>
+      <UnauthenticatedTemplate>
+        <p>Loading...</p>
+      </UnauthenticatedTemplate>
+    </React.Fragment>
+  );
 }
 
 export default App;

@@ -10,9 +10,8 @@ public sealed class CciIndicator : BaseIndicator<CciResult>
 {
     public CciIndicator()
     {
-        
     }
-    
+
     public CciIndicator(int loopBackPeriodRequested)
     {
         LoopBackPeriod = loopBackPeriodRequested;

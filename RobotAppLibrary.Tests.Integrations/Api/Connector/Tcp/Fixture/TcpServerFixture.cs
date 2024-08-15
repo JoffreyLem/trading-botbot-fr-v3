@@ -5,13 +5,8 @@ namespace RobotAppLibrary.Tests.Integrations.Api.Connector.Tcp.Fixture;
 
 public class TcpServerFixture : IDisposable, IAsyncDisposable
 {
-
     public const int ServerPort = 1234;
     public const int StreamingServerPort = 5678;
-    public TcpServerMock Server { get; private set; }
-    public TcpServerMock StreamingServer { get; private set; }
-
-    public X509Certificate2 Certificate { get; private set; }
 
     public TcpServerFixture()
     {
@@ -19,6 +14,11 @@ public class TcpServerFixture : IDisposable, IAsyncDisposable
         Server = new TcpServerMock(ServerPort, Certificate);
         StreamingServer = new TcpServerMock(StreamingServerPort, Certificate);
     }
+
+    public TcpServerMock Server { get; }
+    public TcpServerMock StreamingServer { get; }
+
+    public X509Certificate2 Certificate { get; }
 
     public async ValueTask DisposeAsync()
     {

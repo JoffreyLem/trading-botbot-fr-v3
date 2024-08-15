@@ -9,16 +9,20 @@ public record Tick(
     string Symbol
 )
 {
- 
-    public Tick() : this(null, null, null, null, default, string.Empty) { }
+    public Tick() : this(null, null, null, null, default, string.Empty)
+    {
+    }
+
     public decimal? Spread => Ask - Bid;
 
-    public override string ToString() =>
-        $"Symbol: {Symbol}\n" +
-        $"Date: {Date}\n" +
-        $"Ask: {Ask}\n" +
-        $"Bid: {Bid}\n" +
-        $"AskVolume: {AskVolume}\n" +
-        $"BidVolume: {BidVolume}\n" +
-        $"Spread: {Spread}";
+    public override string ToString()
+    {
+        return $"Symbol: {Symbol}\n" +
+               $"Date: {Date}\n" +
+               $"Ask: {Ask}\n" +
+               $"Bid: {Bid}\n" +
+               $"AskVolume: {AskVolume}\n" +
+               $"BidVolume: {BidVolume}\n" +
+               $"Spread: {Spread}";
+    }
 }

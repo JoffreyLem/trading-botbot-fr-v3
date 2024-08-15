@@ -11,22 +11,22 @@ public class PositionsCommandTest
 {
     private readonly Mock<IApiProviderBase> _apiHandlerMock = new();
     private readonly Mock<ILogger> _logger = new();
+
+    private readonly Mock<ILotValueCalculator> _mockLotValueCalculator = new();
     private readonly PositionHandler _positionHandler;
-    private readonly Tick tickRef = new() { Bid = (decimal?)1.11247, Ask = (decimal?)1.112450 };
 
     private readonly Position positionTest = new();
 
     private readonly string strategyId = "idTest";
-
-    private readonly Mock<ILotValueCalculator> _mockLotValueCalculator = new Mock<ILotValueCalculator>();
+    private readonly Tick tickRef = new() { Bid = (decimal?)1.11247, Ask = (decimal?)1.112450 };
 
     public PositionsCommandTest()
     {
         _logger.Setup(x => x.ForContext<PositionHandler>())
             .Returns(_logger.Object);
-        
+
         _apiHandlerMock.Setup(x => x.GetSymbolInformationAsync(It.IsAny<string>()))
-            .ReturnsAsync(new SymbolInfo()
+            .ReturnsAsync(new SymbolInfo
             {
                 Leverage = 10,
                 TickSize = 0.00001,
@@ -35,16 +35,16 @@ public class PositionsCommandTest
                 Category = Category.Forex,
                 Symbol = "EURUSD",
                 Precision = 5,
-                LotMin = 0.01, 
+                LotMin = 0.01
             });
 
         _apiHandlerMock.Setup(api => api.GetTickPriceAsync(It.IsAny<string>()))
             .ReturnsAsync(tickRef);
-        
+
         _apiHandlerMock
             .Setup(api => api.GetBalanceAsync())
             .ReturnsAsync(new AccountBalance { Balance = 10000, Equity = 10000 });
-        
+
         _mockLotValueCalculator
             .Setup(lot => lot.PipValueStandard)
             .Returns(10);
@@ -52,9 +52,10 @@ public class PositionsCommandTest
         _mockLotValueCalculator
             .Setup(lot => lot.MarginPerLot)
             .Returns(1000);
-        
+
         _positionHandler =
-            new PositionHandler(_logger.Object, _apiHandlerMock.Object, "EURUSD",strategyId, _mockLotValueCalculator.Object);
+            new PositionHandler(_logger.Object, _apiHandlerMock.Object, "EURUSD", strategyId,
+                _mockLotValueCalculator.Object);
     }
 
 
@@ -69,7 +70,6 @@ public class PositionsCommandTest
     [Fact]
     public async Task Init_ShouldInitializeSymbolInfoAndLastPrice()
     {
-     
         // Act
         await Task.Run(() => _positionHandler); // To ensure Init method is called
 
@@ -78,8 +78,8 @@ public class PositionsCommandTest
         _apiHandlerMock.Verify(api => api.GetSymbolInformationAsync("EURUSD"), Times.Once);
         _apiHandlerMock.Verify(api => api.GetTickPriceAsync("EURUSD"), Times.Once);
     }
-    
-    
+
+
     [Fact]
     public async Task Init_ShouldSubscribeToApiEvents()
     {
@@ -101,7 +101,8 @@ public class PositionsCommandTest
         _apiHandlerMock.Setup(api => api.GetOpenedTradesAsync(strategyId)).ReturnsAsync(positionTest);
 
         // Act
-        var handler = new PositionHandler(_logger.Object, _apiHandlerMock.Object, "EURUSD",strategyId, _mockLotValueCalculator.Object);
+        var handler = new PositionHandler(_logger.Object, _apiHandlerMock.Object, "EURUSD", strategyId,
+            _mockLotValueCalculator.Object);
 
         // Assert
         _apiHandlerMock.Verify(api => api.RestoreSession(positionTest), Times.Once);
@@ -115,7 +116,8 @@ public class PositionsCommandTest
         _apiHandlerMock.Setup(api => api.GetOpenedTradesAsync(strategyId)).ReturnsAsync((Position?)null);
 
         // Act
-        var handler = new PositionHandler(_logger.Object, _apiHandlerMock.Object, "EURUSD",strategyId, _mockLotValueCalculator.Object);
+        var handler = new PositionHandler(_logger.Object, _apiHandlerMock.Object, "EURUSD", strategyId,
+            _mockLotValueCalculator.Object);
 
         // Assert
         _apiHandlerMock.Verify(api => api.RestoreSession(It.IsAny<Position>()), Times.Never);
@@ -128,21 +130,20 @@ public class PositionsCommandTest
     #region Position in progress test
 
     [Fact]
-    public  void Test_PositionInProgressPending()
+    public void Test_PositionInProgressPending()
     {
         Test_OpenPosition_Buy();
 
         _positionHandler.PositionInProgress.Should().BeTrue();
     }
-    
+
     [Fact]
-    public  void Test_PositionInProgressOpen()
+    public void Test_PositionInProgressOpen()
     {
         OpenPositionByTest();
 
         _positionHandler.PositionInProgress.Should().BeTrue();
     }
-    
 
     #endregion
 
@@ -162,13 +163,13 @@ public class PositionsCommandTest
         _positionHandler.PositionPending.Symbol.Should().Be("EURUSD");
         _positionHandler.PositionPending.TypePosition.Should().Be(TypeOperation.Buy);
         _positionHandler.PositionPending.OpenPrice.Should().Be(1.112450m);
-        _positionHandler.PositionPending.StopLoss.Should().Be(1.11227M);
-        _positionHandler.PositionPending.TakeProfit.Should().Be(1.11265M);
+        _positionHandler.PositionPending.StopLoss.Should().Be(1.11147M);
+        _positionHandler.PositionPending.TakeProfit.Should().Be(1.11345M);
         _positionHandler.PositionPending.Volume.Should().Be(0.5);
         _positionHandler.PositionPending.StrategyId.Should().Be("idTest");
     }
-    
-    
+
+
     [Fact]
     public async void Test_OpenPosition_Buy()
     {
@@ -192,7 +193,7 @@ public class PositionsCommandTest
         _positionHandler.PositionPending.StrategyId.Should().Be("idTest");
         _positionHandler.PositionPending.PositionStrategyReferenceId.Should().Be(PositionReference);
     }
-    
+
     [Fact]
     public async void Test_OpenPosition_Sell()
     {
@@ -205,7 +206,7 @@ public class PositionsCommandTest
         _positionHandler.PositionPending.Should().NotBeNull();
         _positionHandler.PositionPending.Id.Should().NotBeNull();
         _positionHandler.PositionPending.Symbol.Should().Be("EURUSD");
-        _positionHandler.PositionPending.TypePosition.Should().Be(TypeOperation.Buy);
+        _positionHandler.PositionPending.TypePosition.Should().Be(TypeOperation.Sell);
         _positionHandler.PositionPending.OpenPrice.Should().Be(1.11247M);
         _positionHandler.PositionPending.StopLoss.Should().Be(1.11237m);
         _positionHandler.PositionPending.TakeProfit.Should().Be(1.11257m);
@@ -216,18 +217,20 @@ public class PositionsCommandTest
         _positionHandler.PositionPending.StrategyId.Should().Be("idTest");
         _positionHandler.PositionPending.PositionStrategyReferenceId.Should().Be(PositionReference);
     }
-    
+
     [Fact]
     public async void Test_OpenPosition_For_Other_Type_Symbol()
     {
         // Arrange and Act
         _apiHandlerMock
             .Setup(api => api.GetSymbolInformationAsync(It.IsAny<string>()))
-            .ReturnsAsync(new SymbolInfo { Symbol = "test", Category = Category.Commodities, LotMin = 0.01, TickSize = 0.01, Precision = 5, });
+            .ReturnsAsync(new SymbolInfo
+                { Symbol = "test", Category = Category.Commodities, LotMin = 0.01, TickSize = 0.01, Precision = 5 });
 
-        
+
         var positionHandler =
-            new PositionHandler(_logger.Object, _apiHandlerMock.Object, "EURUSD",strategyId, _mockLotValueCalculator.Object);
+            new PositionHandler(_logger.Object, _apiHandlerMock.Object, "EURUSD", strategyId,
+                _mockLotValueCalculator.Object);
 
         await positionHandler.OpenPositionAsync("test", TypeOperation.Buy, 0.5, 1.11237m, 1.11257m);
 
@@ -248,13 +251,13 @@ public class PositionsCommandTest
         positionHandler.PositionPending.PositionStrategyReferenceId.Should().Be(PositionReference);
     }
 
-    
+
     [Fact]
     public async void Test_OpenPosition_DefaultSl_DefaultTp()
     {
         // Arrange and Act
 
-        await _positionHandler.OpenPositionAsync("EURUSD", TypeOperation.Buy, 0.5, 0, 0);
+        await _positionHandler.OpenPositionAsync("EURUSD", TypeOperation.Buy, 0.5);
 
         // Assert
 
@@ -263,8 +266,8 @@ public class PositionsCommandTest
         _positionHandler.PositionPending.Symbol.Should().Be("EURUSD");
         _positionHandler.PositionPending.TypePosition.Should().Be(TypeOperation.Buy);
         _positionHandler.PositionPending.OpenPrice.Should().Be(1.112450m);
-        _positionHandler.PositionPending.StopLoss.Should().Be(1.11227M);
-        _positionHandler.PositionPending.TakeProfit.Should().Be(1.11265M);
+        _positionHandler.PositionPending.StopLoss.Should().Be(1.11147M);
+        _positionHandler.PositionPending.TakeProfit.Should().Be(1.11345M);
         _positionHandler.PositionPending.Volume.Should().Be(0.5);
         _positionHandler.PositionPending.PositionStrategyReferenceId.Should()
             .Be($"{_positionHandler.PositionPending.StrategyId}|{_positionHandler.PositionPending.Id}");
@@ -295,7 +298,7 @@ public class PositionsCommandTest
         _positionHandler.PositionPending.StrategyId.Should().Be("idTest");
         _positionHandler.PositionPending.PositionStrategyReferenceId.Should().Be(PositionReference);
     }
-    
+
     [Fact]
     public async void Test_OpenPosition_No_Volume_Risk()
     {
@@ -317,7 +320,7 @@ public class PositionsCommandTest
         _positionHandler.PositionPending.StrategyId.Should().Be("idTest");
         _positionHandler.PositionPending.PositionStrategyReferenceId.Should().Be(PositionReference);
     }
-    
+
     [Fact]
     public async void Test_OpenPosition_No_Volume_NoRisk_NoSl()
     {
@@ -330,16 +333,16 @@ public class PositionsCommandTest
         _positionHandler.PositionPending.Symbol.Should().Be("EURUSD");
         _positionHandler.PositionPending.TypePosition.Should().Be(TypeOperation.Buy);
         _positionHandler.PositionPending.OpenPrice.Should().Be(1.112450m);
-        _positionHandler.PositionPending.StopLoss.Should().Be(1.11227M);
+        _positionHandler.PositionPending.StopLoss.Should().Be(1.11147M);
         _positionHandler.PositionPending.TakeProfit.Should().Be(1.11257m);
-        _positionHandler.PositionPending.Volume.Should().Be(1.1);
+        _positionHandler.PositionPending.Volume.Should().Be(0.19);
         _positionHandler.PositionPending.PositionStrategyReferenceId.Should()
             .Be($"{_positionHandler.PositionPending.StrategyId}|{_positionHandler.PositionPending.Id}");
         var PositionReference = $"{_positionHandler.PositionPending.StrategyId}|{_positionHandler.PositionPending.Id}";
         _positionHandler.PositionPending.StrategyId.Should().Be("idTest");
         _positionHandler.PositionPending.PositionStrategyReferenceId.Should().Be(PositionReference);
     }
-    
+
     [Fact]
     public async void Test_OpenPosition_No_Volume_Risk_NoSl()
     {
@@ -352,9 +355,9 @@ public class PositionsCommandTest
         _positionHandler.PositionPending.Symbol.Should().Be("EURUSD");
         _positionHandler.PositionPending.TypePosition.Should().Be(TypeOperation.Buy);
         _positionHandler.PositionPending.OpenPrice.Should().Be(1.112450m);
-        _positionHandler.PositionPending.StopLoss.Should().Be(1.11227M );
+        _positionHandler.PositionPending.StopLoss.Should().Be(1.11147M);
         _positionHandler.PositionPending.TakeProfit.Should().Be(1.11257m);
-        _positionHandler.PositionPending.Volume.Should().Be(2.21);
+        _positionHandler.PositionPending.Volume.Should().Be(0.4);
         _positionHandler.PositionPending.PositionStrategyReferenceId.Should()
             .Be($"{_positionHandler.PositionPending.StrategyId}|{_positionHandler.PositionPending.Id}");
         var PositionReference = $"{_positionHandler.PositionPending.StrategyId}|{_positionHandler.PositionPending.Id}";
@@ -370,7 +373,7 @@ public class PositionsCommandTest
 
         _positionHandler.PositionPending.Volume.Should().Be(0.01);
     }
-    
+
     [Fact]
     public async void Test_PositionSize_Return_MaxLot()
     {
@@ -379,19 +382,19 @@ public class PositionsCommandTest
 
         _positionHandler.PositionPending.Volume.Should().Be(9.99);
     }
-    
+
     [Fact]
     public async void Test_PositionSize_Return_MaxLot_AfterUpdate()
     {
         // Arrange and Act
         _mockLotValueCalculator.SetupGet(x => x.MarginPerLot).Returns(1000);
-        _apiHandlerMock.Raise(api => api.NewBalanceEvent += null,this, new AccountBalance { Balance = 200000, Equity = 200000 });
+        _apiHandlerMock.Raise(api => api.NewBalanceEvent += null, this,
+            new AccountBalance { Balance = 200000, Equity = 200000 });
 
 
         await _positionHandler.OpenPositionAsync("EURUSD", TypeOperation.Buy, 0, 0, 1.11257m, 100);
         _positionHandler.PositionPending.Volume.Should().Be(199.99);
     }
-
 
 
     [Fact]
@@ -413,13 +416,13 @@ public class PositionsCommandTest
     {
         // Arrange
         Test_OpenPosition_Buy();
-        var position = new Position()
+        var position = new Position
         {
             Symbol = "EURUSD",
             Id = _positionHandler.PositionPending.Id,
             StrategyId = "idTest"
         };
- 
+
         var caller = false;
 
         _positionHandler.PositionOpenedEvent += (sender, position1) => caller = true;
@@ -442,10 +445,10 @@ public class PositionsCommandTest
     {
         // Arrange
         Test_OpenPosition_Buy();
-        var position = new Position()
-            {
-                Symbol = "EURUSD"
-            };
+        var position = new Position
+        {
+            Symbol = "EURUSD"
+        };
 
         var caller = false;
 
@@ -466,12 +469,12 @@ public class PositionsCommandTest
     {
         // Arrange
         Test_OpenPosition_Buy();
-        var position = new Position()
-            {
-                Symbol = "EURUSD",
-                Id = _positionHandler.PositionPending.Id,
-                StrategyId = "idTest"
-            };
+        var position = new Position
+        {
+            Symbol = "EURUSD",
+            Id = _positionHandler.PositionPending.Id,
+            StrategyId = "idTest"
+        };
         ;
         var caller = false;
 
@@ -494,12 +497,12 @@ public class PositionsCommandTest
     {
         // Arrange
         Test_OpenPosition_Buy();
-        var position = new Position()
-            {
-                Symbol = "EURUSD",
-                Id = "truc",
-                StrategyId = "testing"
-            };
+        var position = new Position
+        {
+            Symbol = "EURUSD",
+            Id = "truc",
+            StrategyId = "testing"
+        };
         ;
         var caller = false;
 
@@ -541,7 +544,7 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
+        var position = new Position
         {
             StopLoss = 1.11247m
         };
@@ -559,7 +562,7 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
+        var position = new Position
         {
             StatusPosition = StatusPosition.Close,
             StopLoss = 1.11247m
@@ -577,11 +580,11 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
+        var position = new Position
         {
             TakeProfit = 1.11267m
         };
-           
+
 
         // Act
         await _positionHandler.UpdatePositionAsync(position);
@@ -595,7 +598,7 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
+        var position = new Position
         {
             TakeProfit = 1.11267m
         };
@@ -616,7 +619,7 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
+        var position = new Position
         {
             Id = _positionHandler.PositionOpened.Id,
             StrategyId = "idTest",
@@ -644,7 +647,7 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
+        var position = new Position
         {
             Id = "truc",
             StrategyId = "testing",
@@ -677,10 +680,10 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
-            {
-                Id = _positionHandler.PositionOpened.Id
-            };
+        var position = new Position
+        {
+            Id = _positionHandler.PositionOpened.Id
+        };
 
         // Act
 
@@ -697,11 +700,12 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
-            {
-                Id = _positionHandler.PositionOpened.Id,
-                StatusPosition = StatusPosition.Close,
-            };
+        var position = new Position
+        {
+            Id = _positionHandler.PositionOpened.Id,
+            StatusPosition = StatusPosition.Close,
+     
+        };
 
         // Act
 
@@ -718,10 +722,10 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
-            {
-                Id = _positionHandler.PositionOpened.Id
-            };
+        var position = new Position
+        {
+            Id = _positionHandler.PositionOpened.Id
+        };
 
         _apiHandlerMock.Setup(x => x.ClosePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()))
             .ThrowsAsync(new Exception());
@@ -739,14 +743,31 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
-            {
-                Id = _positionHandler.PositionOpened.Id,
-                StrategyId = "idTest"
-            };
+        var position = new Position
+        {
+            Id = _positionHandler.PositionOpened.Id,
+            StrategyId = "idTest",
+            StatusPosition = StatusPosition.Close,
+            Profit = 100,
+            StopLoss = 10,
+            TakeProfit = 11,
+            DateClose = new DateTime(2022,01,01),
+            ClosePrice = 0.10m,
+            ReasonClosed = ReasonClosed.Closed,
+        };
 
         var caller = false;
-        _positionHandler.PositionClosedEvent += (sender, position1) => caller = true;
+        _positionHandler.PositionClosedEvent += (sender, position1) =>
+        {
+            position1.StatusPosition.Should().Be(StatusPosition.Close);
+            position1.Profit.Should().Be(100);
+            position1.StopLoss.Should().Be(10);
+            position1.TakeProfit.Should().Be(11);
+            position1.DateClose.Should().Be(new DateTime(2022, 01, 01));
+            position1.ClosePrice.Should().Be(0.10m);
+            position1.Opened.Should().Be(false);
+            caller = true;
+        };
 
         // Act
         _apiHandlerMock.Raise(x => x.PositionClosedEvent += null, this, position);
@@ -763,11 +784,11 @@ public class PositionsCommandTest
     {
         // Arrange
         OpenPositionByTest();
-        var position = new Position()
-            {
-                Id = "trcds",
-                StrategyId ="testing"
-            };
+        var position = new Position
+        {
+            Id = "trcds",
+            StrategyId = "testing"
+        };
 
         var caller = false;
         _positionHandler.PositionClosedEvent += (sender, position1) => caller = true;
@@ -814,16 +835,16 @@ public class PositionsCommandTest
     public void Test_Calculate_StopLoss_buy_other_quotation()
     {
         // Arrange
-        var symbolInfo = new SymbolInfo()
-                {
-                    Leverage = 10,
-                    TickSize = 0.1,
-                    Currency = "EUR",
-                    CurrencyProfit = "EUR",
-                    Category = Category.Indices,
-                    Symbol = "DE30",
-                    Precision = 1
-                };
+        var symbolInfo = new SymbolInfo
+        {
+            Leverage = 10,
+            TickSize = 0.1,
+            Currency = "EUR",
+            CurrencyProfit = "EUR",
+            Category = Category.Indices,
+            Symbol = "DE30",
+            Precision = 1
+        };
 
         var apiHandlerMock = new Mock<IApiProviderBase>();
 
@@ -836,12 +857,13 @@ public class PositionsCommandTest
 
         apiHandlerMock.Setup(api => api.GetTickPriceAsync(It.IsAny<string>()))
             .ReturnsAsync(new Tick { Ask = 15924.1m, Bid = 15921.9m });
-        
+
         apiHandlerMock
             .Setup(api => api.GetBalanceAsync())
             .ReturnsAsync(new AccountBalance { Balance = 10000, Equity = 10000 });
 
-        var positionHandler = new PositionHandler(_logger.Object, apiHandlerMock.Object, "DE30", "", _mockLotValueCalculator.Object);
+        var positionHandler = new PositionHandler(_logger.Object, apiHandlerMock.Object, "DE30", "",
+            _mockLotValueCalculator.Object);
 
 
         // act
@@ -857,7 +879,7 @@ public class PositionsCommandTest
     public void Test_Calculate_StopLoss_sell_other_quotation()
     {
         // Arrange
-        var symbolInfo = new SymbolInfo()
+        var symbolInfo = new SymbolInfo
         {
             Leverage = 10,
             TickSize = 0.1,
@@ -879,13 +901,13 @@ public class PositionsCommandTest
         apiHandlerMock
             .Setup(api => api.GetBalanceAsync())
             .ReturnsAsync(new AccountBalance { Balance = 10000, Equity = 10000 });
-        
+
         apiHandlerMock.Setup(api => api.GetTickPriceAsync(It.IsAny<string>()))
             .ReturnsAsync(new Tick { Ask = 15924.1m, Bid = 15921.9m });
-        
-        
 
-        var positionHandler = new PositionHandler(_logger.Object, apiHandlerMock.Object, "DE30", "", _mockLotValueCalculator.Object);
+
+        var positionHandler = new PositionHandler(_logger.Object, apiHandlerMock.Object, "DE30", "",
+            _mockLotValueCalculator.Object);
 
 
         // act
@@ -930,7 +952,7 @@ public class PositionsCommandTest
     public void Test_Calculate_TakePRofit_buy_other_quotation()
     {
         // Arrange
-        var symbolInfo = new SymbolInfo()
+        var symbolInfo = new SymbolInfo
         {
             Leverage = 10,
             TickSize = 0.1,
@@ -956,8 +978,9 @@ public class PositionsCommandTest
         apiHandlerMock
             .Setup(api => api.GetBalanceAsync())
             .ReturnsAsync(new AccountBalance { Balance = 10000, Equity = 10000 });
-        
-        var positionHandler = new PositionHandler(_logger.Object, apiHandlerMock.Object, "DE30", "", _mockLotValueCalculator.Object);
+
+        var positionHandler = new PositionHandler(_logger.Object, apiHandlerMock.Object, "DE30", "",
+            _mockLotValueCalculator.Object);
 
 
         // act
@@ -973,7 +996,7 @@ public class PositionsCommandTest
     public void Test_Calculate_TakeProfit_sell_other_quotation()
     {
         // Arrange
-        var symbolInfo = new SymbolInfo()
+        var symbolInfo = new SymbolInfo
         {
             Leverage = 10,
             TickSize = 0.1,
@@ -981,7 +1004,7 @@ public class PositionsCommandTest
             CurrencyProfit = "EUR",
             Category = Category.Indices,
             Symbol = "DE30",
-            Precision =1
+            Precision = 1
         };
 
         var apiHandlerMock = new Mock<IApiProviderBase>();
@@ -999,8 +1022,9 @@ public class PositionsCommandTest
         apiHandlerMock
             .Setup(api => api.GetBalanceAsync())
             .ReturnsAsync(new AccountBalance { Balance = 10000, Equity = 10000 });
-        
-        var positionHandler = new PositionHandler(_logger.Object, apiHandlerMock.Object, "DE30", "", _mockLotValueCalculator.Object);
+
+        var positionHandler = new PositionHandler(_logger.Object, apiHandlerMock.Object, "DE30", "",
+            _mockLotValueCalculator.Object);
 
 
         // act

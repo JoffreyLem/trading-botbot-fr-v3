@@ -8,7 +8,7 @@ namespace RobotAppLibrary.Tests.Strategy;
 
 public abstract class ChartForTest : IChart
 {
-    private readonly List<Candle> _candles = new List<Candle>();
+    private readonly List<Candle> _candles = new();
     private Tick _lastPrice;
 
     public IEnumerator<Candle> GetEnumerator()

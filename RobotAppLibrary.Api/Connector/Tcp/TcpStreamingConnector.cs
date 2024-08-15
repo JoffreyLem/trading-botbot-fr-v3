@@ -7,14 +7,13 @@ namespace RobotAppLibrary.Api.Connector.Tcp;
 
 public interface ITcpStreamingConnector : IConnectorBase, IStreamingEvent
 {
-    
 }
 
 public abstract class TcpStreamingConnector(Server server, ILogger logger)
     : TcpClientBase(server.Address, server.StreamingPort, logger), ITcpStreamingConnector
 {
     public event Action<Tick>? TickRecordReceived;
-    public event Action<Position?>? TradeRecordReceived;
+    public event Action<Position>? TradeRecordReceived;
     public event Action<AccountBalance>? BalanceRecordReceived;
     public event Action<Position>? ProfitRecordReceived;
     public event Action<News>? NewsRecordReceived;
@@ -45,7 +44,7 @@ public abstract class TcpStreamingConnector(Server server, ILogger logger)
     {
         try
         {
-            var message =  ReceiveAsync().Result;
+            var message = ReceiveAsync().Result;
             if (!string.IsNullOrEmpty(message))
             {
                 Logger.Verbose("New stream message received {@message}", message);
@@ -64,7 +63,7 @@ public abstract class TcpStreamingConnector(Server server, ILogger logger)
         TickRecordReceived?.Invoke(obj);
     }
 
-    protected virtual void OnTradeRecordReceived(Position? obj)
+    protected virtual void OnTradeRecordReceived(Position obj)
     {
         Logger.Information("Position event {@obj}", obj);
         TradeRecordReceived?.Invoke(obj);

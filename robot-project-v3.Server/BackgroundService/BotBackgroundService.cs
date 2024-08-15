@@ -54,10 +54,9 @@ public class BotBackgroundService(
 
         await Task.WhenAll(apiTask, strategyTask);
     }
-    
+
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         await commandHandler.Shutdown();
     }
-
 }

@@ -4,7 +4,7 @@ public abstract class CommandeBaseApiAbstract : CommandeBaseAbstract
 {
 }
 
-public class CommandBaseApi<T> : CommandeBaseApiAbstract 
+public class CommandBaseApi<T> : CommandeBaseApiAbstract
 {
     public TaskCompletionSource<T> ResponseSource { get; } = new();
 

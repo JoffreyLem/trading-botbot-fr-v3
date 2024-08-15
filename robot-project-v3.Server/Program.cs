@@ -1,18 +1,106 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading.Channels;
+using Destructurama;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Identity.Web;
+using robot_project_v3.Database;
+using robot_project_v3.Mail;
 using robot_project_v3.Server;
+using robot_project_v3.Server.BackgroundService;
+using robot_project_v3.Server.Command.Api;
+using robot_project_v3.Server.Command.Strategy;
 using robot_project_v3.Server.Hubs;
+using robot_project_v3.Server.Mapper;
+using robot_project_v3.Server.Services;
+using Serilog;
+using Serilog.Debugging;
+using Serilog.Events;
+using Serilog.Exceptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddControllers().AddJsonOptions(o =>
+{
+    o.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    o.JsonSerializerOptions.DictionaryKeyPolicy = JsonNamingPolicy.CamelCase;
+    o.JsonSerializerOptions.PropertyNameCaseInsensitive = false;
+    o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(builder.Configuration);
 builder.Services.AddHealthChecks();
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddProblemDetails();
-builder.AddBotDependency();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin",
+        builder => builder.WithOrigins("https://localhost:5173", "https://robot.botbot.fr")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials());
+});
+builder.Services.AddHsts(options =>
+{
+    options.Preload = true;
+    options.IncludeSubDomains = true;
+    options.MaxAge = TimeSpan.FromDays(365);
+});
+var loggerConfig = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.WithExceptionDetails()
+    .Destructure.UsingAttributes()
+    .Enrich.FromLogContext()
+    .Enrich.WithEnvironmentName()
+    .Enrich.WithProperty("ApplicationName", "Robot-API")
+    .Enrich.WithCorrelationIdHeader("correlationId")
+    .Enrich.With(new RemovePropertiesEnricher())
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Error)
+    .MinimumLevel.Override("System", LogEventLevel.Error)
+    .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+    .WriteTo.Async(writeTo => writeTo.Console());
+
+if (builder.Environment.IsDevelopment())
+    loggerConfig.WriteTo.Async(writeTo => writeTo.Seq(builder.Configuration["Seq:Url"]));
+
+if (builder.Environment.IsProduction())
+    loggerConfig.WriteTo.Async(writeTo =>
+        writeTo.Seq(
+            builder.Configuration["Seq:Url"],
+            apiKey: builder.Configuration["Seq:Apikey"]));
+
+
+var logger = loggerConfig.CreateLogger();
+Log.Logger = logger;
+SelfLog.Enable(Console.Error);
+builder.Host.UseSerilog(logger);
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
+
+builder.Services.AddAutoMapper(cfg => { cfg.AddProfile<MappingProfilesBackgroundServices>(); },
+    typeof(MappingProfilesBackgroundServices).Assembly
+);
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection(nameof(SmtpSettings)));
+builder.Services.AddSignalR();
+builder.Services.AddHostedService<BotBackgroundService>();
+builder.Services.AddStrategyDbContext(builder.Configuration);
+builder.Services.AddSingleton<IApiProviderService, ApiProviderService>();
+builder.Services.AddSingleton<IStrategyService, StrategyService>();
+builder.Services.AddSingleton<IStrategyBuilderService, StrategyBuilderService>();
+builder.Services.AddSingleton<IEmailService, EmailService>();
+builder.Services.AddSingleton<ICommandHandler, CommandHandler>();
+var channelApi = Channel.CreateUnbounded<CommandeBaseApiAbstract>();
+builder.Services.AddSingleton(channelApi.Reader);
+builder.Services.AddSingleton(channelApi.Writer);
+var channelStrategy =
+    Channel.CreateUnbounded<CommandeBaseStrategyAbstract>();
+builder.Services.AddSingleton(channelStrategy.Reader);
+builder.Services.AddSingleton(channelStrategy.Writer);
+
+
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -30,6 +118,7 @@ app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

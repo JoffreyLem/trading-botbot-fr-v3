@@ -8,12 +8,10 @@ namespace RobotAppLibrary.Indicators;
 [ExcludeFromCodeCoverage]
 public class SarIndicator : BaseIndicator<ParabolicSarResult>
 {
-
     public SarIndicator()
     {
-        
     }
-    
+
     public SarIndicator(double accelerationStep = 0.02, double maxAccelerationFactor = 0.2)
     {
         AccelerationStep = accelerationStep;

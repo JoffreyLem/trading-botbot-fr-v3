@@ -1,7 +1,7 @@
 version: '3.7'
 services:
   robot-app:
-    image: registry.gitlab.com/tradingbot3941224/robotapp:latest
+    image: registry.gitlab.com/tradingbot3941224/robotappv3:latest
     restart: always
     networks:
       - bot
@@ -16,6 +16,9 @@ services:
       - SmtpSettings__DefaultEmail=lemery.joffrey@outlook.fr
       - ConnectionStrings__DefaultConnection=server=mariadb_ssl;Database=robot;Uid=admin;Pwd=${DATABASE_PASSWORD};sslmode=required;
       - Seq__ApiKey=${SEQ_APIKEY}
+      - NODE_ENV=production
+      - API_URL=https://robot.botbot.fr/
+      - ASPNETCORE_ENVIRONMENT=Production
 networks:
   bot:
     external: true

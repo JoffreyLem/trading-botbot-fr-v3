@@ -15,11 +15,11 @@ namespace RobotAppLibrary.Tests.Integrations.Api.Connector.Tcp;
 [Collection("TcpServer collection")]
 public class TcpClientTests
 {
+    private readonly TcpServerFixture _fixture;
     private readonly Mock<ILogger> _loggerMock;
     private readonly TcpClient _tcpClient;
     private readonly TcpConnectorWrapper _tcpConnector;
     private readonly TestTcpStreamingConnector _tcpStreamingConnector;
-    private readonly TcpServerFixture _fixture;
 
     public TcpClientTests(TcpServerFixture fixture)
     {
@@ -35,10 +35,10 @@ public class TcpClientTests
         _tcpClient = new TcpClient(server.Address, server.MainPort, _loggerMock.Object);
         _tcpConnector = new TcpConnectorWrapper(server, _loggerMock.Object);
         _tcpStreamingConnector = new TestTcpStreamingConnector(server, _loggerMock.Object);
-
     }
 
     #region Tcp client wrapper base
+
     private class TcpClient(string serverAddress, int port, ILogger logger)
         : TcpClientBase(serverAddress, port, logger)
     {
@@ -47,16 +47,16 @@ public class TcpClientTests
         {
             return true;
         }
-    };
+    }
 
     [Fact]
     public async Task ConnectAsync_ShouldConnectAndAuthenticate()
     {
         // Arrange
         var isConnected = false;
-        
+
         // Act
-        Func<Task> act = async () => await _tcpClient.ConnectAsync();
+        var act = async () => await _tcpClient.ConnectAsync();
 
         _tcpClient.Connected += (sender, args) => isConnected = true;
 
@@ -71,11 +71,11 @@ public class TcpClientTests
     {
         // Arrange
         var isDisconnected = false;
-        
+
         // Act
-        Func<Task> act = async () => await _tcpClient.SendAsync("test message");
+        var act = async () => await _tcpClient.SendAsync("test message");
         await Task.Delay(TimeSpan.FromSeconds(1));
-        
+
         // Assert
         await act.Should().ThrowAsync<ApiCommunicationException>()
             .WithMessage("Error while sending the data (socket disconnected)");
@@ -99,10 +99,10 @@ public class TcpClientTests
         // Arrange
         var tcpClient = new TcpClient("localhost", 1234, _loggerMock.Object);
         var isDisconnected = false;
-        
+
         // Act
         await tcpClient.ConnectAsync();
-        
+
         tcpClient.Disconnected += (sender, args) => isDisconnected = true;
         tcpClient.Close();
 
@@ -110,13 +110,12 @@ public class TcpClientTests
         tcpClient.IsConnected.Should().BeFalse();
         isDisconnected.Should().BeTrue();
     }
-    
 
     #endregion
 
 
     #region Tcp connector
-    
+
     private class TcpConnectorWrapper(Server server, ILogger logger)
         : TcpConnector(server, logger)
     {
@@ -125,7 +124,7 @@ public class TcpClientTests
         {
             return true;
         }
-    };
+    }
 
     [Fact]
     public async Task SendAndReceiveAsync_ShouldLogRequestAndResponse()
@@ -173,14 +172,14 @@ public class TcpClientTests
             IsReadingMessages = true;
             base.ReadStreamMessage();
         }
-        
+
         protected override bool ValidateServerCertificate(object sender, X509Certificate? certificate, X509Chain? chain,
             SslPolicyErrors sslPolicyErrors)
         {
             return true;
         }
     }
- 
+
     [Fact]
     public async Task ConnectAsync_ShouldStartReadingMessages()
     {
@@ -221,8 +220,6 @@ public class TcpClientTests
         _tcpStreamingConnector.TickReceived.Should().BeTrue();
         _loggerMock.Verify(logger => logger.Verbose("New stream message received {@message}", tickMessage), Times.Once);
     }
-    
-    #endregion
 
-  
+    #endregion
 }

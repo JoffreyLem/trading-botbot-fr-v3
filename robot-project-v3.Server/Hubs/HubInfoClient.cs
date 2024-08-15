@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using robot_project_v3.Server.Dto.Response;
+using robot_project_v3.Server.Dto;
 
 namespace robot_project_v3.Server.Hubs;
 

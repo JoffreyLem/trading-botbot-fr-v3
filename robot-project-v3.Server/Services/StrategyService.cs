@@ -1,9 +1,7 @@
 ﻿using System.Threading.Channels;
 using robot_project_v3.Database.Repositories;
 using robot_project_v3.Server.Command.Strategy;
-using robot_project_v3.Server.Dto.Request;
-using robot_project_v3.Server.Dto.Response;
-using RobotAppLibrary.Modeles;
+using robot_project_v3.Server.Dto;
 using ILogger = Serilog.ILogger;
 
 namespace robot_project_v3.Server.Services;
@@ -11,7 +9,6 @@ namespace robot_project_v3.Server.Services;
 public interface IStrategyService
 {
     Task InitStrategy(StrategyInitDto strategyInitDto);
-    Task<List<string>> GetListTimeframes();
     Task<List<StrategyInfoDto>> GetAllStrategy();
     Task CloseStrategy(string id);
     Task<StrategyInfoDto> GetStrategyInfo(string id);
@@ -36,16 +33,11 @@ public class StrategyService(
         var initStrategyCommand = new InitStrategyCommand
         {
             StrategyFileDto = strategyFile,
-            Symbol = strategyInitDto.Symbol,
+            Symbol = strategyInitDto.Symbol
         };
-        
+
         await channelStrategyWriter.WriteAsync(initStrategyCommand);
         await initStrategyCommand.ResponseSource.Task;
-    }
-
-    public Task<List<string>> GetListTimeframes()
-    {
-        return Task.FromResult(Enum.GetNames(typeof(Timeframe)).ToList());
     }
 
     public async Task<List<StrategyInfoDto>> GetAllStrategy()
@@ -54,7 +46,7 @@ public class StrategyService(
 
         await channelStrategyWriter.WriteAsync(allStrategyCommand);
 
-        return (await allStrategyCommand.ResponseSource.Task);
+        return await allStrategyCommand.ResponseSource.Task;
     }
 
     public async Task CloseStrategy(string id)
@@ -94,7 +86,7 @@ public class StrategyService(
 
         var result = await resultCommand.ResponseSource.Task;
 
-        return new GlobalResultsDto()
+        return new GlobalResultsDto
         {
             Positions = result.Positions,
             Result = result.Result,
@@ -118,11 +110,11 @@ public class StrategyService(
 
     public async Task<List<PositionDto>> GetOpenedPositions(string id)
     {
-        var command = new GetOpenedPositionCommand()
+        var command = new GetOpenedPositionCommand
         {
             Id = id
         };
-        
+
         await channelStrategyWriter.WriteAsync(command);
         return await command.ResponseSource.Task;
     }

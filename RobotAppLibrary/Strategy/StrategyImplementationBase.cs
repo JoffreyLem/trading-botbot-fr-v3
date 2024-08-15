@@ -10,14 +10,14 @@ public abstract class StrategyImplementationBase
 {
     internal Func<decimal, TypeOperation, decimal> CalculateStopLossFunc = null!;
     internal Func<decimal, TypeOperation, decimal> CalculateTakeProfitFunc = null!;
-    internal Func<TypeOperation, decimal,decimal, double, double, long,Task> OpenPositionAction = null!;
     public ILogger? Logger;
+    internal Func<TypeOperation, decimal, decimal, double, double, long, Task> OpenPositionAction = null!;
     public virtual string Name => GetType().Name;
     public abstract string? Version { get; }
-    public bool RunOnTick { get; set; } 
-    public bool UpdateOnTick { get; set; } 
-    public bool CloseOnTick { get; set; } 
-    
+    public bool RunOnTick { get; set; }
+    public bool UpdateOnTick { get; set; }
+    public bool CloseOnTick { get; set; }
+
     protected internal int DefaultSl { get; set; }
     protected internal int DefaultTp { get; set; }
 
@@ -38,7 +38,7 @@ public abstract class StrategyImplementationBase
     {
         return CalculateTakeProfitFunc.Invoke(pips, typePosition);
     }
-    
+
     public virtual bool ShouldUpdatePosition(Position position)
     {
         return false;

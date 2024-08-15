@@ -8,4 +8,4 @@ public class XtbApiProvider(ICommandExecutor commandExecutor, ILogger logger, Ti
     : ApiProviderBase(commandExecutor, logger, pingInterval)
 {
     public override ApiProviderEnum ApiProviderName => ApiProviderEnum.Xtb;
-};
+}

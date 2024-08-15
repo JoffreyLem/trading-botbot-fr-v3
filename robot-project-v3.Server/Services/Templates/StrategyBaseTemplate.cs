@@ -1,5 +1,7 @@
-﻿using RobotAppLibrary.Indicators;
+﻿using RobotAppLibrary.Chart;
+using RobotAppLibrary.Indicators;
 using RobotAppLibrary.Modeles;
+using RobotAppLibrary.Modeles.Attribute;
 using RobotAppLibrary.Strategy;
 
 namespace robot_project_v3.Server.Services.Templates;
@@ -11,10 +13,13 @@ public class StrategyBaseTemplate : StrategyImplementationBase
         RunOnTick = true;
         CloseOnTick = true;
     }
+    
+    [Timeframe(Timeframe.FifteenMinutes)] [MainChart]
+    public IChart Chart;
 
     public SarIndicator SarIndicator { get; set; } = new();
 
-    public override string? Version => "7";
+    public override string? Version => "test";
 
     public override void Run()
     {

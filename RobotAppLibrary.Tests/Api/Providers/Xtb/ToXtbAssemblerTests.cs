@@ -1,11 +1,9 @@
-﻿namespace RobotAppLibrary.Tests.Api.Providers.Xtb;
-
-using System;
+﻿using FluentAssertions;
 using RobotAppLibrary.Api.Providers.Xtb.Assembler;
-using Modeles;
 using RobotAppLibrary.Api.Providers.Xtb.Code;
-using Xunit;
-using FluentAssertions;
+using RobotAppLibrary.Modeles;
+
+namespace RobotAppLibrary.Tests.Api.Providers.Xtb;
 
 public class ToXtbAssemblerTests
 {
@@ -35,7 +33,8 @@ public class ToXtbAssemblerTests
     [InlineData(Timeframe.Daily, 1440L, -7)]
     [InlineData(Timeframe.Weekly, 10080L, -7)]
     [InlineData(Timeframe.Monthly, 43200L, -7)]
-    public void SetDateTime_ShouldReturnExpectedPeriodCodeAndDate(Timeframe timeframe, long expectedPeriodCode, int monthsToAdd)
+    public void SetDateTime_ShouldReturnExpectedPeriodCodeAndDate(Timeframe timeframe, long expectedPeriodCode,
+        int monthsToAdd)
     {
         var (periodCode, dateTime) = ToXtbAssembler.SetDateTime(timeframe);
         dateTime.Should().BeCloseTo(DateTime.Now.AddMonths(monthsToAdd), TimeSpan.FromDays(1));

@@ -27,7 +27,7 @@ public static class TestUtils
         {
             var open = (decimal)random.NextDouble() * 100;
             var close = (decimal)random.NextDouble() * 100;
-            var candle = new Candle()
+            var candle = new Candle
             {
                 Open = open,
                 Close = close,
@@ -49,23 +49,20 @@ public static class TestUtils
 
         return candles.Distinct().OrderBy(candle => candle.Date).ToList();
     }
-    
+
     public static List<Position> GeneratePositions(DateTime startDate)
     {
         var random = new Random();
         var positions = new List<Position>();
-        DateTime endDate = startDate.AddMonths(6);
+        var endDate = startDate.AddMonths(6);
 
-        for (DateTime date = startDate; date < endDate; date = date.AddDays(1))
-        {
+        for (var date = startDate; date < endDate; date = date.AddDays(1))
             positions.Add(new Position
             {
-                Profit = random.Next(-100, 101), 
+                Profit = random.Next(-100, 101),
                 DateClose = date
             });
-        }
 
         return positions;
     }
-
 }

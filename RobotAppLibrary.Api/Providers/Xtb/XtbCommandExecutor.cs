@@ -19,7 +19,7 @@ public class XtbCommandExecutor(
         var command = CommandCreator.CreateLoginCommand(credentials);
         var rsp = await TcpClient.SendAndReceiveAsync(command);
         var rspAdapter = ResponseAdapter.AdaptLoginResponse(rsp);
-        ((CommandCreatorXtb)CommandCreator).StreamingSessionId =((LoginResponseXtb)rspAdapter).StreamingSessionId;
+        ((CommandCreatorXtb)CommandCreator).StreamingSessionId = ((LoginResponseXtb)rspAdapter).StreamingSessionId;
         await TcpStreamingClient.ConnectAsync();
     }
 }

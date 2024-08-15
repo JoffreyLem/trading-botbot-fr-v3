@@ -3,4 +3,3 @@
 public class IsConnectedCommand : CommandBaseApi<bool>
 {
 }
-

@@ -2,11 +2,10 @@ namespace RobotAppLibrary.Api.Modeles;
 
 public class Server
 {
-
     public Server()
     {
-        
     }
+
     public Server(string address, int mainPort, int streamingPort, string description)
     {
         Address = address;

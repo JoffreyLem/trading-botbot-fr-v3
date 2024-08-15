@@ -2,7 +2,7 @@
 using AutoMapper;
 using robot_project_v3.Database.Modeles;
 using robot_project_v3.Database.Repositories;
-using robot_project_v3.Server.Dto.Response;
+using robot_project_v3.Server.Dto;
 using robot_project_v3.Server.Exceptions;
 using RobotAppLibrary.StrategyDynamicCompiler;
 using ILogger = Serilog.ILogger;
@@ -30,7 +30,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
     private readonly IStrategyFileRepository _strategyFileRepository = strategyFileRepository;
 
 
-      public async Task<StrategyCompilationResponseDto> CreateNewStrategy(string data)
+    public async Task<StrategyCompilationResponseDto> CreateNewStrategy(string data)
     {
         var strategyCreateRsp = new StrategyCompilationResponseDto();
         try
@@ -73,7 +73,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
             await _strategyFileRepository.AddAsync(strategyFile);
 
             strategyCreateRsp.Compiled = true;
-            strategyCreateRsp.StrategyFileDto = new StrategyFileDto()
+            strategyCreateRsp.StrategyFileDto = new StrategyFileDto
             {
                 Id = strategyFile.Id,
                 Data = Encoding.UTF8.GetString(strategyFile.Data),
@@ -93,7 +93,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
             strategyCreateRsp.Compiled = false;
             strategyCreateRsp.Errors = e.CompileErrors.Select(e => e.ToString()).ToList();
         }
-        catch (Exception e) 
+        catch (Exception e)
         {
             _logger?.Error(e, "An exception occurred while creating the new strategy");
             throw new ApiException("An exception occurred while creating the new strategy");
@@ -124,7 +124,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
         }
     }
 
-   public async Task<StrategyCompilationResponseDto> UpdateStrategyFile(int id, string data)
+    public async Task<StrategyCompilationResponseDto> UpdateStrategyFile(int id, string data)
     {
         var strategyCreateRsp = new StrategyCompilationResponseDto();
         try
@@ -169,7 +169,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
             await _strategyFileRepository.UpdateAsync(strategyFileSelected);
 
             strategyCreateRsp.Compiled = true;
-            strategyCreateRsp.StrategyFileDto = new StrategyFileDto()
+            strategyCreateRsp.StrategyFileDto = new StrategyFileDto
             {
                 Id = strategyFileSelected.Id,
                 Data = Encoding.UTF8.GetString(strategyFileSelected.Data),

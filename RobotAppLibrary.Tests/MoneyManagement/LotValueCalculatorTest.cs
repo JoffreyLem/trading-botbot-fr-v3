@@ -50,7 +50,7 @@ public class LotValueCalculatorTest
                 Symbol = "AUDUSD",
                 Currency = "AUD",
                 CurrencyProfit = "USD",
-                TickSize = 1,
+                TickSize = 1
             });
 
         apiHandlerMock.Setup(x => x.GetTickPriceAsync(It.IsAny<string>()))
@@ -67,7 +67,7 @@ public class LotValueCalculatorTest
                     Symbol = "EURUSD",
                     Currency = "EUR",
                     CurrencyProfit = "USD",
-                    TickSize = 1,
+                    TickSize = 1
                 }
             });
 
@@ -185,7 +185,7 @@ public class LotValueCalculatorTest
                 ContractSize = 25,
                 Category = Category.Indices,
                 Leverage = 5,
-                TickSize = 1,
+                TickSize = 1
             });
 
         apiHandlerMock.Setup(x => x.GetTickPriceAsync(It.IsAny<string>()))
@@ -214,7 +214,7 @@ public class LotValueCalculatorTest
                 CurrencyProfit = "USD",
                 ContractSize = 50,
                 Category = Category.Indices,
-                TickSize = 1,
+                TickSize = 1
             });
 
         apiHandlerMock.Setup(x => x.GetAllSymbolsAsync())
@@ -225,7 +225,7 @@ public class LotValueCalculatorTest
                     Symbol = "EURUSD",
                     Currency = "EUR",
                     CurrencyProfit = "USD",
-                    TickSize = 1,
+                    TickSize = 1
                 }
             });
 
@@ -258,7 +258,7 @@ public class LotValueCalculatorTest
                 CurrencyProfit = "USD",
                 ContractSize = 50,
                 Category = Category.Indices,
-                TickSize = 1,
+                TickSize = 1
             });
 
         apiHandlerMock.Setup(x => x.GetAllSymbolsAsync())
@@ -269,7 +269,7 @@ public class LotValueCalculatorTest
                     Symbol = "EURUSD",
                     Currency = "EUR",
                     CurrencyProfit = "USD",
-                    TickSize = 1,
+                    TickSize = 1
                 }
             });
 

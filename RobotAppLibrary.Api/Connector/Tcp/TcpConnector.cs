@@ -11,8 +11,11 @@ public interface ITcpConnector : IConnectorBase
     Task<string> SendAndReceiveAsync(string messageToSend, bool logResponse = true);
 }
 
-public class TcpConnector(Server server, ILogger logger) : TcpClientBase(server.Address, server.MainPort, logger), ITcpConnector
+public class TcpConnector(Server server, ILogger logger)
+    : TcpClientBase(server.Address, server.MainPort, logger), ITcpConnector
 {
+    private static readonly Regex PasswordRegex = new("\"password\":\".*?\"", RegexOptions.Compiled);
+    private static readonly Regex ApiKeyRegex = new("\"ApiKey\":\".*?\"", RegexOptions.Compiled);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     private long _lastCommandTimestamp;
 
@@ -28,10 +31,7 @@ public class TcpConnector(Server server, ILogger logger) : TcpClientBase(server.
             var currentTimestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             var interval = currentTimestamp - _lastCommandTimestamp;
 
-            if (interval < CommandTimeSpanmeSpace.Ticks)
-            {
-                await Task.Delay(CommandTimeSpanmeSpace - TimeSpan.FromMilliseconds(interval));
-            }
+            if (interval < CommandTimeSpanmeSpace.Ticks) await Task.Delay(CommandTimeSpanmeSpace);
 
             await SendAsync(messageToSend);
             _lastCommandTimestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
@@ -53,14 +53,10 @@ public class TcpConnector(Server server, ILogger logger) : TcpClientBase(server.
         }
     }
 
-    private static readonly Regex PasswordRegex = new Regex("\"password\":\".*?\"", RegexOptions.Compiled);
-    private static readonly Regex ApiKeyRegex = new Regex("\"ApiKey\":\".*?\"", RegexOptions.Compiled);
-
     private string FilterSensitiveData(string message)
     {
         message = PasswordRegex.Replace(message, "\"password\":\"****\"");
         message = ApiKeyRegex.Replace(message, "\"ApiKey\":\"****\"");
         return message;
     }
-
 }

@@ -1,4 +1,3 @@
-
 using RobotAppLibrary.Api.Providers.Base;
 using RobotAppLibrary.Chart;
 using RobotAppLibrary.Modeles;
@@ -12,7 +11,10 @@ public interface IStrategyServiceFactory
 {
     IStrategyResult GetStrategyResultService(IApiProviderBase apiHandler, string positionRefenrece);
     ILotValueCalculator GetLotValueCalculator(IApiProviderBase apiHandler, ILogger logger, string symbol);
-    IPositionHandler GetPositionHandler(ILogger logger, IApiProviderBase handler, string symbol, string positionReferene);
+
+    IPositionHandler GetPositionHandler(ILogger logger, IApiProviderBase handler, string symbol,
+        string positionReferene);
+
     IChart GetChart(ILogger logger, IApiProviderBase apiHandler, string symbol, Timeframe timeframe);
 }
 
@@ -31,7 +33,8 @@ public class StrategyServiceFactory : IStrategyServiceFactory
     public IPositionHandler GetPositionHandler(ILogger logger, IApiProviderBase handler, string symbol,
         string positionReferene)
     {
-        return new PositionHandler(logger, handler, symbol, positionReferene, new LotValueCalculator(handler,logger,symbol));
+        return new PositionHandler(logger, handler, symbol, positionReferene,
+            new LotValueCalculator(handler, logger, symbol));
     }
 
     public IChart GetChart(ILogger logger, IApiProviderBase apiHandler, string symbol, Timeframe timeframe)
