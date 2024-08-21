@@ -60,7 +60,7 @@ public class TcpServerMock : IDisposable
             await _sslStream.AuthenticateAsServerAsync(_certificate, false, false);
 
             using var reader = new StreamReader(_sslStream, Encoding.UTF8);
-            var buffer = new char[8192];
+            var buffer = new char[1024];
             var stringBuilder = new StringBuilder();
 
             try
@@ -75,7 +75,9 @@ public class TcpServerMock : IDisposable
                             var incomingMessage = stringBuilder.ToString();
                             Console.WriteLine("Received: " + incomingMessage);
 
-                            await _sslStream.WriteAsync(Encoding.UTF8.GetBytes("Ok\n"));
+                            var jsonResponse = "{\"status\": \"Ok\"}\n";
+                            await _sslStream.WriteAsync(Encoding.UTF8.GetBytes(jsonResponse));
+
 
                             stringBuilder.Clear();
                         }

@@ -34,9 +34,10 @@ public class XtbAdapterTests
                 }
             ]
         }";
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
 
         // Act
-        var result = _xtbAdapter.AdaptAllSymbolsResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptAllSymbolsResponse(jsonDoc);
 
         // Assert
         result.Should().NotBeNull();
@@ -83,9 +84,9 @@ public class XtbAdapterTests
                 }
             ]
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptCalendarResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptCalendarResponse(jsonDoc);
 
         // Assert
         result.Should().HaveCount(2);
@@ -142,10 +143,10 @@ public class XtbAdapterTests
                 ]
             }
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
 
         // Act
-        var result = _xtbAdapter.AdaptFullChartResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptFullChartResponse(jsonDoc);
 
         // Assert
         result.Should().HaveCount(2);
@@ -199,9 +200,9 @@ public class XtbAdapterTests
             }
         }";
 
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptRangeChartResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptRangeChartResponse(jsonDoc);
 
         // Assert
         result.Should().HaveCount(2);
@@ -230,9 +231,9 @@ public class XtbAdapterTests
     {
         // Arrange
         var jsonResponse = "{ \"status\": \"success\" }"; // Example JSON response
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptLogOutResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptLogOutResponse(jsonDoc);
 
         // Assert
         result.Should().BeEmpty();
@@ -254,9 +255,9 @@ public class XtbAdapterTests
                 ""balance"": 11500.0
             }
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptBalanceAccountResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptBalanceAccountResponse(jsonDoc);
 
         // Assert
         result.Should().BeEquivalentTo(new AccountBalance
@@ -291,9 +292,9 @@ public class XtbAdapterTests
                                        ]
                                    }
                            """;
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptNewsResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptNewsResponse(jsonDoc);
 
         // Assert
         result.Should().HaveCount(2);
@@ -315,20 +316,20 @@ public class XtbAdapterTests
     public void AdaptCurrentUserDataResponse_ThrowsNotImplementedException()
     {
         // Arrange
-        var jsonResponse = "{ /* your JSON here */ }";
-
+        var jsonResponse = "{ \"status\": true }";
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act & Assert
-        Assert.Throws<NotImplementedException>(() => _xtbAdapter.AdaptCurrentUserDataResponse(jsonResponse));
+        Assert.Throws<NotImplementedException>(() => _xtbAdapter.AdaptCurrentUserDataResponse(jsonDoc));
     }
 
     [Fact]
     public void AdaptCurrentUserDataResponse_AlwaysThrowsNotImplementedException()
     {
         // Arrange
-        var jsonResponse = "some JSON response";
-
+        var jsonResponse = "{ \"status\": true }";
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act & Assert
-        FluentActions.Invoking(() => _xtbAdapter.AdaptCurrentUserDataResponse(jsonResponse))
+        FluentActions.Invoking(() => _xtbAdapter.AdaptCurrentUserDataResponse(jsonDoc))
             .Should().Throw<NotImplementedException>();
     }
 
@@ -337,9 +338,9 @@ public class XtbAdapterTests
     {
         // Arrange
         var validJsonResponse = "{ \"status\": true }";
-
+        var jsonDoc = JsonDocument.Parse(validJsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptPingResponse(validJsonResponse);
+        var result = _xtbAdapter.AdaptPingResponse(jsonDoc);
 
         // Assert
         result.Should().BeTrue();
@@ -365,9 +366,9 @@ public class XtbAdapterTests
             ""leverage"": 100.0
         }
     }";
-
+        var jsonDoc = JsonDocument.Parse(validJsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptSymbolResponse(validJsonResponse);
+        var result = _xtbAdapter.AdaptSymbolResponse(jsonDoc);
 
         // Assert
         result.Should().NotBeNull();
@@ -401,9 +402,9 @@ public class XtbAdapterTests
             ]
         }
     }";
-
+        var jsonDoc = JsonDocument.Parse(validJsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptTickResponse(validJsonResponse);
+        var result = _xtbAdapter.AdaptTickResponse(jsonDoc);
 
         // Assert
         result.Should().NotBeNull();
@@ -445,9 +446,9 @@ public class XtbAdapterTests
             }
         ]
     }";
-
+        var jsonDoc = JsonDocument.Parse(apiResponse);
         // Act
-        var result = xtbAdapter.AdaptTradesHistoryResponse(apiResponse, positionReference);
+        var result = xtbAdapter.AdaptTradesHistoryResponse(jsonDoc, positionReference);
 
         // Assert
         var expectedPosition = new Position
@@ -504,9 +505,9 @@ public class XtbAdapterTests
             }
         ]
     }";
-
+        var jsonDoc = JsonDocument.Parse(apiResponse);
         // Act
-        var result = xtbAdapter.AdaptTradesOpenedTradesResponse(apiResponse, positionReference);
+        var result = xtbAdapter.AdaptTradesOpenedTradesResponse(jsonDoc, positionReference);
 
         // Assert
         var expectedPosition = new Position
@@ -538,9 +539,9 @@ public class XtbAdapterTests
         // Arrange
         var adapter = new XtbAdapter();
         var jsonResponse = "{ \"returnData\": [ { \"trading\": [ { \"day\": 1, \"fromT\": 0, \"toT\": 1 } ] } ] }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = adapter.AdaptTradingHoursResponse(jsonResponse);
+        var result = adapter.AdaptTradingHoursResponse(jsonDoc);
 
         // Assert
         Assert.NotNull(result);
@@ -561,9 +562,9 @@ public class XtbAdapterTests
         var adapter = new XtbAdapter();
         var jsonResponse =
             "{ \"returnData\": [ { \"trading\": [ { \"day\": 1, \"fromT\": 63000000, \"toT\": 63000000 } ] } ] }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = adapter.AdaptTradingHoursResponse(jsonResponse);
+        var result = adapter.AdaptTradingHoursResponse(jsonDoc);
 
         // Assert
         result.Should().NotBeNull().And.BeOfType<TradeHourRecord>();
@@ -581,10 +582,10 @@ public class XtbAdapterTests
     public void AdaptOpenTradeResponse_ShouldReturnExpectedPosition(string jsonResponse, string expectedOrder)
     {
         // Arrange
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
 
         // Act
-        var result = _xtbAdapter.AdaptOpenTradeResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptOpenTradeResponse(jsonDoc);
 
         // Assert
         result.Order.Should().Be(expectedOrder);
@@ -595,9 +596,9 @@ public class XtbAdapterTests
     public void AdaptUpdateTradeResponse_ShouldReturnExpectedPosition(string jsonResponse, string expectedOrder)
     {
         // Arrange
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptUpdateTradeResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptUpdateTradeResponse(jsonDoc);
 
         // Assert
         result.Order.Should().Be(expectedOrder);
@@ -608,10 +609,10 @@ public class XtbAdapterTests
     public void AdaptCloseTradeResponse_ShouldReturnExpectedPosition(string jsonResponse, string expectedOrder)
     {
         // Arrange
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
 
         // Act
-        var result = _xtbAdapter.AdaptCloseTradeResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptCloseTradeResponse(jsonDoc);
 
         // Assert
         result.Order.Should().Be(expectedOrder);
@@ -644,9 +645,9 @@ public class XtbAdapterTests
                 ""customComment"": ""strategy1|trade123""
             }
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptTradeRecordStreaming(jsonResponse);
+        var result = _xtbAdapter.AdaptTradeRecordStreaming(jsonDoc);
 
         // Assert
         result.Should().BeEquivalentTo(new Position
@@ -695,9 +696,9 @@ public class XtbAdapterTests
                 ""customComment"": ""strategy1|trade123""
             }
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptTradeRecordStreaming(jsonResponse);
+        var result = _xtbAdapter.AdaptTradeRecordStreaming(jsonDoc);
 
         // Assert
         result.Should().BeEquivalentTo(new Position
@@ -746,9 +747,9 @@ public class XtbAdapterTests
                 ""customComment"": ""strategy1|trade123""
             }
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptTradeRecordStreaming(jsonResponse);
+        var result = _xtbAdapter.AdaptTradeRecordStreaming(jsonDoc);
 
         // Assert
         result.Should().BeEquivalentTo(new Position
@@ -787,9 +788,9 @@ public class XtbAdapterTests
                 ""timestamp"": 1625097600000
             }
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptTickRecordStreaming(jsonResponse);
+        var result = _xtbAdapter.AdaptTickRecordStreaming(jsonDoc);
 
         // Assert
         result.Should().BeEquivalentTo(new Tick
@@ -819,9 +820,9 @@ public class XtbAdapterTests
                 ""balance"": 11500.0
             }
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptBalanceRecordStreaming(jsonResponse);
+        var result = _xtbAdapter.AdaptBalanceRecordStreaming(jsonDoc);
 
         // Assert
         result.Should().BeEquivalentTo(new AccountBalance
@@ -848,9 +849,9 @@ public class XtbAdapterTests
     {
         // Arrange
 
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptTradeStatusRecordStreaming(jsonResponse);
+        var result = _xtbAdapter.AdaptTradeStatusRecordStreaming(jsonDoc);
 
         // Assert
         result.Order.Should().Be(expectedOrder);
@@ -870,9 +871,9 @@ public class XtbAdapterTests
                 ""profit"": 150.25
             }
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptProfitRecordStreaming(jsonResponse);
+        var result = _xtbAdapter.AdaptProfitRecordStreaming(jsonDoc);
 
         // Assert
         result.Should().BeEquivalentTo(new Position
@@ -896,9 +897,9 @@ public class XtbAdapterTests
                 ""title"": ""Breaking news title""
             }
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptNewsRecordStreaming(jsonResponse);
+        var result = _xtbAdapter.AdaptNewsRecordStreaming(jsonDoc);
 
         // Assert
         result.Should().BeEquivalentTo(new News
@@ -924,9 +925,9 @@ public class XtbAdapterTests
                 ""volume"": 1000
             }
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        Action act = () => _xtbAdapter.AdaptCandleRecordStreaming(jsonResponse);
+        Action act = () => _xtbAdapter.AdaptCandleRecordStreaming(jsonDoc);
 
         // Assert
         act.Should().Throw<NotImplementedException>();
@@ -941,9 +942,9 @@ public class XtbAdapterTests
             ""streamSessionId"": ""session123""
         }";
 
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        var result = _xtbAdapter.AdaptLoginResponse(jsonResponse);
+        var result = _xtbAdapter.AdaptLoginResponse(jsonDoc);
 
         // Assert
         result.Should().BeEquivalentTo(new LoginResponseXtb
@@ -960,9 +961,9 @@ public class XtbAdapterTests
         {
             ""streamSessionId"": null
         }";
-
+        var jsonDoc = JsonDocument.Parse(jsonResponse);
         // Act
-        Action act = () => _xtbAdapter.AdaptLoginResponse(jsonResponse);
+        Action act = () => _xtbAdapter.AdaptLoginResponse(jsonDoc);
 
         // Assert
         act.Should().Throw<ApiProvidersException>().WithMessage("Can't get the stream session id");

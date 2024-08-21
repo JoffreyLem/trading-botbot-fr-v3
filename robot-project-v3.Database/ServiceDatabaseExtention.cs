@@ -25,9 +25,9 @@ public static class ServiceDatabaseExtension
                             null))
                 .LogTo(message =>
                 {
-                    Log.Logger.Information(message);
+                    Log.Logger.Error(message);
                     Console.WriteLine(message);
-                }, LogLevel.Information)
+                }, LogLevel.Error)
                 .EnableDetailedErrors());
 
         services.AddSingleton<IStrategyFileRepository, StrategyFileRepository>();

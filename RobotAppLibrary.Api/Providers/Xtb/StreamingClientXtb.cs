@@ -10,12 +10,11 @@ namespace RobotAppLibrary.Api.Providers.Xtb;
 public class StreamingClientXtb(Server server, ILogger logger, IReponseAdapter adapter)
     : TcpStreamingConnector(server, logger)
 {
-    protected override void HandleMessage(string message)
+    protected override void HandleMessage(JsonDocument message)
     {
         try
         {
-            using var doc = JsonDocument.Parse(message);
-            var root = doc.RootElement;
+            var root = message.RootElement;
             var commandName = root.GetProperty("command").GetString();
 
             switch (commandName)

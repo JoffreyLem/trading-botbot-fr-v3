@@ -1,3 +1,4 @@
+using System.Text.Json;
 using RobotAppLibrary.Api.Connector.Tcp;
 using RobotAppLibrary.Api.Executor;
 using RobotAppLibrary.Api.Modeles;
@@ -17,7 +18,7 @@ public class XtbCommandExecutor(
     {
         await TcpClient.ConnectAsync();
         var command = CommandCreator.CreateLoginCommand(credentials);
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         var rspAdapter = ResponseAdapter.AdaptLoginResponse(rsp);
         ((CommandCreatorXtb)CommandCreator).StreamingSessionId = ((LoginResponseXtb)rspAdapter).StreamingSessionId;
         await TcpStreamingClient.ConnectAsync();

@@ -322,6 +322,11 @@ public class CommandHandler(
         {
             throw;
         }
+        finally
+        {
+            //TODO : Temporaire voir pour supprimer plus tard.
+            GC.Collect();
+        }
     }
 
     private void GetStrategyInfo(GetStrategyInfoCommand getStrategyInfoCommand, IStrategyBase strategy)

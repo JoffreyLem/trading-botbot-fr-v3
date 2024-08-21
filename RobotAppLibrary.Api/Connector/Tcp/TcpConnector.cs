@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using RobotAppLibrary.Api.Connector.Exceptions;
 using RobotAppLibrary.Api.Interfaces;
@@ -8,7 +9,7 @@ namespace RobotAppLibrary.Api.Connector.Tcp;
 
 public interface ITcpConnector : IConnectorBase
 {
-    Task<string> SendAndReceiveAsync(string messageToSend, bool logResponse = true);
+    Task<JsonDocument?> SendAndReceiveAsync(string messageToSend, bool logResponse = true);
 }
 
 public class TcpConnector(Server server, ILogger logger)
@@ -19,25 +20,25 @@ public class TcpConnector(Server server, ILogger logger)
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     private long _lastCommandTimestamp;
 
-    public async Task<string> SendAndReceiveAsync(string messageToSend, bool logResponse = true)
+    public async Task<JsonDocument?> SendAndReceiveAsync(string messageToSend, bool logResponse = true)
     {
         await _semaphore.WaitAsync();
         var tcpLog = new TcpLog
         {
-            RequestMessage = FilterSensitiveData(messageToSend)
+            RequestMessage = messageToSend
         };
         try
         {
             var currentTimestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             var interval = currentTimestamp - _lastCommandTimestamp;
 
-            if (interval < CommandTimeSpanmeSpace.Ticks) await Task.Delay(CommandTimeSpanmeSpace);
+            if (interval < CommandTimeSpanmeSpace.Ticks) await Task.Delay(CommandTimeSpanmeSpace).ConfigureAwait(false);
 
-            await SendAsync(messageToSend);
+            await SendAsync(messageToSend).ConfigureAwait(false);
             _lastCommandTimestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
-            var response = await ReceiveAsync();
-            tcpLog.ResponseMessage = logResponse ? FilterSensitiveData(response) : "Response not logged";
+            var response =  await ReceiveAsync();
+            tcpLog.ResponseMessage = logResponse ? response : null;
 
             return response;
         }
@@ -53,10 +54,4 @@ public class TcpConnector(Server server, ILogger logger)
         }
     }
 
-    private string FilterSensitiveData(string message)
-    {
-        message = PasswordRegex.Replace(message, "\"password\":\"****\"");
-        message = ApiKeyRegex.Replace(message, "\"ApiKey\":\"****\"");
-        return message;
-    }
 }

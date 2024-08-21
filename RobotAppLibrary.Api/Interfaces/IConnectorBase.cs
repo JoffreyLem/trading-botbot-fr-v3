@@ -1,4 +1,6 @@
-﻿namespace RobotAppLibrary.Api.Interfaces;
+﻿using System.Text.Json;
+
+namespace RobotAppLibrary.Api.Interfaces;
 
 public interface IConnectorBase : IConnectionEvent
 {
@@ -6,6 +8,6 @@ public interface IConnectorBase : IConnectionEvent
     void Dispose();
     Task ConnectAsync();
     Task SendAsync(string messageToSend);
-    Task<string> ReceiveAsync(CancellationToken cancellationToken = default);
+    Task<JsonDocument?> ReceiveAsync(CancellationToken cancellationToken = default);
     void Close();
 }

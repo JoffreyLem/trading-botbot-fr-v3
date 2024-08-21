@@ -1,3 +1,4 @@
+using System.Text.Json;
 using RobotAppLibrary.Api.Connector.Tcp;
 using RobotAppLibrary.Api.Interfaces;
 using RobotAppLibrary.Api.Modeles;

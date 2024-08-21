@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿using System.Text.Json;
+using FluentAssertions;
 using Moq;
 using RobotAppLibrary.Api.Connector.Tcp;
 using RobotAppLibrary.Api.Executor;
@@ -175,10 +176,11 @@ public class TcpCommandExecutorTests
     public async Task ExecuteLoginCommand_ShouldConnectAndSendCommand()
     {
         // Arrange
+
         var credentials = new Credentials();
         _commandCreatorMock.Setup(m => m.CreateLoginCommand(credentials)).Returns(CommandMock);
         _tcpConnectorMock.Setup(m => m.ConnectAsync()).Returns(Task.CompletedTask);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(CommandMock, It.IsAny<bool>())).Returns(Task.FromResult(""));
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(CommandMock, It.IsAny<bool>())).ReturnsAsync(JsonDocument.Parse("{\"property\":\"value\"}"));
         _tcpStreamingConnectorMock.Setup(m => m.ConnectAsync()).Returns(Task.CompletedTask);
 
         // Act
@@ -197,7 +199,7 @@ public class TcpCommandExecutorTests
         // Arrange
         var commandMock = "command";
         _commandCreatorMock.Setup(m => m.CreateLogOutCommand()).Returns(commandMock);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(commandMock, It.IsAny<bool>())).Returns(Task.FromResult(""));
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(commandMock, It.IsAny<bool>())).ReturnsAsync(JsonDocument.Parse("{\"property\":\"value\"}"));
 
         // Act
         await _tcpCommandExecutor.ExecuteLogoutCommand();
@@ -215,10 +217,10 @@ public class TcpCommandExecutorTests
         var command = "command";
         var response = "response";
         var symbols = new List<SymbolInfo>();
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
         _commandCreatorMock.Setup(m => m.CreateAllSymbolsCommand()).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, false)).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptAllSymbolsResponse(response)).Returns(symbols);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, false)).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptAllSymbolsResponse(jsonDoc)).Returns(symbols);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteAllSymbolsCommand();
@@ -226,7 +228,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateAllSymbolsCommand(), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, false), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptAllSymbolsResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptAllSymbolsResponse(jsonDoc), Times.Once);
         result.Should().BeEquivalentTo(symbols);
     }
 
@@ -237,10 +239,11 @@ public class TcpCommandExecutorTests
         var command = "command"; // Remplacez par votre classe réelle de commande
         var response = "response"; // Remplacez par votre type de réponse réelle
         var events = new List<CalendarEvent>(); // Remplacez par votre classe réelle de calendar event
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
+        
         _commandCreatorMock.Setup(m => m.CreateCalendarCommand()).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptCalendarResponse(response)).Returns(events);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptCalendarResponse(jsonDoc)).Returns(events);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteCalendarCommand();
@@ -248,7 +251,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateCalendarCommand(), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptCalendarResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptCalendarResponse(jsonDoc), Times.Once);
         result.Should().BeEquivalentTo(events);
     }
 
@@ -263,10 +266,10 @@ public class TcpCommandExecutorTests
         var timeframe = new Timeframe(); // Remplacez par votre classe réelle de timeframe
         var start = DateTime.UtcNow;
         var symbol = "symbol";
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
         _commandCreatorMock.Setup(m => m.CreateFullChartCommand(timeframe, start, symbol)).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, false)).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptFullChartResponse(response)).Returns(candles);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, false)).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptFullChartResponse(jsonDoc)).Returns(candles);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteFullChartCommand(timeframe, start, symbol);
@@ -274,7 +277,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateFullChartCommand(timeframe, start, symbol), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, false), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptFullChartResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptFullChartResponse(jsonDoc), Times.Once);
         result.Should().BeEquivalentTo(candles);
     }
 
@@ -290,10 +293,11 @@ public class TcpCommandExecutorTests
         var start = DateTime.UtcNow;
         var end = DateTime.UtcNow.AddHours(1);
         var symbol = "symbol";
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
+        
         _commandCreatorMock.Setup(m => m.CreateRangeChartCommand(timeframe, start, end, symbol)).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, false)).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptRangeChartResponse(response)).Returns(candles);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, false)).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptRangeChartResponse(jsonDoc)).Returns(candles);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteRangeChartCommand(timeframe, start, end, symbol);
@@ -301,7 +305,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateRangeChartCommand(timeframe, start, end, symbol), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, false), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptRangeChartResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptRangeChartResponse(jsonDoc), Times.Once);
         result.Should().BeEquivalentTo(candles);
     }
 
@@ -312,10 +316,10 @@ public class TcpCommandExecutorTests
         var command = "Command"; // Remplacez par votre classe réelle de commande
         var response = "response"; // Remplacez par votre type de réponse réelle
         var balance = new AccountBalance(); // Remplacez par votre classe réelle de account balance
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
         _commandCreatorMock.Setup(m => m.CreateBalanceAccountCommand()).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptBalanceAccountResponse(response)).Returns(balance);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptBalanceAccountResponse(jsonDoc)).Returns(balance);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteBalanceAccountCommand();
@@ -323,7 +327,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateBalanceAccountCommand(), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptBalanceAccountResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptBalanceAccountResponse(jsonDoc), Times.Once);
         result.Should().Be(balance);
     }
 
@@ -337,10 +341,10 @@ public class TcpCommandExecutorTests
 
         DateTime? start = DateTime.UtcNow.AddDays(-1);
         DateTime? end = DateTime.UtcNow;
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
         _commandCreatorMock.Setup(m => m.CreateNewsCommand(start, end)).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptNewsResponse(response)).Returns(news);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptNewsResponse(jsonDoc)).Returns(news);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteNewsCommand(start, end);
@@ -348,7 +352,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateNewsCommand(start, end), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptNewsResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptNewsResponse(jsonDoc), Times.Once);
         result.Should().BeEquivalentTo(news);
     }
 
@@ -359,10 +363,10 @@ public class TcpCommandExecutorTests
         var command = "Command"; // Remplacez par votre classe réelle de commande
         var response = "response"; // Remplacez par votre type de réponse réelle
         var userData = "user data"; // Remplacez par votre type de user data
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
         _commandCreatorMock.Setup(m => m.CreateCurrentUserDataCommand()).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptCurrentUserDataResponse(response)).Returns(userData);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptCurrentUserDataResponse(jsonDoc)).Returns(userData);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteCurrentUserDataCommand();
@@ -370,7 +374,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateCurrentUserDataCommand(), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptCurrentUserDataResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptCurrentUserDataResponse(jsonDoc), Times.Once);
         result.Should().Be(userData);
     }
 
@@ -381,10 +385,10 @@ public class TcpCommandExecutorTests
         var command = "Command"; // Remplacez par votre classe réelle de commande
         var response = "response"; // Remplacez par votre type de réponse réelle
         var pingResponse = true; // Remplacez par votre type de ping response
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
         _commandCreatorMock.Setup(m => m.CreatePingCommand()).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptPingResponse(response)).Returns(pingResponse);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptPingResponse(jsonDoc)).Returns(pingResponse);
 
         // Act
         var result = await _tcpCommandExecutor.ExecutePingCommand();
@@ -392,7 +396,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreatePingCommand(), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptPingResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptPingResponse(jsonDoc), Times.Once);
         result.Should().Be(pingResponse);
     }
 
@@ -408,10 +412,10 @@ public class TcpCommandExecutorTests
             TickSize = 1
         }; // Remplacez par votre classe réelle de symbol info
         var symbol = "symbol";
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
         _commandCreatorMock.Setup(m => m.CreateSymbolCommand(symbol)).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptSymbolResponse(response)).Returns(symbolInfo);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptSymbolResponse(jsonDoc)).Returns(symbolInfo);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteSymbolCommand(symbol);
@@ -419,7 +423,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateSymbolCommand(symbol), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptSymbolResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptSymbolResponse(jsonDoc), Times.Once);
         result.Should().Be(symbolInfo);
     }
 
@@ -431,10 +435,10 @@ public class TcpCommandExecutorTests
         var response = "response"; // Remplacez par votre type de réponse réelle
         var tick = new Tick(); // Remplacez par votre classe réelle de tick
         var symbol = "symbol";
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
         _commandCreatorMock.Setup(m => m.CreateTickCommand(symbol)).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptTickResponse(response)).Returns(tick);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptTickResponse(jsonDoc)).Returns(tick);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteTickCommand(symbol);
@@ -442,7 +446,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateTickCommand(symbol), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptTickResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptTickResponse(jsonDoc), Times.Once);
         result.Should().Be(tick);
     }
 
@@ -454,10 +458,11 @@ public class TcpCommandExecutorTests
         var response = "response"; // Remplacez par votre type de réponse réelle
         var trades = new List<Position>(); // Remplacez par votre classe réelle de position
         var tradeCom = "tradeCom";
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
+        
         _commandCreatorMock.Setup(m => m.CreateTradesHistoryCommand()).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, false)).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptTradesHistoryResponse(response, tradeCom)).Returns(trades);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, false)).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptTradesHistoryResponse(jsonDoc, tradeCom)).Returns(trades);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteTradesHistoryCommand(tradeCom);
@@ -465,7 +470,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateTradesHistoryCommand(), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, false), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptTradesHistoryResponse(response, tradeCom), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptTradesHistoryResponse(jsonDoc, tradeCom), Times.Once);
         result.Should().BeEquivalentTo(trades);
     }
 
@@ -477,10 +482,11 @@ public class TcpCommandExecutorTests
         var response = "response"; // Remplacez par votre type de réponse réelle
         var trade = new Position(); // Remplacez par votre classe réelle de position
         var tradeCom = "tradeCom";
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
+        
         _commandCreatorMock.Setup(m => m.CreateTradesOpenedTradesCommand()).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, false)).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptTradesOpenedTradesResponse(response, tradeCom)).Returns(trade);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, false)).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptTradesOpenedTradesResponse(jsonDoc, tradeCom)).Returns(trade);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteTradesOpenedTradesCommand(tradeCom);
@@ -488,7 +494,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateTradesOpenedTradesCommand(), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, false), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptTradesOpenedTradesResponse(response, tradeCom), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptTradesOpenedTradesResponse(jsonDoc, tradeCom), Times.Once);
         result.Should().Be(trade);
     }
 
@@ -500,10 +506,11 @@ public class TcpCommandExecutorTests
         var response = "response"; // Remplacez par votre type de réponse réelle
         var tradingHours = new TradeHourRecord(); // Remplacez par votre classe réelle de trading hours
         var symbol = "symbol";
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
+        
         _commandCreatorMock.Setup(m => m.CreateTradingHoursCommand(symbol)).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptTradingHoursResponse(response)).Returns(tradingHours);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptTradingHoursResponse(jsonDoc)).Returns(tradingHours);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteTradingHoursCommand(symbol);
@@ -511,7 +518,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateTradingHoursCommand(symbol), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptTradingHoursResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptTradingHoursResponse(jsonDoc), Times.Once);
         result.Should().Be(tradingHours);
     }
 
@@ -523,10 +530,11 @@ public class TcpCommandExecutorTests
         var response = "response"; // Remplacez par votre type de réponse réelle
         var position = new Position(); // Remplacez par votre classe réelle de position
         var price = 123.45m;
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
+        
         _commandCreatorMock.Setup(m => m.CreateOpenTradeCommande(position, price)).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptOpenTradeResponse(response)).Returns(position);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptOpenTradeResponse(jsonDoc)).Returns(position);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteOpenTradeCommand(position, price);
@@ -534,7 +542,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateOpenTradeCommande(position, price), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptOpenTradeResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptOpenTradeResponse(jsonDoc), Times.Once);
         result.Should().Be(position);
     }
 
@@ -546,10 +554,11 @@ public class TcpCommandExecutorTests
         var response = "response"; // Remplacez par votre type de réponse réelle
         var position = new Position(); // Remplacez par votre classe réelle de position
         var price = 123.45m;
-
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
+        
         _commandCreatorMock.Setup(m => m.CreateUpdateTradeCommande(position, price)).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptUpdateTradeResponse(response)).Returns(position);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptUpdateTradeResponse(jsonDoc)).Returns(position);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteUpdateTradeCommand(position, price);
@@ -557,7 +566,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateUpdateTradeCommande(position, price), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptUpdateTradeResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptUpdateTradeResponse(jsonDoc), Times.Once);
         result.Should().Be(position);
     }
 
@@ -569,10 +578,11 @@ public class TcpCommandExecutorTests
         var response = "response"; // Remplacez par votre type de réponse réelle
         var position = new Position(); // Remplacez par votre classe réelle de position
         var price = 123.45m;
+        var jsonDoc = JsonDocument.Parse("{\"property\":\"value\"}");
 
         _commandCreatorMock.Setup(m => m.CreateCloseTradeCommande(position, price)).Returns(command);
-        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(response);
-        _responseAdapterMock.Setup(m => m.AdaptCloseTradeResponse(response)).Returns(position);
+        _tcpConnectorMock.Setup(m => m.SendAndReceiveAsync(command, It.IsAny<bool>())).ReturnsAsync(jsonDoc);
+        _responseAdapterMock.Setup(m => m.AdaptCloseTradeResponse(jsonDoc)).Returns(position);
 
         // Act
         var result = await _tcpCommandExecutor.ExecuteCloseTradeCommand(position, price);
@@ -580,7 +590,7 @@ public class TcpCommandExecutorTests
         // Assert
         _commandCreatorMock.Verify(m => m.CreateCloseTradeCommande(position, price), Times.Once);
         _tcpConnectorMock.Verify(m => m.SendAndReceiveAsync(command, true), Times.Once);
-        _responseAdapterMock.Verify(m => m.AdaptCloseTradeResponse(response), Times.Once);
+        _responseAdapterMock.Verify(m => m.AdaptCloseTradeResponse(jsonDoc), Times.Once);
         result.Should().Be(position);
     }
 

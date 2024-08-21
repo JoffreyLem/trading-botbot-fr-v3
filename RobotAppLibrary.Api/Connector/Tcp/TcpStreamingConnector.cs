@@ -1,3 +1,4 @@
+using System.Text.Json;
 using RobotAppLibrary.Api.Interfaces;
 using RobotAppLibrary.Api.Modeles;
 using RobotAppLibrary.Modeles;
@@ -23,29 +24,30 @@ public abstract class TcpStreamingConnector(Server server, ILogger logger)
     public override async Task ConnectAsync()
     {
         await base.ConnectAsync();
-
-        var t = new Thread(() =>
+        
+        _ = Task.Run(async () =>
         {
-            while (IsConnected) ReadStreamMessage();
+            while (IsConnected) 
+            {
+                await ReadStreamMessage();
+            }
         });
-
-        t.Start();
     }
 
-    public override Task SendAsync(string messageToSend)
+    public override async Task SendAsync(string messageToSend)
     {
         Logger.Information("Streaming message to send {Message}", messageToSend);
-        return base.SendAsync(messageToSend);
+        await base.SendAsync(messageToSend).ConfigureAwait(false);
     }
 
-    protected abstract void HandleMessage(string message);
+    protected abstract void HandleMessage(JsonDocument message);
 
-    protected virtual void ReadStreamMessage()
+    protected virtual async Task ReadStreamMessage()
     {
         try
         {
-            var message = ReceiveAsync().Result;
-            if (!string.IsNullOrEmpty(message))
+            using var message = await ReceiveAsync().ConfigureAwait(false);
+            if (message is not null)
             {
                 Logger.Verbose("New stream message received {@message}", message);
                 HandleMessage(message);

@@ -1,8 +1,11 @@
+using System.Buffers;
+using System.IO.Pipelines;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.Json;
 using RobotAppLibrary.Api.Connector.Exceptions;
 using RobotAppLibrary.Api.Interfaces;
 using Serilog;
@@ -105,35 +108,54 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
         }
     }
 
-    public async Task<string> ReceiveAsync(CancellationToken cancellationToken = default)
+    public async Task<JsonDocument?> ReceiveAsync(CancellationToken cancellationToken = default)
     {
-        var result = new StringBuilder();
-
-        try
-        {
-            while (!cancellationToken.IsCancellationRequested &&
-                   await _apiReadStream.ReadLineAsync(cancellationToken) is { } line)
+        var pipeReader = PipeReader.Create(_stream);
+    
+            var delimiter = "\n\n"u8.ToArray();
+         
+            while (true)
             {
-                result.Append(line);
+                ReadResult result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
+                ReadOnlySequence<byte> buffer = result.Buffer;
 
-                if (string.IsNullOrEmpty(line) && result.Length > 0 && result[^1] == '}')
+                while (true)
+                {
+        
+                    var position = buffer.PositionOf((byte)'\n');
+
+                    if (position != null)
+                    {
+                        try
+                        {
+                            var data=JsonDocument.Parse(buffer);
+                            var next = buffer.GetPosition(delimiter.Length, position.Value);
+                            pipeReader.AdvanceTo(next);
+                            return data;
+                        }
+                        catch (Exception e)
+                        {
+                            string bufferText = Encoding.UTF8.GetString(buffer.ToArray());
+                            Logger.Error(e, $"An error occurred on response receive TCP. Buffer content: {bufferText}");
+                            await pipeReader.CompleteAsync().ConfigureAwait(false);
+                            return null;
+                        }
+                    }
+
                     break;
+                }
+
+                pipeReader.AdvanceTo(buffer.Start, buffer.End);
+
+                if (result.IsCompleted)
+                {
+                    break;
+                }
             }
-
-            return result.ToString();
-        }
-        catch (OperationCanceledException)
-        {
-            Close();
-            throw new TimeoutException("The operation has timed out.");
-        }
-        catch (Exception ex)
-        {
-            Close();
-            throw new ApiCommunicationException("Disconnected from server: " + ex.Message, ex);
-        }
+            await pipeReader.CompleteAsync().ConfigureAwait(false);
+            return null;
+      
     }
-
     public void Close()
     {
         if (IsConnected)

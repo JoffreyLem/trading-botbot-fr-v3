@@ -53,7 +53,7 @@ public class Chart : List<Candle>, IChart
 
     public bool IsReadOnly => false;
 
-    public Tick LastPrice { get; private set; } = null!;
+    public Tick LastPrice { get; private set; }
 
     public event Func<Tick, Task>? OnTickEvent;
     public event Func<Candle, Task>? OnCandleEvent;

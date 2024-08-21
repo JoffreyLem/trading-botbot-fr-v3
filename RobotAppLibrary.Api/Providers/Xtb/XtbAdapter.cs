@@ -12,12 +12,10 @@ namespace RobotAppLibrary.Api.Providers.Xtb;
 
 public class XtbAdapter : IReponseAdapter
 {
-    public List<SymbolInfo> AdaptAllSymbolsResponse(string jsonResponse)
+    public List<SymbolInfo> AdaptAllSymbolsResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse);
 
         var symbolRecords = new List<SymbolInfo>();
 
@@ -40,12 +38,10 @@ public class XtbAdapter : IReponseAdapter
     }
 
 
-    public List<CalendarEvent> AdaptCalendarResponse(string jsonResponse)
+    public List<CalendarEvent> AdaptCalendarResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse);
 
         var calendarList = new List<CalendarEvent>();
 
@@ -67,12 +63,10 @@ public class XtbAdapter : IReponseAdapter
         return calendarList;
     }
 
-    public List<Candle> AdaptFullChartResponse(string jsonResponse)
+    public List<Candle> AdaptFullChartResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse);
 
         var dataRecordsList = new List<Candle>();
 
@@ -85,35 +79,31 @@ public class XtbAdapter : IReponseAdapter
         return dataRecordsList;
     }
 
-    public List<Candle> AdaptRangeChartResponse(string jsonResponse)
+    public List<Candle> AdaptRangeChartResponse(JsonDocument? jsonResponse)
     {
         return AdaptFullChartResponse(jsonResponse);
     }
 
 
     // TODO : voir pour peut être changer ? 
-    public string AdaptLogOutResponse(string jsonResponse)
+    public string AdaptLogOutResponse(JsonDocument jsonResponse)
     {
         return "";
     }
 
-    public AccountBalance AdaptBalanceAccountResponse(string jsonResponse)
+    public AccountBalance AdaptBalanceAccountResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse);
 
         return MapAccountBalance(returnData);
     }
 
 
-    public List<News> AdaptNewsResponse(string jsonResponse)
+    public List<News> AdaptNewsResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc, JsonValueKind.Array);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse, JsonValueKind.Array);
         var data = new List<News>();
 
         data.AddRange(returnData.EnumerateArray().Select(MapNews));
@@ -122,25 +112,21 @@ public class XtbAdapter : IReponseAdapter
     }
 
 
-    public string AdaptCurrentUserDataResponse(string jsonResponse)
+    public string AdaptCurrentUserDataResponse(JsonDocument? jsonResponse)
     {
         throw new NotImplementedException();
     }
 
-    public bool AdaptPingResponse(string jsonResponse)
+    public bool AdaptPingResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
+        CheckApiStatus(jsonResponse);
         return true;
     }
 
-    public SymbolInfo AdaptSymbolResponse(string jsonResponse)
+    public SymbolInfo AdaptSymbolResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse);
 
         var symbolRecord = new SymbolInfo
         {
@@ -158,23 +144,19 @@ public class XtbAdapter : IReponseAdapter
         return symbolRecord;
     }
 
-    public Tick AdaptTickResponse(string jsonResponse)
+    public Tick AdaptTickResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse);
 
         var quotation = returnData.GetProperty("quotations").EnumerateArray().First();
         return MapTick(quotation);
     }
 
-    public List<Position> AdaptTradesHistoryResponse(string jsonResponse, string positionReference)
+    public List<Position>? AdaptTradesHistoryResponse(JsonDocument? jsonResponse, string positionReference)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse);
 
         var listPosition = new List<Position>();
 
@@ -186,12 +168,10 @@ public class XtbAdapter : IReponseAdapter
         return listPosition;
     }
 
-    public Position? AdaptTradesOpenedTradesResponse(string jsonResponse, string positionId)
+    public Position? AdaptTradesOpenedTradesResponse(JsonDocument? jsonResponse, string positionId)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse);
 
         var listPosition = (from recordElement in returnData.EnumerateArray()
             where recordElement.GetProperty("customComment").GetString().Contains(positionId)
@@ -200,13 +180,11 @@ public class XtbAdapter : IReponseAdapter
         return listPosition.FirstOrDefault();
     }
 
-    public TradeHourRecord AdaptTradingHoursResponse(string jsonResponse)
+    public TradeHourRecord AdaptTradingHoursResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
+        CheckApiStatus(jsonResponse);
         var tradeHourRecord = new TradeHourRecord();
-        var returnData = ReturnData(doc);
+        var returnData = ReturnData(jsonResponse);
 
         var firstData = returnData.EnumerateArray().First();
 
@@ -225,51 +203,41 @@ public class XtbAdapter : IReponseAdapter
     }
 
 
-    public Position AdaptOpenTradeResponse(string jsonResponse)
+    public Position AdaptOpenTradeResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-        CheckApiStatus(doc);
+        CheckApiStatus(jsonResponse);
 
-        var returnData = ReturnData(doc);
+        var returnData = ReturnData(jsonResponse);
 
         return MapPositionTrasaction(returnData);
     }
 
-    public Position AdaptUpdateTradeResponse(string jsonResponse)
+    public Position AdaptUpdateTradeResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse);
 
         return MapPositionTrasaction(returnData);
     }
 
-    public Position AdaptCloseTradeResponse(string jsonResponse)
+    public Position AdaptCloseTradeResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
-
-        CheckApiStatus(doc);
-        var returnData = ReturnData(doc);
+        CheckApiStatus(jsonResponse);
+        var returnData = ReturnData(jsonResponse);
 
         return MapPositionTrasaction(returnData);
     }
 
-    public Tick AdaptTickRecordStreaming(string input)
+    public Tick AdaptTickRecordStreaming(JsonDocument input)
     {
-        using var doc = JsonDocument.Parse(input);
-
-        var data = ReturnDataStreaming(doc);
+        var data = ReturnDataStreaming(input);
 
         return MapTick(data);
     }
 
-    public Position AdaptTradeRecordStreaming(string input)
+    public Position AdaptTradeRecordStreaming(JsonDocument input)
     {
-        using var doc = JsonDocument.Parse(input);
-
-
-        var data = ReturnDataStreaming(doc);
+        var data = ReturnDataStreaming(input);
 
         var recordElement = data;
         var customComment = recordElement.GetProperty("customComment").GetString();
@@ -337,19 +305,15 @@ public class XtbAdapter : IReponseAdapter
         return null;
     }
 
-    public AccountBalance AdaptBalanceRecordStreaming(string input)
+    public AccountBalance AdaptBalanceRecordStreaming(JsonDocument input)
     {
-        using var doc = JsonDocument.Parse(input);
-
-        var data = ReturnDataStreaming(doc);
+        var data = ReturnDataStreaming(input);
         return MapAccountBalanceStreaming(data);
     }
 
-    public Position AdaptTradeStatusRecordStreaming(string input)
+    public Position AdaptTradeStatusRecordStreaming(JsonDocument input)
     {
-        using var doc = JsonDocument.Parse(input);
-
-        var data = ReturnDataStreaming(doc);
+        var data = ReturnDataStreaming(input);
         var order = data.GetProperty("order").GetInt64();
 
         return new Position
@@ -361,11 +325,9 @@ public class XtbAdapter : IReponseAdapter
         };
     }
 
-    public Position AdaptProfitRecordStreaming(string input)
+    public Position AdaptProfitRecordStreaming(JsonDocument input)
     {
-        using var doc = JsonDocument.Parse(input);
-
-        var data = ReturnDataStreaming(doc);
+        var data = ReturnDataStreaming(input);
         var order = data.GetProperty("order").GetInt64();
         var order2 = data.GetProperty("order2").GetInt64();
         var positionId = data.GetProperty("position").GetInt64();
@@ -377,27 +339,23 @@ public class XtbAdapter : IReponseAdapter
         };
     }
 
-    public News AdaptNewsRecordStreaming(string input)
+    public News AdaptNewsRecordStreaming(JsonDocument input)
     {
-        using var doc = JsonDocument.Parse(input);
-
-        var data = ReturnDataStreaming(doc);
+        var data = ReturnDataStreaming(input);
         return MapNews(data);
     }
 
-    public Candle AdaptCandleRecordStreaming(string input)
+    public Candle AdaptCandleRecordStreaming(JsonDocument input)
     {
-        using var doc = JsonDocument.Parse(input);
+
         throw new NotImplementedException();
     }
 
-    public LoginResponse AdaptLoginResponse(string jsonResponse)
+    public LoginResponse AdaptLoginResponse(JsonDocument? jsonResponse)
     {
-        using var doc = JsonDocument.Parse(jsonResponse);
+        CheckApiStatus(jsonResponse);
 
-        CheckApiStatus(doc);
-
-        var root = doc.RootElement;
+        var root = jsonResponse.RootElement;
 
         var streamSessionId = root.GetProperty("streamSessionId").GetString();
 
@@ -479,7 +437,7 @@ public class XtbAdapter : IReponseAdapter
         return position;
     }
 
-    private void CheckApiStatus(JsonDocument doc)
+    private void CheckApiStatus(JsonDocument? doc)
     {
         var root = doc.RootElement;
 
@@ -529,7 +487,7 @@ public class XtbAdapter : IReponseAdapter
     }
 
 
-    private static JsonElement ReturnData(JsonDocument doc, JsonValueKind? expectedValueKind = null)
+    private static JsonElement ReturnData(JsonDocument? doc, JsonValueKind? expectedValueKind = null)
     {
         var root = doc.RootElement;
 

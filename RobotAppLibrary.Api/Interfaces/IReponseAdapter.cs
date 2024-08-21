@@ -1,3 +1,4 @@
+using System.Text.Json;
 using RobotAppLibrary.Api.Modeles;
 using RobotAppLibrary.Modeles;
 
@@ -5,36 +6,36 @@ namespace RobotAppLibrary.Api.Interfaces;
 
 public interface IReponseAdapter
 {
-    List<SymbolInfo> AdaptAllSymbolsResponse(string jsonResponse);
-    List<CalendarEvent> AdaptCalendarResponse(string jsonResponse);
-    List<Candle> AdaptFullChartResponse(string jsonResponse);
-    List<Candle> AdaptRangeChartResponse(string jsonResponse);
-    string AdaptLogOutResponse(string jsonResponse);
-    public LoginResponse AdaptLoginResponse(string jsonResponse);
-    AccountBalance AdaptBalanceAccountResponse(string jsonResponse);
-    List<News> AdaptNewsResponse(string jsonResponse);
-    string AdaptCurrentUserDataResponse(string jsonResponse);
-    bool AdaptPingResponse(string jsonResponse);
-    SymbolInfo AdaptSymbolResponse(string jsonResponse);
-    Tick AdaptTickResponse(string jsonResponse);
-    List<Position>? AdaptTradesHistoryResponse(string jsonResponse, string tradeCom);
-    Position? AdaptTradesOpenedTradesResponse(string jsonResponse, string tradeCom);
-    TradeHourRecord AdaptTradingHoursResponse(string jsonResponse);
-    Position AdaptOpenTradeResponse(string jsonResponse);
-    Position AdaptUpdateTradeResponse(string jsonResponse);
-    Position AdaptCloseTradeResponse(string jsonResponse);
+    List<SymbolInfo> AdaptAllSymbolsResponse(JsonDocument? jsonResponse);
+    List<CalendarEvent> AdaptCalendarResponse(JsonDocument? jsonResponse);
+    List<Candle> AdaptFullChartResponse(JsonDocument? jsonResponse);
+    List<Candle> AdaptRangeChartResponse(JsonDocument? jsonResponse);
+    string AdaptLogOutResponse(JsonDocument jsonResponse);
+    public LoginResponse AdaptLoginResponse(JsonDocument? jsonResponse);
+    AccountBalance AdaptBalanceAccountResponse(JsonDocument? jsonResponse);
+    List<News> AdaptNewsResponse(JsonDocument? jsonResponse);
+    string AdaptCurrentUserDataResponse(JsonDocument? jsonResponse);
+    bool AdaptPingResponse(JsonDocument? jsonResponse);
+    SymbolInfo AdaptSymbolResponse(JsonDocument? jsonResponse);
+    Tick AdaptTickResponse(JsonDocument? jsonResponse);
+    List<Position>? AdaptTradesHistoryResponse(JsonDocument? jsonResponse, string tradeCom);
+    Position? AdaptTradesOpenedTradesResponse(JsonDocument? jsonResponse, string tradeCom);
+    TradeHourRecord AdaptTradingHoursResponse(JsonDocument? jsonResponse);
+    Position AdaptOpenTradeResponse(JsonDocument? jsonResponse);
+    Position AdaptUpdateTradeResponse(JsonDocument? jsonResponse);
+    Position AdaptCloseTradeResponse(JsonDocument? jsonResponse);
 
-    Tick AdaptTickRecordStreaming(string input);
+    Tick AdaptTickRecordStreaming(JsonDocument input);
 
-    Position AdaptTradeRecordStreaming(string input);
+    Position AdaptTradeRecordStreaming(JsonDocument input);
 
-    AccountBalance AdaptBalanceRecordStreaming(string input);
+    AccountBalance AdaptBalanceRecordStreaming(JsonDocument input);
 
-    Position AdaptTradeStatusRecordStreaming(string input);
+    Position AdaptTradeStatusRecordStreaming(JsonDocument input);
 
-    Position AdaptProfitRecordStreaming(string input);
+    Position AdaptProfitRecordStreaming(JsonDocument input);
 
-    News AdaptNewsRecordStreaming(string input);
+    News AdaptNewsRecordStreaming(JsonDocument input);
 
-    Candle AdaptCandleRecordStreaming(string input);
+    Candle AdaptCandleRecordStreaming(JsonDocument input);
 }
