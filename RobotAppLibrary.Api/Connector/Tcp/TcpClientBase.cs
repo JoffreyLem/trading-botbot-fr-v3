@@ -24,9 +24,9 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
 
     protected readonly ILogger Logger;
 
-    private StreamReader? _apiReadStream;
+    private PipeReader? _apiReadStream;
 
-    private StreamWriter? _apiWriteStream;
+    private PipeWriter? _apiWriteStream;
 
     private SslStream? _stream;
 
@@ -43,8 +43,8 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
 
     public void Dispose()
     {
-        _apiReadStream?.Dispose();
-        _apiWriteStream?.Dispose();
+        _apiReadStream?.CompleteAsync();
+        _apiWriteStream?.CompleteAsync();
         _client.Dispose();
     }
 
@@ -76,8 +76,8 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
 
             if (completedTask2 == delayTask) throw new TimeoutException("SSL handshake timed out.");
 
-            _apiWriteStream ??= new StreamWriter(_stream, leaveOpen: false);
-            _apiReadStream ??= new StreamReader(_stream, leaveOpen: false);
+            _apiWriteStream ??= PipeWriter.Create(_stream);
+            _apiReadStream ??= PipeReader.Create(_stream);
             OnConnectedEvent();
         }
         catch (Exception e)
@@ -98,7 +98,8 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
 
         try
         {
-            await _apiWriteStream!.WriteAsync(messageToSend);
+            var messageBytes = Encoding.UTF8.GetBytes(messageToSend);
+            await _apiWriteStream.WriteAsync(messageBytes);
             await _apiWriteStream.FlushAsync();
         }
         catch (IOException ex)
@@ -108,64 +109,66 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
         }
     }
 
+
     public async Task<JsonDocument?> ReceiveAsync(CancellationToken cancellationToken = default)
     {
-        var pipeReader = PipeReader.Create(_stream);
-    
-            var delimiter = "\n\n"u8.ToArray();
-         
-            while (true)
-            {
-                ReadResult result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
-                ReadOnlySequence<byte> buffer = result.Buffer;
-
-                while (true)
-                {
-        
-                    var position = buffer.PositionOf((byte)'\n');
-
-                    if (position != null)
-                    {
-                        try
-                        {
-                            var data=JsonDocument.Parse(buffer);
-                            var next = buffer.GetPosition(delimiter.Length, position.Value);
-                            pipeReader.AdvanceTo(next);
-                            return data;
-                        }
-                        catch (Exception e)
-                        {
-                            string bufferText = Encoding.UTF8.GetString(buffer.ToArray());
-                            Logger.Error(e, $"An error occurred on response receive TCP. Buffer content: {bufferText}");
-                            await pipeReader.CompleteAsync().ConfigureAwait(false);
-                            return null;
-                        }
-                    }
-
-                    break;
-                }
-
-                pipeReader.AdvanceTo(buffer.Start, buffer.End);
-
-                if (result.IsCompleted)
-                {
-                    break;
-                }
-            }
-            await pipeReader.CompleteAsync().ConfigureAwait(false);
-            return null;
       
+        while (true)
+        {
+            var result = await _apiReadStream.ReadAsync(cancellationToken);
+            var buffer = result.Buffer;
+
+            try
+            {
+                var jsonDocument = ExtractJsons(buffer, out var consumed);
+
+                if (jsonDocument != null)
+                {
+                    _apiReadStream.AdvanceTo(consumed);
+                    return jsonDocument;
+                }
+
+                if (result.IsCompleted) return null;
+            }
+            catch (Exception ex)
+            {
+                var bufferContent = Encoding.UTF8.GetString(buffer.ToArray());
+                Logger.Error("Buffer content before exception: {BufferContent}", bufferContent);
+
+                Logger.Error(ex, "Error on message TCP reception");
+                _apiReadStream.AdvanceTo(buffer.Start, buffer.End);
+                throw;
+            }
+        }
     }
+    
+    private JsonDocument? ExtractJsons(ReadOnlySequence<byte> sequence, out SequencePosition consumed)
+    {
+        var reader = new SequenceReader<byte>(sequence);
+        var delimiter = "\n\n"u8.ToArray();
+        if (reader.TryReadTo(out ReadOnlySequence<byte> jsonSlice, delimiter, true))
+        {
+            var utf8Reader = new Utf8JsonReader(jsonSlice, true, default);
+            consumed = reader.Position;
+            return JsonDocument.ParseValue(ref utf8Reader);
+        }
+        consumed = sequence.Start;
+        return null;
+    }
+
+
     public void Close()
     {
         if (IsConnected)
         {
-            _apiReadStream?.Close();
-            _apiWriteStream?.Close();
+            _apiReadStream?.CompleteAsync();
+            _apiWriteStream?.CompleteAsync();
             _client.Close();
             OnDisconnected();
         }
     }
+
+    
 
     private void OnConnectedEvent()
     {
