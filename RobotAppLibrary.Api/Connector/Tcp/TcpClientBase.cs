@@ -144,13 +144,13 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
     
     private JsonDocument? ExtractJsons(ReadOnlySequence<byte> sequence, out SequencePosition consumed)
     {
+
         var reader = new SequenceReader<byte>(sequence);
         var delimiter = "\n\n"u8.ToArray();
         if (reader.TryReadTo(out ReadOnlySequence<byte> jsonSlice, delimiter, true))
         {
-            var utf8Reader = new Utf8JsonReader(jsonSlice, true, default);
             consumed = reader.Position;
-            return JsonDocument.ParseValue(ref utf8Reader);
+            return JsonDocument.Parse(jsonSlice);
         }
         consumed = sequence.Start;
         return null;
