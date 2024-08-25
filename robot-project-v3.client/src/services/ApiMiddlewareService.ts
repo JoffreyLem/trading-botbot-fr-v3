@@ -53,7 +53,7 @@ export class ApiMiddlewareService {
     if (!response.ok) {
       if (response.headers.get("Content-Type")?.includes("application/json")) {
         const errorBody: ApiResponseError = await response.json();
-        throw new ApiException(errorBody.Error);
+        throw new ApiException(errorBody.error);
       } else {
         throw new Error(`HTTP error: ${response.status}`);
       }

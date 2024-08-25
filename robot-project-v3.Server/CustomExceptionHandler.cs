@@ -20,15 +20,8 @@ public class CustomExceptionHandler : IExceptionHandler
         else
             statusCode = HttpStatusCode.InternalServerError;
 
-        await HandleExceptionAsync(httpContext, exception, statusCode);
-
-        return true;
-    }
-
-    private static Task HandleExceptionAsync(HttpContext context, Exception exception, HttpStatusCode statusCode)
-    {
-        context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)statusCode;
+        httpContext.Response.ContentType = "application/json";
+        httpContext.Response.StatusCode = (int)statusCode;
 
         var response = new ApiResponseError
         {
@@ -37,9 +30,12 @@ public class CustomExceptionHandler : IExceptionHandler
 
         var jsonResponse = JsonSerializer.Serialize(response, new JsonSerializerOptions
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+   
         });
 
-        return context.Response.WriteAsync(jsonResponse);
+        await httpContext.Response.WriteAsync(jsonResponse, cancellationToken: cancellationToken);
+
+        return true;
     }
+
 }

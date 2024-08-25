@@ -12,9 +12,9 @@ public class ApiProvidersExceptionDestructuringPolicy : IDestructuringPolicy
         {
             var properties = new List<LogEventProperty>
             {
-                new LogEventProperty(nameof(apiEx.Message), new ScalarValue(apiEx.Message)),
-                new LogEventProperty(nameof(apiEx.ErrorCode), new ScalarValue(apiEx.ErrorCode ?? "null")),
-                new LogEventProperty(nameof(apiEx.StackTrace), new ScalarValue(apiEx.StackTrace))
+                new(nameof(apiEx.Message), new ScalarValue(apiEx.Message)),
+                new(nameof(apiEx.ErrorCode), new ScalarValue(apiEx.ErrorCode ?? "null")),
+                new(nameof(apiEx.StackTrace), new ScalarValue(apiEx.StackTrace))
             };
 
             result = new StructureValue(properties);

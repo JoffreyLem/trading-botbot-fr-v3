@@ -7,7 +7,6 @@ export const useErrorHandler = () => {
   const { addNotification } = useNotification();
 
   return (error: Error | ApiException) => {
-    console.error(error);
     addNotification(error.message, "error");
   };
 };
