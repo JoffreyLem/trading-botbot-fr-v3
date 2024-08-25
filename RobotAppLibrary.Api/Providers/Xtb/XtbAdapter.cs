@@ -458,6 +458,10 @@ public class XtbAdapter : IReponseAdapter
             if (errorDescr == null && !string.IsNullOrEmpty(errorCode))
                 errorDescr = ERR_CODE.getErrorDescription(errorCode);
 
+            if (string.IsNullOrEmpty(errorDescr))
+            {
+                errorDescr = "Unknow error";
+            }
             var exception = new ApiProvidersException(errorDescr)
             {
                 ErrorCode = errorCode
