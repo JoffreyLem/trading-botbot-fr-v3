@@ -17,6 +17,9 @@ using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Exceptions;
+using Serilog.Formatting.Compact;
+using Serilog.Formatting.Elasticsearch;
+using Serilog.Sinks.Seq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,6 +54,8 @@ builder.Services.AddHsts(options =>
 var loggerConfig = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .Enrich.WithExceptionDetails()
+    .Enrich.With<CustomExceptionEnricher>()
+    .Destructure.With<ApiProvidersExceptionDestructuringPolicy>()
     .Destructure.UsingAttributes()
     .Enrich.FromLogContext()
     .Enrich.WithEnvironmentName()
@@ -60,7 +65,10 @@ var loggerConfig = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Error)
     .MinimumLevel.Override("System", LogEventLevel.Error)
     .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
-    .WriteTo.Async(writeTo => writeTo.Console());
+    .WriteTo.Async(writeTo => writeTo.Console(
+        outputTemplate:
+        "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{@Exception}{@Properties}{NewLine}"
+    ));
 
 if (builder.Environment.IsDevelopment())
     loggerConfig.WriteTo.Async(writeTo => writeTo.Seq(builder.Configuration["Seq:Url"]));

@@ -32,8 +32,11 @@ public class StrategyService(
         var strategyFile = await strategyFileRepository.GetByIdAsync(int.Parse(strategyInitDto.StrategyFileId));
         var initStrategyCommand = new InitStrategyCommand
         {
-            StrategyFileDto = strategyFile,
-            Symbol = strategyInitDto.Symbol
+            Data = new InitStrategyDto()
+            {
+                StrategyFileDto = strategyFile,
+                Symbol = strategyInitDto.Symbol
+            },
         };
 
         await channelStrategyWriter.WriteAsync(initStrategyCommand);
@@ -98,7 +101,7 @@ public class StrategyService(
     {
         var setCanRunCommand = new SetCanRunCommand
         {
-            Bool = value,
+            Data = value,
             Id = id
         };
 

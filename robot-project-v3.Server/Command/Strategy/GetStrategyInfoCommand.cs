@@ -2,6 +2,6 @@
 
 namespace robot_project_v3.Server.Command.Strategy;
 
-public class GetStrategyInfoCommand : CommandBaseStrategy<StrategyInfoDto>
+public class GetStrategyInfoCommand : CommandBaseStrategy<StrategyInfoDto, EmptyCommand>
 {
 }

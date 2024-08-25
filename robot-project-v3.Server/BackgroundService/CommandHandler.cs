@@ -9,6 +9,7 @@ using robot_project_v3.Server.Command.Strategy;
 using robot_project_v3.Server.Dto;
 using robot_project_v3.Server.Exceptions;
 using robot_project_v3.Server.Hubs;
+using robot_project_v3.Server.Modele;
 using RobotAppLibrary.Api.Modeles;
 using RobotAppLibrary.Api.Providers;
 using RobotAppLibrary.Api.Providers.Base;
@@ -53,34 +54,59 @@ public class CommandHandler(
     #region API
 
     public async Task HandleApiCommand(CommandeBaseApiAbstract command)
+{
+    switch (command)
     {
-        switch (command)
-        {
-            case DisconnectCommand disconnectCommand:
-                logger.Information("Api command {CommandName} received", disconnectCommand.GetType().Name);
-                await Disconnect(disconnectCommand);
-                break;
-            case GetAllSymbolCommand getAllSymbolCommand:
-                logger.Information("Api command {CommandName} received",getAllSymbolCommand.GetType().Name);
-                await GetAllSymbol(getAllSymbolCommand);
-                break;
-            case GetTypeProviderCommand getTypeHandlerCommand:
-                logger.Information("Api command {CommandName} received", getTypeHandlerCommand.GetType().Name);
-                GetTypeHandler(getTypeHandlerCommand);
-                break;
-            case IsConnectedCommand isConnectedCommand:
-                logger.Information("Api command received {@Command}",isConnectedCommand.GetType().Name);
-                IsConnected(isConnectedCommand);
-                break;
-            case ApiConnectCommand apiConnectCommand:
-                logger.Information("Api command received {@Command} {@Data}", apiConnectCommand.GetType().Name, apiConnectCommand.Data.User);
-                await Connect(apiConnectCommand);
-                break;
-            default:
-                _logger.Error("Trying to use unhandled command {@Command}", command);
-                throw new UnhandledCommandException();
-        }
+        case DisconnectCommand disconnectCommand:
+            await Disconnect(disconnectCommand);
+            logger.Information("Api command processed {@Command}", new LogCommand()
+            {
+                LogCommandName = disconnectCommand.GetType().Name,
+            });
+            break;
+
+        case GetAllSymbolCommand getAllSymbolCommand:
+            await GetAllSymbol(getAllSymbolCommand);
+            logger.Information("Api command processed {@Command}", new LogCommand()
+            {
+                LogCommandName = getAllSymbolCommand.GetType().Name,
+            });
+            break;
+
+        case GetTypeProviderCommand getTypeHandlerCommand:
+            GetTypeHandler(getTypeHandlerCommand);
+            logger.Information("Api command processed {@Command}", new LogCommand()
+            {
+                LogCommandName = getTypeHandlerCommand.GetType().Name,
+            });
+            break;
+
+        case IsConnectedCommand isConnectedCommand:
+            IsConnected(isConnectedCommand);
+            logger.Information("Api command processed {@Command}", new LogCommand()
+            {
+                LogCommandName = isConnectedCommand.GetType().Name,
+            });
+            break;
+
+        case ApiConnectCommand apiConnectCommand:
+            await Connect(apiConnectCommand);
+            logger.Information("Api command processed {@Command}", new LogCommand()
+            {
+                LogCommandName = apiConnectCommand.GetType().Name,
+                CommandData = apiConnectCommand.Data.User 
+            });
+            break;
+
+        default:
+            _logger.Error("Trying to use unhandled command {@Command}", new LogCommand()
+            {
+                LogCommandName = command.GetType().Name
+            });
+            throw new UnhandledCommandException();
     }
+}
+
 
     private void GetTypeHandler(GetTypeProviderCommand getTypeHandlerCommand)
     {
@@ -185,57 +211,120 @@ public class CommandHandler(
     #region Strategy
 
     public async Task HandleStrategyCommand(CommandeBaseStrategyAbstract command)
+{
+    switch (command)
     {
-        switch (command)
-        {
-            case InitStrategyCommand initStrategyCommandDto:
-                CheckApiHandlerNotNull();
-                InitStrategy(initStrategyCommandDto);
-                _logger.Information("Strategy command processed {@Command}", initStrategyCommandDto);
-                break;
-            case GetStrategyInfoCommand getStrategyInfoCommand:
-                GetStrategyInfo(getStrategyInfoCommand, GetStrategyById(getStrategyInfoCommand.Id));
-                _logger.Information("Strategy command processed {@Command}", getStrategyInfoCommand);
-                break;
-            case CloseStrategyCommand closeStrategyCommand:
-                await CloseStrategy(closeStrategyCommand, GetStrategyById(closeStrategyCommand.Id));
-                _logger.Information("Strategy command processed {@Command}", closeStrategyCommand);
-                break;
-            case GetStrategyResultCommand getStrategyResultRequestCommand:
-                GetStrategyResult(getStrategyResultRequestCommand, GetStrategyById(getStrategyResultRequestCommand.Id));
-                _logger.Information("Strategy command processed {@Command}", getStrategyResultRequestCommand);
-                break;
-            case GetOpenedPositionCommand getOpenedPositionRequestCommand:
-                GetOpenedPosition(getOpenedPositionRequestCommand, GetStrategyById(getOpenedPositionRequestCommand.Id));
-                _logger.Information("Strategy command processed {@Command}", getOpenedPositionRequestCommand);
-                break;
-            case SetCanRunCommand setCanRunCommand:
-                SetCanRun(setCanRunCommand, GetStrategyById(setCanRunCommand.Id));
-                _logger.Information("Strategy command processed {@Command}", setCanRunCommand);
-                break;
-            case GetChartCommand getChartCommandRequest:
-                GetChart(getChartCommandRequest, GetStrategyById(getChartCommandRequest.Id));
-                _logger.Information("Strategy command processed {@Command}", getChartCommandRequest);
-                break;
-            case GetAllStrategyCommand getAllStrategyCommandRequest:
-                GetAllStrategy(getAllStrategyCommandRequest);
-                _logger.Information("Strategy command processed {@Command}", getAllStrategyCommandRequest);
-                break;
-            case RunStrategyBacktestCommand runStrategyBacktestCommand:
-                RunBackTest(runStrategyBacktestCommand, GetStrategyById(runStrategyBacktestCommand.Id));
-                _logger.Information("Api command processed {@Command}", runStrategyBacktestCommand);
-                break;
-            case GetBacktestResultCommand strategyResultBacktestCommand:
-                GetStrategyBacktestResult(strategyResultBacktestCommand,
-                    GetStrategyById(strategyResultBacktestCommand.Id));
-                _logger.Information("Api command processed {@Command}", strategyResultBacktestCommand);
-                break;
+        case InitStrategyCommand initStrategyCommandDto:
+            CheckApiHandlerNotNull();
+            InitStrategy(initStrategyCommandDto);
+            _logger.Information("Strategy command processed {@CommandName}", new LogCommand()
+            {
+                LogCommandName = initStrategyCommandDto.GetType().Name,
+                StrategyId = initStrategyCommandDto.Id,
+                CommandData = initStrategyCommandDto.Data
+            });
+            break;
 
-            default:
-                _logger.Error("Trying to use unanhdled command {@Command}", command);
-                throw new CommandException("Internal error");
-        }
+        case GetStrategyInfoCommand getStrategyInfoCommand:
+            GetStrategyInfo(getStrategyInfoCommand, GetStrategyById(getStrategyInfoCommand.Id));
+            _logger.Information("Strategy command processed {@CommandName}", new LogCommand()
+            {
+                LogCommandName = getStrategyInfoCommand.GetType().Name,
+                StrategyId = getStrategyInfoCommand.Id,
+                CommandResponse = await getStrategyInfoCommand.ResponseSource.Task
+            });
+            break;
+
+        case CloseStrategyCommand closeStrategyCommand:
+            await CloseStrategy(closeStrategyCommand, GetStrategyById(closeStrategyCommand.Id));
+            _logger.Information("Strategy command processed {@CommandName}", new LogCommand()
+            {
+                LogCommandName = closeStrategyCommand.GetType().Name,
+                StrategyId = closeStrategyCommand.Id,
+            });
+            break;
+
+        case GetStrategyResultCommand getStrategyResultRequestCommand:
+            GetStrategyResult(getStrategyResultRequestCommand, GetStrategyById(getStrategyResultRequestCommand.Id));
+            _logger.Information("Strategy command processed {@CommandName}", new LogCommand()
+            {
+                LogCommandName = getStrategyResultRequestCommand.GetType().Name,
+                StrategyId = getStrategyResultRequestCommand.Id,
+                CommandResponse = new
+                {
+                    GlobalResults = getStrategyResultRequestCommand.ResponseSource.Task.Result.Result,
+                    MonthlyResult = getStrategyResultRequestCommand.ResponseSource.Task.Result.MonthlyResults,
+                    Positions = getStrategyResultRequestCommand.ResponseSource.Task.Result.Positions.Count,
+                }
+            });
+            break;
+
+        case GetOpenedPositionCommand getOpenedPositionRequestCommand:
+            GetOpenedPosition(getOpenedPositionRequestCommand, GetStrategyById(getOpenedPositionRequestCommand.Id));
+            _logger.Information("Strategy command processed {@CommandName}", new LogCommand()
+            {
+                LogCommandName = getOpenedPositionRequestCommand.GetType().Name,
+                StrategyId = getOpenedPositionRequestCommand.Id,
+                CommandResponse = getOpenedPositionRequestCommand.ResponseSource.Task.Result
+            });
+            break;
+
+        case SetCanRunCommand setCanRunCommand:
+            SetCanRun(setCanRunCommand, GetStrategyById(setCanRunCommand.Id));
+            _logger.Information("Strategy command processed {@CommandName}", new LogCommand()
+            {
+                LogCommandName = setCanRunCommand.GetType().Name,
+                StrategyId = setCanRunCommand.Id,
+                CommandData = setCanRunCommand.Data,
+            });
+            break;
+
+        case GetChartCommand getChartCommandRequest:
+            GetChart(getChartCommandRequest, GetStrategyById(getChartCommandRequest.Id));
+            _logger.Information("Strategy command processed {@CommandName}", new LogCommand()
+            {
+                LogCommandName = getChartCommandRequest.GetType().Name,
+                StrategyId = getChartCommandRequest.Id,
+            });
+            break;
+
+        case GetAllStrategyCommand getAllStrategyCommandRequest:
+            GetAllStrategy(getAllStrategyCommandRequest);
+            _logger.Information("Strategy command processed {@CommandName}", new LogCommand()
+            {
+                LogCommandName = getAllStrategyCommandRequest.GetType().Name,
+                StrategyId = getAllStrategyCommandRequest.Id,
+                CommandResponse = getAllStrategyCommandRequest.ResponseSource.Task.Result
+            });
+            break;
+
+        case RunStrategyBacktestCommand runStrategyBacktestCommand:
+            RunBackTest(runStrategyBacktestCommand, GetStrategyById(runStrategyBacktestCommand.Id));
+            _logger.Information("Strategy command processed {@CommandName}", new LogCommand()
+            {
+                LogCommandName = runStrategyBacktestCommand.GetType().Name,
+                StrategyId = runStrategyBacktestCommand.Id,
+            });
+            break;
+
+        case GetBacktestResultCommand strategyResultBacktestCommand:
+            GetStrategyBacktestResult(strategyResultBacktestCommand, GetStrategyById(strategyResultBacktestCommand.Id));
+            _logger.Information("Strategy command processed {@CommandName}", new LogCommand()
+            {
+                LogCommandName = strategyResultBacktestCommand.GetType().Name,
+                StrategyId = strategyResultBacktestCommand.Id,
+            });
+            break;
+
+        default:
+            _logger.Error("Trying to use unhandled command {@CommandName}", new LogCommand()
+            {
+                LogCommandName = command.GetType().Name,
+            });
+            throw new CommandException("Internal error");
     }
+}
+
 
 
     private (StrategyImplementationBase, CustomLoadContext) GenerateStrategy(StrategyFile strategyFileDto)
@@ -304,9 +393,9 @@ public class CommandHandler(
     {
         try
         {
-            var strategyImplementation = GenerateStrategy(initStrategyCommandDto.StrategyFileDto);
+            var strategyImplementation = GenerateStrategy(initStrategyCommandDto.Data.StrategyFileDto);
             var istrategySerrvice = new StrategyServiceFactory();
-            var strategyBase = new StrategyBase(initStrategyCommandDto.Symbol, strategyImplementation.Item1,
+            var strategyBase = new StrategyBase(initStrategyCommandDto.Data.Symbol, strategyImplementation.Item1,
                 _apiProviderBase,
                 logger, istrategySerrvice);
 
@@ -383,7 +472,7 @@ public class CommandHandler(
 
     private void SetCanRun(SetCanRunCommand setCanRunCommand, IStrategyBase strategy)
     {
-        strategy.CanRun = setCanRunCommand.Bool;
+        strategy.CanRun = setCanRunCommand.Data;
         setCanRunCommand.ResponseSource.SetResult(new AcknowledgementResponse());
     }
 

@@ -1,6 +1,6 @@
 namespace robot_project_v3.Server.Command.Strategy;
 
-public class SetCanRunCommand : CommandBaseStrategy<AcknowledgementResponse>
+public class SetCanRunCommand : CommandBaseStrategy<AcknowledgementResponse, bool>
 {
-    public bool Bool { get; set; }
+
 }

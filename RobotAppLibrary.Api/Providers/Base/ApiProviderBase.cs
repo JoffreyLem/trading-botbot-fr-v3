@@ -68,6 +68,10 @@ public abstract class ApiProviderBase : IApiProviderBase
 
             _pingTimer = new Timer(TimerCallback, null, 0, PingInterval.Ticks / TimeSpan.TicksPerMillisecond);
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(ConnectAsync)}", e);
@@ -80,6 +84,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         {
             await CommandExecutor.ExecuteLogoutCommand();
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(DisconnectAsync)}",e);
@@ -91,6 +99,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         try
         {
             return CommandExecutor.ExecuteIsConnected();
+        }
+        catch (ApiProvidersException)
+        {
+            throw;
         }
         catch (Exception e)
         {
@@ -118,6 +130,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         {
             return await CommandExecutor.ExecuteBalanceAccountCommand();
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(GetBalanceAsync)}",e);
@@ -130,6 +146,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         try
         {
             return await CommandExecutor.ExecuteCalendarCommand();
+        }
+        catch (ApiProvidersException)
+        {
+            throw;
         }
         catch (Exception e)
         {
@@ -145,6 +165,10 @@ public abstract class ApiProviderBase : IApiProviderBase
 
             return AllSymbols.ToList();
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(GetAllSymbolsAsync)}",e);
@@ -157,6 +181,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         {
             return await CommandExecutor.ExecuteTradesOpenedTradesCommand(comment);
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(GetOpenedTradesAsync)}",e);
@@ -168,6 +196,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         try
         {
             return await CommandExecutor.ExecuteTradesHistoryCommand(comment);
+        }
+        catch (ApiProvidersException)
+        {
+            throw;
         }
         catch (Exception e)
         {
@@ -183,6 +215,10 @@ public abstract class ApiProviderBase : IApiProviderBase
 
             return await CommandExecutor.ExecuteSymbolCommand(symbol);
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(GetSymbolInformationAsync)}",e);
@@ -194,6 +230,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         try
         {
             return await CommandExecutor.ExecuteTradingHoursCommand(symbol);
+        }
+        catch (ApiProvidersException)
+        {
+            throw;
         }
         catch (Exception e)
         {
@@ -208,6 +248,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         {
             return await CommandExecutor.ExecuteFullChartCommand(chartRequest);
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(GetChartAsync)}",e);
@@ -220,6 +264,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         {
             return await CommandExecutor.ExecuteRangeChartCommand(chartRequest);
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(GetChartByDateAsync)}",e);
@@ -231,6 +279,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         try
         {
             return await CommandExecutor.ExecuteTickCommand(symbol);
+        }
+        catch (ApiProvidersException)
+        {
+            throw;
         }
         catch (Exception e)
         {
@@ -247,6 +299,10 @@ public abstract class ApiProviderBase : IApiProviderBase
             CachePosition.Add(position);
             return pos;
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(OpenPositionAsync)}",e);
@@ -259,6 +315,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         {
             await CommandExecutor.ExecuteUpdateTradeCommand(position);
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(UpdatePositionAsync)}",e);
@@ -270,6 +330,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         try
         {
             await CommandExecutor.ExecuteCloseTradeCommand(position);
+        }
+        catch (ApiProvidersException)
+        {
+            throw;
         }
         catch (Exception e)
         {
@@ -288,6 +352,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         {
             CommandExecutor.ExecuteTickPricesCommandStreaming(symbol);
         }
+        catch (ApiProvidersException)
+        {
+            throw;
+        }
         catch (Exception e)
         {
             throw new ApiProvidersException($"Error on  {nameof(SubscribePrice)}",e);
@@ -299,6 +367,10 @@ public abstract class ApiProviderBase : IApiProviderBase
         try
         {
             CommandExecutor.ExecuteStopTickPriceCommandStreaming(symbol);
+        }
+        catch (ApiProvidersException)
+        {
+            throw;
         }
         catch (Exception e)
         {

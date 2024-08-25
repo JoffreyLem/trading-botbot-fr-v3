@@ -2,6 +2,6 @@
 
 namespace robot_project_v3.Server.Command.Strategy;
 
-public class GetChartCommand : CommandBaseStrategy<List<CandleDto>>
+public class GetChartCommand : CommandBaseStrategy<List<CandleDto>, EmptyCommand>
 {
 }

@@ -2,6 +2,6 @@
 
 namespace robot_project_v3.Server.Command.Strategy;
 
-public class GetStrategyResultCommand : CommandBaseStrategy<GlobalResultsDto>
+public class GetStrategyResultCommand : CommandBaseStrategy<GlobalResultsDto, EmptyCommand>
 {
 }

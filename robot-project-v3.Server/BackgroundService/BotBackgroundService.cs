@@ -1,6 +1,7 @@
 ﻿using System.Threading.Channels;
 using robot_project_v3.Server.Command.Api;
 using robot_project_v3.Server.Command.Strategy;
+using RobotAppLibrary.Api.Providers.Exceptions;
 using ILogger = Serilog.ILogger;
 
 namespace robot_project_v3.Server.BackgroundService;
@@ -17,13 +18,12 @@ public class BotBackgroundService(
         await foreach (var command in channelApiReader.ReadAllAsync(stoppingToken))
             try
             {
-                logger.Information("Strategy command received {Command}", command.GetType().Name);
                 await commandHandler.HandleApiCommand(command);
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                logger.Error(ex, "Error on {Command} execution", command);
-                command.SetException(ex);
+                logger.Error(e, "Error on API {Command} execution", command.GetType().Name );
+                command.SetException(e);
             }
 
     }
@@ -37,7 +37,7 @@ public class BotBackgroundService(
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "Error on {Command} execution", command);
+                logger.Error(ex, "Error on Strategy {Command} execution", command.GetType().Name);
                 command.SetException(ex);
             }
     }
