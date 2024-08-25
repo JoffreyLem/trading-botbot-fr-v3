@@ -325,7 +325,7 @@ public class CommandHandler(
         finally
         {
             //TODO : Temporaire voir pour supprimer plus tard.
-            GC.Collect();
+            //GC.Collect();
         }
     }
 

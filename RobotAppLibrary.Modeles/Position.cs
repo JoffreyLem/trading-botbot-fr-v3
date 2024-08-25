@@ -33,6 +33,9 @@ public class Position
     public decimal OpenPrice { get; set; }
     public DateTime DateOpen { get; set; }
     public decimal? ClosePrice { get; set; }
+    
+    // TODO : Test
+    public decimal? CurrentPrice { get; set; }
     public DateTime? DateClose { get; set; }
     public ReasonClosed? ReasonClosed { get; set; } = null;
     public decimal StopLoss { get; set; }
@@ -42,7 +45,7 @@ public class Position
     public StatusPosition StatusPosition { get; set; }
     public bool Opened { get; set; }
 
-    public Position Clone()
+    public Position? Clone()
     {
         return new Position
         {

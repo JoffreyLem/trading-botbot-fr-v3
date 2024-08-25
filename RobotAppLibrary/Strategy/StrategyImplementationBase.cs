@@ -39,7 +39,7 @@ public abstract class StrategyImplementationBase
         return CalculateTakeProfitFunc.Invoke(pips, typePosition);
     }
 
-    public virtual bool ShouldUpdatePosition(Position position)
+    public virtual bool ShouldUpdatePosition(Position? position)
     {
         return false;
     }

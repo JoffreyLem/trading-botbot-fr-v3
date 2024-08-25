@@ -332,12 +332,11 @@ public class CommandCreatorXtbTests
             Symbol = "EURUSD",
             Volume = 1000,
             StrategyId = "strategy123",
-            Id = "1"
+            Id = "1",
+            OpenPrice = 1.2345m,
         };
-        var price = 1.2345m;
-
         // Act
-        var actualJson = commandCreator.CreateOpenTradeCommande(position, price);
+        var actualJson = commandCreator.CreateOpenTradeCommande(position);
 
         // Assert
         using var doc = ValidateCommandJson(actualJson, "tradeTransaction");
@@ -346,7 +345,7 @@ public class CommandCreatorXtbTests
         tradeTransInfo.GetProperty("cmd").GetInt64().Should()
             .Be(ToXtbAssembler.ToTradeOperationCode(position.TypePosition));
         tradeTransInfo.GetProperty("type").GetInt64().Should().Be(TRADE_TRANSACTION_TYPE.ORDER_OPEN.Code);
-        tradeTransInfo.GetProperty("price").GetDecimal().Should().Be(price);
+        tradeTransInfo.GetProperty("price").GetDecimal().Should().Be(position.OpenPrice);
         tradeTransInfo.GetProperty("sl").GetDecimal().Should().Be(position.StopLoss);
         tradeTransInfo.GetProperty("tp").GetDecimal().Should().Be(position.TakeProfit);
         tradeTransInfo.GetProperty("symbol").GetString().Should().Be(position.Symbol);
@@ -369,12 +368,12 @@ public class CommandCreatorXtbTests
             StopLoss = 1.1000m,
             TakeProfit = 1.2000m,
             Symbol = "EURUSD",
-            Volume = 1000
+            Volume = 1000,
+            CurrentPrice = 1.2345m,
         };
-        var price = 1.2345m;
-
+     
         // Act
-        var actualJson = commandCreator.CreateUpdateTradeCommande(position, price);
+        var actualJson = commandCreator.CreateUpdateTradeCommande(position);
 
         // Assert
         using var doc = ValidateCommandJson(actualJson, "tradeTransaction");
@@ -383,7 +382,7 @@ public class CommandCreatorXtbTests
         tradeTransInfo.GetProperty("cmd").GetInt64().Should()
             .Be(ToXtbAssembler.ToTradeOperationCode(position.TypePosition));
         tradeTransInfo.GetProperty("type").GetInt64().Should().Be(TRADE_TRANSACTION_TYPE.ORDER_MODIFY.Code);
-        tradeTransInfo.GetProperty("price").GetDecimal().Should().Be(price);
+        tradeTransInfo.GetProperty("price").GetDecimal().Should().Be(position.CurrentPrice);
         tradeTransInfo.GetProperty("sl").GetDecimal().Should().Be(position.StopLoss);
         tradeTransInfo.GetProperty("tp").GetDecimal().Should().Be(position.TakeProfit);
         tradeTransInfo.GetProperty("symbol").GetString().Should().Be(position.Symbol);
@@ -405,12 +404,11 @@ public class CommandCreatorXtbTests
             StopLoss = 1.1000m,
             TakeProfit = 1.2000m,
             Symbol = "EURUSD",
-            Volume = 1000
+            Volume = 1000,
+            ClosePrice = 1.2345m,
         };
-        var price = 1.2345m;
-
         // Act
-        var actualJson = commandCreator.CreateCloseTradeCommande(position, price);
+        var actualJson = commandCreator.CreateCloseTradeCommande(position);
 
         // Assert
         using var doc = ValidateCommandJson(actualJson, "tradeTransaction");
@@ -419,7 +417,7 @@ public class CommandCreatorXtbTests
         tradeTransInfo.GetProperty("cmd").GetInt64().Should()
             .Be(ToXtbAssembler.ToTradeOperationCode(position.TypePosition));
         tradeTransInfo.GetProperty("type").GetInt64().Should().Be(TRADE_TRANSACTION_TYPE.ORDER_CLOSE.Code);
-        tradeTransInfo.GetProperty("price").GetDecimal().Should().Be(price);
+        tradeTransInfo.GetProperty("price").GetDecimal().Should().Be(position.ClosePrice);
         tradeTransInfo.GetProperty("sl").GetDecimal().Should().Be(position.StopLoss);
         tradeTransInfo.GetProperty("tp").GetDecimal().Should().Be(position.TakeProfit);
         tradeTransInfo.GetProperty("symbol").GetString().Should().Be(position.Symbol);

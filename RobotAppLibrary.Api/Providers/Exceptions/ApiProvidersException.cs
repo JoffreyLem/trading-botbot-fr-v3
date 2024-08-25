@@ -6,6 +6,7 @@ namespace RobotAppLibrary.Api.Providers.Exceptions;
 [ExcludeFromCodeCoverage]
 public class ApiProvidersException : Exception
 {
+    public string? ErrorCode { get; set; }
     public ApiProvidersException()
     {
     }

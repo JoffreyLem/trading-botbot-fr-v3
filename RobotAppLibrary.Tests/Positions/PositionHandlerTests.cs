@@ -15,7 +15,7 @@ public class PositionsCommandTest
     private readonly Mock<ILotValueCalculator> _mockLotValueCalculator = new();
     private readonly PositionHandler _positionHandler;
 
-    private readonly Position positionTest = new();
+    private readonly Position? positionTest = new();
 
     private readonly string strategyId = "idTest";
     private readonly Tick tickRef = new() { Bid = (decimal?)1.11247, Ask = (decimal?)1.112450 };
@@ -401,7 +401,7 @@ public class PositionsCommandTest
     public async void Test_OpenPosition_throw_Exception()
     {
         // Arrange
-        _apiHandlerMock.Setup(x => x.OpenPositionAsync(It.IsAny<Position>(), It.IsAny<decimal>()))
+        _apiHandlerMock.Setup(x => x.OpenPositionAsync(It.IsAny<Position>()))
             .ThrowsAsync(new Exception());
 
         // Act
@@ -535,7 +535,7 @@ public class PositionsCommandTest
         await _positionHandler.UpdatePositionAsync(position);
 
         // Assert
-        _apiHandlerMock.Verify(x => x.UpdatePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()), Times.Never);
+        _apiHandlerMock.Verify(x => x.UpdatePositionAsync(It.IsAny<Position>()), Times.Never);
     }
 
 
@@ -554,7 +554,7 @@ public class PositionsCommandTest
         await _positionHandler.UpdatePositionAsync(position);
 
         // Assert
-        _apiHandlerMock.Verify(x => x.UpdatePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()), Times.Once);
+        _apiHandlerMock.Verify(x => x.UpdatePositionAsync(It.IsAny<Position>()), Times.Once);
     }
 
     [Fact]
@@ -572,7 +572,7 @@ public class PositionsCommandTest
         await _positionHandler.UpdatePositionAsync(position);
 
         // Assert
-        _apiHandlerMock.Verify(x => x.UpdatePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()), Times.Never);
+        _apiHandlerMock.Verify(x => x.UpdatePositionAsync(It.IsAny<Position>()), Times.Never);
     }
 
     [Fact]
@@ -590,7 +590,7 @@ public class PositionsCommandTest
         await _positionHandler.UpdatePositionAsync(position);
 
         // Assert
-        _apiHandlerMock.Verify(x => x.UpdatePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()), Times.Once);
+        _apiHandlerMock.Verify(x => x.UpdatePositionAsync(It.IsAny<Position>()), Times.Once);
     }
 
     [Fact]
@@ -603,14 +603,14 @@ public class PositionsCommandTest
             TakeProfit = 1.11267m
         };
 
-        _apiHandlerMock.Setup(x => x.UpdatePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()))
+        _apiHandlerMock.Setup(x => x.UpdatePositionAsync(It.IsAny<Position>()))
             .ThrowsAsync(new Exception());
 
         // Act
         await _positionHandler.UpdatePositionAsync(position);
 
         // Assert
-        _apiHandlerMock.Verify(x => x.UpdatePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()), Times.Once);
+        _apiHandlerMock.Verify(x => x.UpdatePositionAsync(It.IsAny<Position>()), Times.Once);
         _logger.Verify(x => x.Error(It.IsAny<Exception?>(), It.IsAny<string>(), It.IsAny<string>()));
     }
 
@@ -691,7 +691,7 @@ public class PositionsCommandTest
 
         // Assert
 
-        _apiHandlerMock.Verify(x => x.ClosePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()), Times.Once);
+        _apiHandlerMock.Verify(x => x.ClosePositionAsync(It.IsAny<Position>()), Times.Once);
     }
 
 
@@ -713,7 +713,7 @@ public class PositionsCommandTest
 
         // Assert
 
-        _apiHandlerMock.Verify(x => x.ClosePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()), Times.Never);
+        _apiHandlerMock.Verify(x => x.ClosePositionAsync(It.IsAny<Position>()), Times.Never);
     }
 
 
@@ -727,14 +727,14 @@ public class PositionsCommandTest
             Id = _positionHandler.PositionOpened.Id
         };
 
-        _apiHandlerMock.Setup(x => x.ClosePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()))
+        _apiHandlerMock.Setup(x => x.ClosePositionAsync(It.IsAny<Position>()))
             .ThrowsAsync(new Exception());
 
         // Act
         await _positionHandler.ClosePositionAsync(position);
 
         // Assert
-        _apiHandlerMock.Verify(x => x.ClosePositionAsync(It.IsAny<decimal>(), It.IsAny<Position>()), Times.Once);
+        _apiHandlerMock.Verify(x => x.ClosePositionAsync(It.IsAny<Position>()), Times.Once);
         _logger.Verify(x => x.Error(It.IsAny<Exception?>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 

@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Moq;
+using RobotAppLibrary.Api.Modeles;
 using RobotAppLibrary.Api.Providers.Base;
 using RobotAppLibrary.Chart;
 using RobotAppLibrary.Modeles;
@@ -37,13 +38,13 @@ public class ChartTests
     public void Test_Aggregate(Timeframe timeframe, int expectedCount)
     {
         var candles = TestUtils.GenerateCandle(Timeframe.OneMinute, 10000);
-        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>())).ReturnsAsync(candles);
+        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<ChartRequest>())).ReturnsAsync(candles);
         _mockApiProvider.Setup(x => x.GetTickPriceAsync(It.IsAny<string>())).ReturnsAsync(new Tick());
 
         var chart = new RobotAppLibrary.Chart.Chart(_mockApiProvider.Object, _mockLogger.Object, Timeframe.OneMinute,
             "TEST_SYMBOL");
 
-        _mockApiProvider.Verify(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>()), Times.Once);
+        _mockApiProvider.Verify(x => x.GetChartAsync(It.IsAny<ChartRequest>()), Times.Once);
         _mockApiProvider.Verify(x => x.GetTradingHoursAsync(It.IsAny<string>()), Times.Once);
         _mockApiProvider.Verify(x => x.GetTickPriceAsync(It.IsAny<string>()), Times.Once);
 
@@ -60,13 +61,13 @@ public class ChartTests
     public void Init_Should_Initialize_With_Candles()
     {
         var candles = TestUtils.GenerateCandle(Timeframe.OneMinute, 5);
-        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>())).ReturnsAsync(candles);
+        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<ChartRequest>())).ReturnsAsync(candles);
         _mockApiProvider.Setup(x => x.GetTickPriceAsync(It.IsAny<string>())).ReturnsAsync(new Tick());
 
         var chart = new RobotAppLibrary.Chart.Chart(_mockApiProvider.Object, _mockLogger.Object, Timeframe.OneMinute,
             "TEST_SYMBOL");
 
-        _mockApiProvider.Verify(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>()), Times.Once);
+        _mockApiProvider.Verify(x => x.GetChartAsync(It.IsAny<ChartRequest>()), Times.Once);
         _mockApiProvider.Verify(x => x.GetTradingHoursAsync(It.IsAny<string>()), Times.Once);
         _mockApiProvider.Verify(x => x.GetTickPriceAsync(It.IsAny<string>()), Times.Once);
 
@@ -79,7 +80,7 @@ public class ChartTests
     {
         // Arrange
 
-        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>()))
+        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<ChartRequest>()))
             .ThrowsAsync(new Exception());
 
         // Act && assert
@@ -113,7 +114,7 @@ public class ChartTests
         var callerTick = false;
 
         var initialCandles = TestUtils.GenerateCandle(timeframe, 10);
-        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>()))
+        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<ChartRequest>()))
             .ReturnsAsync(initialCandles);
 
         var chart = new RobotAppLibrary.Chart.Chart(_mockApiProvider.Object, _mockLogger.Object, timeframe,
@@ -172,7 +173,7 @@ public class ChartTests
         lastCandle.Low = 0;
         lastCandle.Close = 0;
 
-        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>()))
+        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<ChartRequest>()))
             .ReturnsAsync(candleListData);
 
         var chart = new RobotAppLibrary.Chart.Chart(_mockApiProvider.Object, _mockLogger.Object, timeframe,
@@ -227,7 +228,7 @@ public class ChartTests
         var callerTick = false;
 
         var candleListData = TestUtils.GenerateCandle(timeframe, 100);
-        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>()))
+        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<ChartRequest>()))
             .ReturnsAsync(candleListData);
 
         var chart = new RobotAppLibrary.Chart.Chart(_mockApiProvider.Object, _mockLogger.Object, timeframe, "EURUSD");
@@ -284,7 +285,7 @@ public class ChartTests
         var callerTick = false;
 
         var candleListData = TestUtils.GenerateCandle(timeframe, 2000);
-        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>()))
+        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<ChartRequest>()))
             .ReturnsAsync(candleListData);
 
         var chart = new RobotAppLibrary.Chart.Chart(_mockApiProvider.Object, _mockLogger.Object, timeframe, "EURUSD");
@@ -340,7 +341,7 @@ public class ChartTests
         var caller = false;
         var callerTick = false;
 
-        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>()))
+        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<ChartRequest>()))
             .ReturnsAsync(new List<Candle>());
 
         var chart = new RobotAppLibrary.Chart.Chart(_mockApiProvider.Object, _mockLogger.Object, timeframe, "EURUSD");
@@ -391,7 +392,7 @@ public class ChartTests
         var callerTick = false;
 
         var candleListData = TestUtils.GenerateCandle(timeframe, 100);
-        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<string>(), It.IsAny<Timeframe>()))
+        _mockApiProvider.Setup(x => x.GetChartAsync(It.IsAny<ChartRequest>()))
             .ReturnsAsync(candleListData);
 
         var chart = new RobotAppLibrary.Chart.Chart(_mockApiProvider.Object, _mockLogger.Object, timeframe, "EURUSD");

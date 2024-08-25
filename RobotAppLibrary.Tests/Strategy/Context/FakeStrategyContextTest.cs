@@ -51,7 +51,7 @@ public class FakeStrategyContextTest : StrategyImplementationBase
         RunEvent?.Invoke(this, EventArgs.Empty);
     }
 
-    public override bool ShouldUpdatePosition(Position position)
+    public override bool ShouldUpdatePosition(Position? position)
     {
         if (ShouldUpdatePositionProperty) return true;
 

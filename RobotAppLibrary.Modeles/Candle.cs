@@ -4,7 +4,7 @@ namespace RobotAppLibrary.Modeles;
 
 public class Candle : CandleProperties
 {
-    public List<Tick> Ticks { get; set; } = new();
+    public List<Tick> Ticks { get; set; } = new(1000);
     public decimal BidVolume { get; set; }
     public decimal AskVolume { get; set; }
 

@@ -1,8 +1,11 @@
 using System.Text.Json;
 using RobotAppLibrary.Api.Connector.Tcp;
+using RobotAppLibrary.Api.Consts;
 using RobotAppLibrary.Api.Interfaces;
 using RobotAppLibrary.Api.Modeles;
 using RobotAppLibrary.Modeles;
+using Serilog;
+using Serilog.Core;
 
 namespace RobotAppLibrary.Api.Executor;
 
@@ -12,14 +15,16 @@ public class TcpCommandExecutor : ICommandExecutor
     protected readonly IReponseAdapter ResponseAdapter;
     protected readonly ITcpConnector TcpClient;
     protected readonly ITcpStreamingConnector TcpStreamingClient;
+    protected readonly ILogger Logger;
 
     protected TcpCommandExecutor(ITcpConnector tcpClient, ITcpStreamingConnector tcpStreamingClient,
-        ICommandCreator commandCreator, IReponseAdapter responseAdapter)
+        ICommandCreator commandCreator, IReponseAdapter responseAdapter, ILogger logger)
     {
         TcpClient = tcpClient;
         TcpStreamingClient = tcpStreamingClient;
         CommandCreator = commandCreator;
         ResponseAdapter = responseAdapter;
+        Logger = logger.ForContext<TcpCommandExecutor>();
         tcpClient.Connected += (sender, args) => Connected?.Invoke(sender, args);
         tcpClient.Disconnected += (sender, args) => Disconnected?.Invoke(sender, args);
         tcpStreamingClient.Connected += (sender, args) => Connected?.Invoke(sender, args);
@@ -27,7 +32,6 @@ public class TcpCommandExecutor : ICommandExecutor
         tcpStreamingClient.TickRecordReceived += tick => TickRecordReceived?.Invoke(tick);
         tcpStreamingClient.TradeRecordReceived += position => TradeRecordReceived?.Invoke(position);
         tcpStreamingClient.BalanceRecordReceived += balance => BalanceRecordReceived?.Invoke(balance);
-        tcpStreamingClient.ProfitRecordReceived += profit => ProfitRecordReceived?.Invoke(profit);
         tcpStreamingClient.NewsRecordReceived += news => NewsRecordReceived?.Invoke(news);
         tcpStreamingClient.KeepAliveRecordReceived += () => KeepAliveRecordReceived?.Invoke();
         tcpStreamingClient.CandleRecordReceived += candle => CandleRecordReceived?.Invoke(candle);
@@ -36,7 +40,6 @@ public class TcpCommandExecutor : ICommandExecutor
     public event Action<Tick>? TickRecordReceived;
     public event Action<Position>? TradeRecordReceived;
     public event Action<AccountBalance>? BalanceRecordReceived;
-    public event Action<Position>? ProfitRecordReceived;
     public event Action<News>? NewsRecordReceived;
     public event Action? KeepAliveRecordReceived;
     public event Action<Candle>? CandleRecordReceived;
@@ -46,6 +49,7 @@ public class TcpCommandExecutor : ICommandExecutor
 
     public virtual async Task ExecuteLoginCommand(Credentials credentials)
     {
+        Logger.Information("Execute login command");
         await TcpClient.ConnectAsync();
         var command = CommandCreator.CreateLoginCommand(credentials);
         await TcpClient.SendAndReceiveAsync(command);
@@ -54,233 +58,292 @@ public class TcpCommandExecutor : ICommandExecutor
 
     public async Task ExecuteLogoutCommand()
     {
+        Logger.Information("Execute logout command");
         var command = CommandCreator.CreateLogOutCommand();
         await TcpClient.SendAndReceiveAsync(command);
     }
 
     public virtual async Task<List<SymbolInfo>> ExecuteAllSymbolsCommand()
     {
+        Logger.Information("Execute all symbols command");
         var command = CommandCreator.CreateAllSymbolsCommand();
-        var rsp = await TcpClient.SendAndReceiveAsync(command, false);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptAllSymbolsResponse(rsp);
     }
 
     public virtual async Task<List<CalendarEvent>> ExecuteCalendarCommand()
     {
+        Logger.Information("Execute calendar command");
         var command = CommandCreator.CreateCalendarCommand();
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptCalendarResponse(rsp);
     }
 
-    public virtual async Task<List<Candle>> ExecuteFullChartCommand(Timeframe timeframe, DateTime start, string symbol)
+    public virtual async Task<List<Candle>> ExecuteFullChartCommand(ChartRequest chartRequest)
     {
-        var command = CommandCreator.CreateFullChartCommand(timeframe, start, symbol);
-        var rsp = await TcpClient.SendAndReceiveAsync(command, false);
+        Logger.Information("Execute full chart command with params {@ChartRequest}", chartRequest);
+        var command = CommandCreator.CreateFullChartCommand(chartRequest.Timeframe, chartRequest.Start, chartRequest.Symbol);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptFullChartResponse(rsp);
     }
 
-    public virtual async Task<List<Candle>> ExecuteRangeChartCommand(Timeframe timeframe, DateTime start, DateTime end,
-        string symbol)
+    public virtual async Task<List<Candle>> ExecuteRangeChartCommand(ChartRequest chartRequest)
     {
-        var command = CommandCreator.CreateRangeChartCommand(timeframe, start, end, symbol);
-        var rsp = await TcpClient.SendAndReceiveAsync(command, false);
+        Logger.Information("Execute chart range command with params {@ChartRequest}", chartRequest);
+        var command = CommandCreator.CreateRangeChartCommand(chartRequest.Timeframe, chartRequest.Start, chartRequest.End.GetValueOrDefault(), chartRequest.Symbol);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptRangeChartResponse(rsp);
     }
 
     public virtual async Task<AccountBalance> ExecuteBalanceAccountCommand()
     {
+        Logger.Information("Execute balance account command");
         var command = CommandCreator.CreateBalanceAccountCommand();
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptBalanceAccountResponse(rsp);
     }
 
-    public virtual async Task<List<News>> ExecuteNewsCommand(DateTime? start, DateTime? end)
+    public virtual async Task<List<News>> ExecuteNewsCommand(NewsRequest newsRequest)
     {
-        var command = CommandCreator.CreateNewsCommand(start, end);
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
+        Logger.Information("Execute news command with params {@NewsRequest}", newsRequest); 
+        var command = CommandCreator.CreateNewsCommand(newsRequest.Start, newsRequest.End);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptNewsResponse(rsp);
     }
 
     public virtual async Task<string> ExecuteCurrentUserDataCommand()
     {
+        Logger.Information("Get current user data");
         var command = CommandCreator.CreateCurrentUserDataCommand();
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptCurrentUserDataResponse(rsp);
     }
 
     public virtual async Task<bool> ExecutePingCommand()
     {
+        Logger.Information("Execute ping command");
         var command = CommandCreator.CreatePingCommand();
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptPingResponse(rsp);
     }
 
     public virtual async Task<SymbolInfo> ExecuteSymbolCommand(string symbol)
     {
+        Logger.Information("Execute symbol command for symbol {Symbol}", symbol);
         var command = CommandCreator.CreateSymbolCommand(symbol);
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptSymbolResponse(rsp);
     }
 
     public virtual async Task<Tick> ExecuteTickCommand(string symbol)
     {
+        Logger.Information("Execute tick command for symbol {Symbol}", symbol);
         var command = CommandCreator.CreateTickCommand(symbol);
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptTickResponse(rsp);
     }
 
 
     public virtual async Task<List<Position>?> ExecuteTradesHistoryCommand(string tradeCom)
     {
+        Logger.Information("Execute trade history command for id {Id}", tradeCom);
         var command = CommandCreator.CreateTradesHistoryCommand();
-        var rsp = await TcpClient.SendAndReceiveAsync(command, false);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptTradesHistoryResponse(rsp, tradeCom);
     }
 
     public virtual async Task<Position?> ExecuteTradesOpenedTradesCommand(string tradeCom)
     {
+        Logger.Information("Execute trade Opened command for id {Id}", tradeCom);
         var command = CommandCreator.CreateTradesOpenedTradesCommand();
-        var rsp = await TcpClient.SendAndReceiveAsync(command, false);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptTradesOpenedTradesResponse(rsp, tradeCom);
     }
 
     public virtual async Task<TradeHourRecord> ExecuteTradingHoursCommand(string symbol)
     {
+        Logger.Information("Execute trade hours record for symbol {Symbol}", symbol);
         var command = CommandCreator.CreateTradingHoursCommand(symbol);
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
+        using var rsp = await TcpClient.SendAndReceiveAsync(command);
         return ResponseAdapter.AdaptTradingHoursResponse(rsp);
     }
 
-    public virtual async Task<Position> ExecuteOpenTradeCommand(Position position, decimal price)
+    public virtual async Task<Position?> ExecuteOpenTradeCommand(Position? position)
     {
-        var command = CommandCreator.CreateOpenTradeCommande(position, price);
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
-        return ResponseAdapter.AdaptOpenTradeResponse(rsp);
+        var command = string.Empty;
+        Position? positionResponse = null;
+        try
+        {
+            command = CommandCreator.CreateOpenTradeCommande(position);
+            using var rsp = await TcpClient.SendAndReceiveAsync(command);
+            positionResponse = ResponseAdapter.AdaptOpenTradeResponse(rsp);
+            return positionResponse;
+        }
+        finally
+        {
+            Logger.ForContext(LoggerConst.PositionId,position?.Id).Information("Open trade command executed {@Position}", new LogObject()
+            {
+                Command = command,
+                Result = positionResponse
+            });
+        }
+        
     }
 
-    public virtual async Task<Position> ExecuteUpdateTradeCommand(Position position, decimal price)
+    public virtual async Task<Position?> ExecuteUpdateTradeCommand(Position? position)
     {
-        var command = CommandCreator.CreateUpdateTradeCommande(position, price);
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
-        return ResponseAdapter.AdaptUpdateTradeResponse(rsp);
+        var command = string.Empty;
+        Position? positionResponse = null;
+        try
+        {
+            command = CommandCreator.CreateUpdateTradeCommande(position);
+            using var rsp = await TcpClient.SendAndReceiveAsync(command);
+            positionResponse = ResponseAdapter.AdaptUpdateTradeResponse(rsp);
+            return positionResponse;
+        }
+        finally
+        {
+            Logger.ForContext(LoggerConst.PositionId,position?.Id).Information("Update trade command executed {@Position}", new LogObject()
+            {
+                Command = command,
+                Result = positionResponse
+            });
+        }
+
     }
 
-    public virtual async Task<Position> ExecuteCloseTradeCommand(Position position, decimal price)
+    public virtual async Task<Position?> ExecuteCloseTradeCommand(Position? position)
     {
-        var command = CommandCreator.CreateCloseTradeCommande(position, price);
-        var rsp = await TcpClient.SendAndReceiveAsync(command);
-        return ResponseAdapter.AdaptCloseTradeResponse(rsp);
+        var command = string.Empty;
+        Position? positionResponse = null;
+        try
+        {
+          
+            command = CommandCreator.CreateCloseTradeCommande(position);
+            using var rsp = await TcpClient.SendAndReceiveAsync(command);
+            positionResponse = ResponseAdapter.AdaptCloseTradeResponse(rsp);
+            return positionResponse;
+        }
+        finally
+        {
+            Logger.ForContext(LoggerConst.PositionId,position?.Id).Information("Close trade command executed {@Position}", new LogObject()
+            {
+                Command = command,
+                Result = positionResponse
+            });
+        }
+
     }
 
     public bool ExecuteIsConnected()
     {
+        Logger.Information("Execute is connected command");
         return TcpClient.IsConnected && TcpStreamingClient.IsConnected;
     }
 
     public virtual async void ExecuteSubscribeBalanceCommandStreaming()
     {
+        Logger.Information("Execute subscribe balance command streaming");
         var command = CommandCreator.CreateSubscribeBalanceCommandStreaming();
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteStopBalanceCommandStreaming()
     {
+        Logger.Information("Execute stop balance command streaming");
         var command = CommandCreator.CreateStopBalanceCommandStreaming();
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteSubscribeCandleCommandStreaming(string symbol)
     {
+        Logger.Information("Execute subscribe candle command streaming");
         var command = CommandCreator.CreateSubscribeCandleCommandStreaming(symbol);
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteStopCandleCommandStreaming(string symbol)
     {
+        Logger.Information("Execute stop candle command streaming");
         var command = CommandCreator.CreateStopCandleCommandStreaming(symbol);
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteSubscribeKeepAliveCommandStreaming()
     {
+        Logger.Information("Execute subscribe keep alive command stream");
         var command = CommandCreator.CreateSubscribeKeepAliveCommandStreaming();
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteStopKeepAliveCommandStreaming()
     {
+        Logger.Information("Execute stop keep alive command stream");
         var command = CommandCreator.CreateStopKeepAliveCommandStreaming();
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteSubscribeNewsCommandStreaming()
     {
+        Logger.Information("Execute subscribe news command stream");
         var command = CommandCreator.CreateSubscribeNewsCommandStreaming();
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteStopNewsCommandStreaming()
     {
+        Logger.Information("Execute stop news command stream");
         var command = CommandCreator.CreateStopNewsCommandStreaming();
-        await TcpStreamingClient.SendAsync(command);
-    }
-
-    public virtual async void ExecuteSubscribeProfitsCommandStreaming()
-    {
-        var command = CommandCreator.CreateSubscribeProfitsCommandStreaming();
-        await TcpStreamingClient.SendAsync(command);
-    }
-
-    public virtual async void ExecuteStopProfitsCommandStreaming()
-    {
-        var command = CommandCreator.CreateStopProfitsCommandStreaming();
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteTickPricesCommandStreaming(string symbol)
     {
+        Logger.Information("Execute subscribe tick price command stream");
         var command = CommandCreator.CreateTickPricesCommandStreaming(symbol);
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteStopTickPriceCommandStreaming(string symbol)
     {
+        Logger.Information("Execute stop tick price command stream");
         var command = CommandCreator.CreateStopTickPriceCommandStreaming(symbol);
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteTradesCommandStreaming()
     {
+        Logger.Information("Execute subscribe trades command stream");
         var command = CommandCreator.CreateTradesCommandStreaming();
         await TcpStreamingClient.SendAsync(command);
+        var command2 = CommandCreator.CreateSubscribeProfitsCommandStreaming();
+        await TcpStreamingClient.SendAsync(command2);
+        var command3 = CommandCreator.CreateTradeStatusCommandStreaming();
+        await TcpStreamingClient.SendAsync(command3);
     }
 
     public virtual async void ExecuteStopTradesCommandStreaming()
     {
+        Logger.Information("Execute stop trades command stream");
         var command = CommandCreator.CreateStopTradesCommandStreaming();
         await TcpStreamingClient.SendAsync(command);
+        var command2 = CommandCreator.CreateStopProfitsCommandStreaming();
+        await TcpStreamingClient.SendAsync(command2);
+        var command3 = CommandCreator.CreateStopTradeStatusCommandStreaming();
+        await TcpStreamingClient.SendAsync(command3);
     }
 
-    public virtual async void ExecuteTradeStatusCommandStreaming()
-    {
-        var command = CommandCreator.CreateTradeStatusCommandStreaming();
-        await TcpStreamingClient.SendAsync(command);
-    }
-
-    public virtual async void ExecuteStopTradeStatusCommandStreaming()
-    {
-        var command = CommandCreator.CreateStopTradeStatusCommandStreaming();
-        await TcpStreamingClient.SendAsync(command);
-    }
 
     public virtual async void ExecutePingCommandStreaming()
     {
+        Logger.Information("Execute  ping command stream");
         var command = CommandCreator.CreatePingCommandStreaming();
         await TcpStreamingClient.SendAsync(command);
     }
 
     public virtual async void ExecuteStopPingCommandStreaming()
     {
+        Logger.Information("Execute stop ping command stream");
         var command = CommandCreator.CreateStopPingCommandStreaming();
         await TcpStreamingClient.SendAsync(command);
     }

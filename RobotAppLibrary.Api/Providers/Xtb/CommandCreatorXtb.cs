@@ -222,19 +222,19 @@ public class CommandCreatorXtb : ICommandCreatorXtb
         return WriteBaseCommand("getTradingHours", doc.RootElement);
     }
 
-    public string CreateOpenTradeCommande(Position position, decimal price)
+    public string CreateOpenTradeCommande(Position? position)
     {
-        return CreateTradeTransactionCommand(position, price, TRADE_TRANSACTION_TYPE.ORDER_OPEN.Code);
+        return CreateTradeTransactionCommand(position, position.OpenPrice, TRADE_TRANSACTION_TYPE.ORDER_OPEN.Code);
     }
 
-    public string CreateUpdateTradeCommande(Position position, decimal price)
+    public string CreateUpdateTradeCommande(Position? position)
     {
-        return CreateTradeTransactionCommand(position, price, TRADE_TRANSACTION_TYPE.ORDER_MODIFY.Code);
+        return CreateTradeTransactionCommand(position, position.CurrentPrice.GetValueOrDefault(), TRADE_TRANSACTION_TYPE.ORDER_MODIFY.Code);
     }
 
-    public string CreateCloseTradeCommande(Position position, decimal price)
+    public string CreateCloseTradeCommande(Position? position)
     {
-        return CreateTradeTransactionCommand(position, price, TRADE_TRANSACTION_TYPE.ORDER_CLOSE.Code);
+        return CreateTradeTransactionCommand(position, position.ClosePrice.GetValueOrDefault(), TRADE_TRANSACTION_TYPE.ORDER_CLOSE.Code);
     }
 
     public string CreateSubscribeBalanceCommandStreaming()
@@ -539,7 +539,7 @@ public class CommandCreatorXtb : ICommandCreatorXtb
     }
 
 
-    private string CreateTradeTransactionCommand(Position position, decimal price, long? typeCode)
+    private string CreateTradeTransactionCommand(Position? position, decimal price, long? typeCode)
     {
         using var stream = new MemoryStream();
         using var writer = new Utf8JsonWriter(stream);

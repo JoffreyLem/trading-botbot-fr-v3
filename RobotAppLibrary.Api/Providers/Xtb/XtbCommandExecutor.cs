@@ -3,6 +3,7 @@ using RobotAppLibrary.Api.Connector.Tcp;
 using RobotAppLibrary.Api.Executor;
 using RobotAppLibrary.Api.Modeles;
 using RobotAppLibrary.Api.Providers.Xtb.Modeles;
+using Serilog;
 
 namespace RobotAppLibrary.Api.Providers.Xtb;
 
@@ -10,12 +11,14 @@ public class XtbCommandExecutor(
     TcpConnector tcpClient,
     StreamingClientXtb tcpStreamingClient,
     CommandCreatorXtb commandCreator,
-    XtbAdapter responseAdapter)
+    XtbAdapter responseAdapter,
+    ILogger logger)
     : TcpCommandExecutor(tcpClient, tcpStreamingClient,
-        commandCreator, responseAdapter)
+        commandCreator, responseAdapter, logger)
 {
     public override async Task ExecuteLoginCommand(Credentials credentials)
     {
+        Logger.Information("Execute login command for user {User}", credentials.User);
         await TcpClient.ConnectAsync();
         var command = CommandCreator.CreateLoginCommand(credentials);
         using var rsp = await TcpClient.SendAndReceiveAsync(command);

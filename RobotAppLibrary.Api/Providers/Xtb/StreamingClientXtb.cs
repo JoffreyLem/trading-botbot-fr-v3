@@ -32,7 +32,7 @@ public class StreamingClientXtb(Server server, ILogger logger, IReponseAdapter a
                     OnTradeRecordReceived(adapter.AdaptTradeStatusRecordStreaming(message));
                     break;
                 case "profit":
-                    OnProfitRecordReceived(adapter.AdaptProfitRecordStreaming(message));
+                    OnTradeRecordReceived(adapter.AdaptProfitRecordStreaming(message));
                     break;
                 case "news":
                     OnNewsRecordReceived(adapter.AdaptNewsRecordStreaming(message));

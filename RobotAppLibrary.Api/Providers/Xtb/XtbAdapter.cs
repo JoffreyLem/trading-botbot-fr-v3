@@ -68,10 +68,14 @@ public class XtbAdapter : IReponseAdapter
         CheckApiStatus(jsonResponse);
         var returnData = ReturnData(jsonResponse);
 
-        var dataRecordsList = new List<Candle>();
+        var arrayData = returnData.GetProperty("rateInfos").EnumerateArray();
+
+        var count = arrayData.Count();
+
+        var dataRecordsList = new List<Candle>(count);
 
         var digits = returnData.GetProperty("digits").GetInt32();
-        dataRecordsList.AddRange(returnData.GetProperty("rateInfos").EnumerateArray()
+        dataRecordsList.AddRange(arrayData
             .Select(recordElement => MapCandle(recordElement, digits)));
 
         dataRecordsList.Sort((c1, c2) => c1.Date.CompareTo(c2.Date));
@@ -203,7 +207,7 @@ public class XtbAdapter : IReponseAdapter
     }
 
 
-    public Position AdaptOpenTradeResponse(JsonDocument? jsonResponse)
+    public Position? AdaptOpenTradeResponse(JsonDocument? jsonResponse)
     {
         CheckApiStatus(jsonResponse);
 
@@ -212,7 +216,7 @@ public class XtbAdapter : IReponseAdapter
         return MapPositionTrasaction(returnData);
     }
 
-    public Position AdaptUpdateTradeResponse(JsonDocument? jsonResponse)
+    public Position? AdaptUpdateTradeResponse(JsonDocument? jsonResponse)
     {
         CheckApiStatus(jsonResponse);
         var returnData = ReturnData(jsonResponse);
@@ -220,7 +224,7 @@ public class XtbAdapter : IReponseAdapter
         return MapPositionTrasaction(returnData);
     }
 
-    public Position AdaptCloseTradeResponse(JsonDocument? jsonResponse)
+    public Position? AdaptCloseTradeResponse(JsonDocument? jsonResponse)
     {
         CheckApiStatus(jsonResponse);
         var returnData = ReturnData(jsonResponse);
@@ -426,7 +430,7 @@ public class XtbAdapter : IReponseAdapter
         return position;
     }
 
-    private Position MapPositionTrasaction(JsonElement jsonElement)
+    private Position? MapPositionTrasaction(JsonElement jsonElement)
     {
         var position = new Position();
         var order = jsonElement.GetProperty("order").GetInt64();
@@ -454,7 +458,10 @@ public class XtbAdapter : IReponseAdapter
             if (errorDescr == null && !string.IsNullOrEmpty(errorCode))
                 errorDescr = ERR_CODE.getErrorDescription(errorCode);
 
-            throw new ApiProvidersException(errorDescr);
+            throw new ApiProvidersException(errorDescr)
+            {
+                ErrorCode = errorCode
+            };
         }
     }
 

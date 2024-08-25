@@ -12,7 +12,7 @@ namespace RobotAppLibrary.Api.Providers.Base;
 //TODO : test des states event avec les order ?
 public abstract class ApiProviderBase : IApiProviderBase
 {
-    internal readonly List<Position> CachePosition = [];
+    internal readonly List<Position?> CachePosition = [];
     protected readonly ILogger Logger;
     private Timer? _pingTimer;
     public DateTime LastPing;
@@ -22,13 +22,13 @@ public abstract class ApiProviderBase : IApiProviderBase
         CommandExecutor = commandExecutor;
         Logger = logger.ForContext<ApiProviderBase>();
         CommandExecutor.BalanceRecordReceived += TcpStreamingConnectorOnBalanceRecordReceived;
-        CommandExecutor.NewsRecordReceived += news => NewsEvent?.Invoke(this, news);
-        CommandExecutor.TickRecordReceived += tick => TickEvent?.Invoke(this, tick);
+        CommandExecutor.NewsRecordReceived += OnCommandExecutorOnNewsRecordReceived;
+        CommandExecutor.TickRecordReceived += OnCommandExecutorOnTickRecordReceived;
         CommandExecutor.TradeRecordReceived += TcpStreamingConnectorOnTradeRecordReceived;
-        CommandExecutor.ProfitRecordReceived += TcpStreamingConnectorOnProfitRecordReceived;
         CommandExecutor.Disconnected += TcpConnectorOnDisconnected;
         PingInterval = pingInterval;
     }
+
 
     public TimeSpan PingInterval { get; }
 
@@ -58,8 +58,6 @@ public abstract class ApiProviderBase : IApiProviderBase
             await CommandExecutor.ExecuteLoginCommand(credentials);
             CommandExecutor.ExecuteSubscribeBalanceCommandStreaming();
             CommandExecutor.ExecuteTradesCommandStreaming();
-            CommandExecutor.ExecuteTradeStatusCommandStreaming();
-            CommandExecutor.ExecuteSubscribeProfitsCommandStreaming();
             CommandExecutor.ExecuteSubscribeNewsCommandStreaming();
             CommandExecutor.ExecuteSubscribeKeepAliveCommandStreaming();
 
@@ -72,7 +70,6 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(ConnectAsync)}");
             throw new ApiProvidersException($"Error on  {nameof(ConnectAsync)}", e);
         }
     }
@@ -85,8 +82,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(DisconnectAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(DisconnectAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(DisconnectAsync)}",e);
         }
     }
 
@@ -98,8 +94,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(IsConnected)}");
-            throw new ApiProvidersException($"Error on  {nameof(IsConnected)}");
+            throw new ApiProvidersException($"Error on  {nameof(IsConnected)}", e);
         }
     }
 
@@ -125,8 +120,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(GetBalanceAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(GetBalanceAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(GetBalanceAsync)}",e);
         }
     }
 
@@ -139,8 +133,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(GetCalendarAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(GetCalendarAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(GetCalendarAsync)}",e);
         }
     }
 
@@ -154,8 +147,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(GetAllSymbolsAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(GetAllSymbolsAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(GetAllSymbolsAsync)}",e);
         }
     }
 
@@ -167,8 +159,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(GetOpenedTradesAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(GetOpenedTradesAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(GetOpenedTradesAsync)}",e);
         }
     }
 
@@ -180,8 +171,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(GetAllPositionsByCommentAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(GetAllPositionsByCommentAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(GetAllPositionsByCommentAsync)}", e);
         }
     }
 
@@ -195,8 +185,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(GetSymbolInformationAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(GetSymbolInformationAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(GetSymbolInformationAsync)}",e);
         }
     }
 
@@ -208,35 +197,32 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(GetTradingHoursAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(GetTradingHoursAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(GetTradingHoursAsync)}",e);
         }
     }
 
-    public async Task<List<Candle>> GetChartAsync(string symbol, Timeframe timeframe)
+    public async Task<List<Candle>> 
+        GetChartAsync(ChartRequest chartRequest)
     {
         try
         {
-            return await CommandExecutor.ExecuteFullChartCommand(timeframe, new DateTime(), symbol);
+            return await CommandExecutor.ExecuteFullChartCommand(chartRequest);
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(GetChartAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(GetChartAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(GetChartAsync)}",e);
         }
     }
 
-    public async Task<List<Candle>> GetChartByDateAsync(string symbol, Timeframe periodCodeStr, DateTime start,
-        DateTime end)
+    public async Task<List<Candle>> GetChartByDateAsync(ChartRequest chartRequest)
     {
         try
         {
-            return await CommandExecutor.ExecuteRangeChartCommand(periodCodeStr, start, end, symbol);
+            return await CommandExecutor.ExecuteRangeChartCommand(chartRequest);
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(GetChartByDateAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(GetChartByDateAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(GetChartByDateAsync)}",e);
         }
     }
 
@@ -248,50 +234,46 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(GetTickPriceAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(GetTickPriceAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(GetTickPriceAsync)}",e);
         }
     }
 
-    public virtual async Task<Position> OpenPositionAsync(Position position, decimal price)
+    public virtual async Task<Position?> OpenPositionAsync(Position? position)
     {
         try
         {
-            var pos = await CommandExecutor.ExecuteOpenTradeCommand(position, price);
+            var pos = await CommandExecutor.ExecuteOpenTradeCommand(position);
             position.Order = pos.Order;
             CachePosition.Add(position);
             return pos;
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(OpenPositionAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(OpenPositionAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(OpenPositionAsync)}",e);
         }
     }
 
-    public virtual async Task UpdatePositionAsync(decimal price, Position position)
+    public virtual async Task UpdatePositionAsync(Position? position)
     {
         try
         {
-            await CommandExecutor.ExecuteUpdateTradeCommand(position, price);
+            await CommandExecutor.ExecuteUpdateTradeCommand(position);
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(UpdatePositionAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(UpdatePositionAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(UpdatePositionAsync)}",e);
         }
     }
 
-    public virtual async Task ClosePositionAsync(decimal price, Position position)
+    public virtual async Task ClosePositionAsync(Position? position)
     {
         try
         {
-            await CommandExecutor.ExecuteCloseTradeCommand(position, price);
+            await CommandExecutor.ExecuteCloseTradeCommand(position);
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(ClosePositionAsync)}");
-            throw new ApiProvidersException($"Error on  {nameof(ClosePositionAsync)}");
+            throw new ApiProvidersException($"Error on  {nameof(ClosePositionAsync)}",e);
         }
     }
 
@@ -308,8 +290,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(SubscribePrice)}");
-            throw new ApiProvidersException($"Error on  {nameof(SubscribePrice)}");
+            throw new ApiProvidersException($"Error on  {nameof(SubscribePrice)}",e);
         }
     }
 
@@ -321,13 +302,12 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
         catch (Exception e)
         {
-            Logger.Error(e, $"Error on  {nameof(UnsubscribePrice)}");
-            throw new ApiProvidersException($"Error on  {nameof(UnsubscribePrice)}");
+            throw new ApiProvidersException($"Error on  {nameof(UnsubscribePrice)}",e);
         }
     }
 
     // TODO : Peut être refacto ce fonctionnement ? 
-    public void RestoreSession(Position position)
+    public void RestoreSession(Position? position)
     {
         CachePosition.Add(position);
     }
@@ -343,15 +323,25 @@ public abstract class ApiProviderBase : IApiProviderBase
         Logger.Information("Disconnected from {Connector}", sender);
         Disconnected?.Invoke(this, EventArgs.Empty);
     }
-
-    private void TcpStreamingConnectorOnProfitRecordReceived(Position? obj)
+    
+    
+    private void OnCommandExecutorOnTickRecordReceived(Tick tick)
     {
-        OnPositionUpdatedEvent(obj);
+        TickEvent?.Invoke(this, tick);
+        Logger.Verbose("New tick {@tick}",tick);
     }
+
+    private void OnCommandExecutorOnNewsRecordReceived(News news)
+    {
+        NewsEvent?.Invoke(this, news);
+        Logger.Verbose("New api event {@news}", news);
+    }
+
 
     private void TcpStreamingConnectorOnTradeRecordReceived(Position? obj)
     {
         if (obj is not null)
+        {
             switch (obj.StatusPosition)
             {
                 case StatusPosition.Pending:
@@ -370,6 +360,9 @@ public abstract class ApiProviderBase : IApiProviderBase
                     OnPositionClosedEvent(obj);
                     break;
             }
+            Logger.Verbose("Position data received {@position}", obj);
+        }
+          
     }
 
 
@@ -385,6 +378,7 @@ public abstract class ApiProviderBase : IApiProviderBase
             AccountBalance.MarginLevel = obj.MarginLevel;
 
             NewBalanceEvent?.Invoke(this, AccountBalance);
+            Logger.Verbose("New account balance data {@Account}", AccountBalance);
         }
     }
 

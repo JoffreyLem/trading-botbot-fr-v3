@@ -21,9 +21,9 @@ public interface IReponseAdapter
     List<Position>? AdaptTradesHistoryResponse(JsonDocument? jsonResponse, string tradeCom);
     Position? AdaptTradesOpenedTradesResponse(JsonDocument? jsonResponse, string tradeCom);
     TradeHourRecord AdaptTradingHoursResponse(JsonDocument? jsonResponse);
-    Position AdaptOpenTradeResponse(JsonDocument? jsonResponse);
-    Position AdaptUpdateTradeResponse(JsonDocument? jsonResponse);
-    Position AdaptCloseTradeResponse(JsonDocument? jsonResponse);
+    Position? AdaptOpenTradeResponse(JsonDocument? jsonResponse);
+    Position? AdaptUpdateTradeResponse(JsonDocument? jsonResponse);
+    Position? AdaptCloseTradeResponse(JsonDocument? jsonResponse);
 
     Tick AdaptTickRecordStreaming(JsonDocument input);
 

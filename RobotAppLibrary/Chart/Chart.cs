@@ -1,4 +1,5 @@
-﻿using RobotAppLibrary.Api.Providers.Base;
+﻿using RobotAppLibrary.Api.Modeles;
+using RobotAppLibrary.Api.Providers.Base;
 using RobotAppLibrary.Modeles;
 using RobotAppLibrary.Utils;
 using Serilog;
@@ -67,12 +68,19 @@ public class Chart : List<Candle>, IChart
         try
         {
             _apiHandler.TickEvent += ApiHandlerOnTickEvent;
-            var data = await _apiHandler.GetChartAsync(_symbol, _timeframe);
+            var data = await _apiHandler.GetChartAsync(new ChartRequest()
+            {
+                Symbol = this._symbol,
+                Timeframe = this._timeframe
+            });
             LastPrice = await _apiHandler.GetTickPriceAsync(_symbol);
             if (data is { Count: > 0 })
             {
-                foreach (var candle in data.TakeLast(2000)) Add(candle);
+                foreach (var candle in data.TakeLast(2000).ToList()) Add(candle);
                 this.Validate();
+                data.Clear();
+                data.TrimExcess();
+                data = null;
             }
 
             _tradeHourRecord = await _apiHandler.GetTradingHoursAsync(_symbol);
@@ -122,7 +130,7 @@ public class Chart : List<Candle>, IChart
             AskVolume = tick.AskVolume.GetValueOrDefault(),
             BidVolume = tick.BidVolume.GetValueOrDefault()
         };
-        candle.Ticks.Add(tick);
+       candle.Ticks.Add(tick);
         Add(candle);
         OnOnCandleEvent(this.Last());
         if (Count >= 2000) RemoveAt(0);

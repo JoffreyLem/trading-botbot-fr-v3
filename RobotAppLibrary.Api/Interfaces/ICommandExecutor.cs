@@ -9,10 +9,10 @@ public interface ICommandExecutor : IStreamingEvent, IConnectionEvent, IDisposab
     Task ExecuteLogoutCommand();
     Task<List<SymbolInfo>> ExecuteAllSymbolsCommand();
     Task<List<CalendarEvent>> ExecuteCalendarCommand();
-    Task<List<Candle>> ExecuteFullChartCommand(Timeframe timeframe, DateTime start, string symbol);
-    Task<List<Candle>> ExecuteRangeChartCommand(Timeframe timeframe, DateTime start, DateTime end, string symbol);
+    Task<List<Candle>> ExecuteFullChartCommand(ChartRequest chartRequest);
+    Task<List<Candle>> ExecuteRangeChartCommand(ChartRequest chartRequest);
     Task<AccountBalance> ExecuteBalanceAccountCommand();
-    Task<List<News>> ExecuteNewsCommand(DateTime? start, DateTime? end);
+    Task<List<News>> ExecuteNewsCommand(NewsRequest newsRequest);
     Task<string> ExecuteCurrentUserDataCommand();
     Task<bool> ExecutePingCommand();
     Task<SymbolInfo> ExecuteSymbolCommand(string symbol);
@@ -20,9 +20,9 @@ public interface ICommandExecutor : IStreamingEvent, IConnectionEvent, IDisposab
     Task<List<Position>?> ExecuteTradesHistoryCommand(string positionReference);
     Task<Position?> ExecuteTradesOpenedTradesCommand(string positionReference);
     Task<TradeHourRecord> ExecuteTradingHoursCommand(string symbol);
-    Task<Position> ExecuteOpenTradeCommand(Position position, decimal price);
-    Task<Position> ExecuteUpdateTradeCommand(Position position, decimal price);
-    Task<Position> ExecuteCloseTradeCommand(Position position, decimal price);
+    Task<Position?> ExecuteOpenTradeCommand(Position? position);
+    Task<Position?> ExecuteUpdateTradeCommand(Position? position);
+    Task<Position?> ExecuteCloseTradeCommand(Position? position);
     bool ExecuteIsConnected();
     void ExecuteSubscribeBalanceCommandStreaming();
     void ExecuteStopBalanceCommandStreaming();
@@ -32,14 +32,12 @@ public interface ICommandExecutor : IStreamingEvent, IConnectionEvent, IDisposab
     void ExecuteStopKeepAliveCommandStreaming();
     void ExecuteSubscribeNewsCommandStreaming();
     void ExecuteStopNewsCommandStreaming();
-    void ExecuteSubscribeProfitsCommandStreaming();
-    void ExecuteStopProfitsCommandStreaming();
+
     void ExecuteTickPricesCommandStreaming(string symbol);
     void ExecuteStopTickPriceCommandStreaming(string symbol);
     void ExecuteTradesCommandStreaming();
     void ExecuteStopTradesCommandStreaming();
-    void ExecuteTradeStatusCommandStreaming();
-    void ExecuteStopTradeStatusCommandStreaming();
+
     void ExecutePingCommandStreaming();
     void ExecuteStopPingCommandStreaming();
 }

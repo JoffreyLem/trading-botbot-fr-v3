@@ -22,7 +22,7 @@ public static class ApiProviderFactory
         var adapter = new XtbAdapter();
         var streamingCLient = new StreamingClientXtb(XtbServer.DemoTcp, logger, adapter);
         var commandCreator = new CommandCreatorXtb();
-        var icommandExecutor = new XtbCommandExecutor(tcpConnector, streamingCLient, commandCreator, adapter);
+        var icommandExecutor = new XtbCommandExecutor(tcpConnector, streamingCLient, commandCreator, adapter, logger);
         return new XtbApiProvider(icommandExecutor, logger, TimeSpan.FromMinutes(10));
     }
 }

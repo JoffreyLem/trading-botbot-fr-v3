@@ -26,7 +26,6 @@ public class BotBackgroundService(
                 command.SetException(ex);
             }
 
-        Console.WriteLine("ok");
     }
 
     private async Task ProcessStrategyChannel(CancellationToken stoppingToken)
@@ -35,10 +34,7 @@ public class BotBackgroundService(
             try
             {
                 logger.Information("Api command received {Command}", command);
-                if (command is RunStrategyBacktestCommand)
-                    _ = commandHandler.HandleStrategyCommand(command);
-                else
-                    await commandHandler.HandleStrategyCommand(command);
+                await commandHandler.HandleStrategyCommand(command);
             }
             catch (Exception ex)
             {

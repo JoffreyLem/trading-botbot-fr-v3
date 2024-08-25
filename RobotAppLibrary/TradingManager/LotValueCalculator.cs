@@ -13,7 +13,6 @@ public interface ILotValueCalculator : IDisposable
     public double PipValueMicroLot => PipValueStandard / 100;
     public double PipValueNanoLot => PipValueStandard / 1000;
     double MarginPerLot { get; }
-    Tick? TickPriceSecondary { get; }
 }
 
 public class LotValueCalculator : ILotValueCalculator

@@ -115,7 +115,6 @@ public class ApiProviderBaseTest
         _mockCommandExecutor.VerifyAdd(m => m.NewsRecordReceived += It.IsAny<Action<News>>(), Times.Once);
         _mockCommandExecutor.VerifyAdd(m => m.TickRecordReceived += It.IsAny<Action<Tick>>(), Times.Once);
         _mockCommandExecutor.VerifyAdd(m => m.TradeRecordReceived += It.IsAny<Action<Position>>(), Times.Once);
-        _mockCommandExecutor.VerifyAdd(m => m.ProfitRecordReceived += It.IsAny<Action<Position>>(), Times.Once);
         _mockCommandExecutor.VerifyAdd(m => m.Disconnected += It.IsAny<EventHandler>(), Times.Once);
     }
 
@@ -137,8 +136,6 @@ public class ApiProviderBaseTest
         _mockCommandExecutor.Verify(x => x.ExecuteLoginCommand(It.IsAny<Credentials>()), Times.Once);
         _mockCommandExecutor.Verify(x => x.ExecuteSubscribeBalanceCommandStreaming(), Times.Once);
         _mockCommandExecutor.Verify(x => x.ExecuteTradesCommandStreaming(), Times.Once);
-        _mockCommandExecutor.Verify(x => x.ExecuteTradeStatusCommandStreaming(), Times.Once);
-        _mockCommandExecutor.Verify(x => x.ExecuteSubscribeProfitsCommandStreaming(), Times.Once);
         _mockCommandExecutor.Verify(x => x.ExecuteSubscribeNewsCommandStreaming(), Times.Once);
         _mockCommandExecutor.Verify(x => x.ExecutePingCommand(), Times.Between(0, 1, Range.Inclusive));
         _mockCommandExecutor.Verify(x => x.ExecutePingCommandStreaming(), Times.Between(0, 1, Range.Inclusive));
@@ -593,21 +590,34 @@ public class ApiProviderBaseTest
         // Arrange
         var symbol = "testSymbol";
         var timeframe = Timeframe.OneHour;
+        var start = DateTime.Now;
+        var chartRequest = new ChartRequest()
+        {
+            Symbol = symbol,
+            Timeframe = timeframe,
+            Start = start // Utilisez une date valide
+        };
         var expectedCandles = new List<Candle>
         {
-            // ...initialize mock candles...
+            // Add expected Candle objects here
         };
-        _mockCommandExecutor.Setup(x => x.ExecuteFullChartCommand(timeframe, It.IsAny<DateTime>(), symbol))
+
+        _mockCommandExecutor
+            .Setup(x => x.ExecuteFullChartCommand(It.IsAny<ChartRequest>()))
             .ReturnsAsync(expectedCandles);
 
         // Act
-        var candles = await _apiHandler.GetChartAsync(symbol, timeframe);
+        var candles = await _apiHandler.GetChartAsync(chartRequest);
 
         // Assert
         candles.Should().BeEquivalentTo(expectedCandles);
-        _mockCommandExecutor.Verify(x => x.ExecuteFullChartCommand(timeframe, It.IsAny<DateTime>(), symbol),
+        _mockCommandExecutor.Verify(x => x.ExecuteFullChartCommand(It.Is<ChartRequest>(c =>
+                c.Symbol == symbol && 
+                c.Timeframe == timeframe &&
+                c.Start == start && c.End == null)),
             Times.Once);
     }
+
 
     [Fact]
     public async Task Test_GetChartAsync_Throw_Exception()
@@ -615,14 +625,14 @@ public class ApiProviderBaseTest
         // Arrange
         var symbol = "testSymbol";
         var timeframe = Timeframe.OneHour;
-        _mockCommandExecutor.Setup(x => x.ExecuteFullChartCommand(timeframe, It.IsAny<DateTime>(), symbol))
+        _mockCommandExecutor.Setup(x => x.ExecuteFullChartCommand(It.IsAny<ChartRequest>()))
             .ThrowsAsync(new Exception());
 
         // Act & Assert
-        Func<Task> act = async () => await _apiHandler.GetChartAsync(symbol, timeframe);
+        Func<Task> act = async () => await _apiHandler.GetChartAsync(new ChartRequest());
         await act.Should().ThrowAsync<ApiProvidersException>();
 
-        _mockCommandExecutor.Verify(x => x.ExecuteFullChartCommand(timeframe, It.IsAny<DateTime>(), symbol),
+        _mockCommandExecutor.Verify(x => x.ExecuteFullChartCommand(It.IsAny<ChartRequest>()),
             Times.Once);
     }
 
@@ -638,20 +648,39 @@ public class ApiProviderBaseTest
         var timeframe = Timeframe.OneHour;
         var start = new DateTime(2023, 1, 1);
         var end = new DateTime(2023, 1, 31);
+        var chartRequest = new ChartRequest
+        {
+            Symbol = symbol,
+            Timeframe = timeframe,
+            Start = start,
+            End = end // Ajoutez End si votre ChartRequest supporte ce champ
+        };
         var expectedCandles = new List<Candle>
         {
             // ...initialize mock candles...
         };
-        _mockCommandExecutor.Setup(x => x.ExecuteRangeChartCommand(timeframe, start, end, symbol))
+
+        _mockCommandExecutor.Setup(x => x.ExecuteRangeChartCommand(
+                It.Is<ChartRequest>(c => 
+                    c.Symbol == chartRequest.Symbol &&
+                    c.Timeframe == chartRequest.Timeframe &&
+                    c.Start == chartRequest.Start &&
+                    c.End == chartRequest.End))) // Utilisation de It.Is<ChartRequest> pour matcher l'objet
             .ReturnsAsync(expectedCandles);
 
         // Act
-        var candles = await _apiHandler.GetChartByDateAsync(symbol, timeframe, start, end);
+        var candles = await _apiHandler.GetChartByDateAsync(chartRequest);
 
         // Assert
         candles.Should().BeEquivalentTo(expectedCandles);
-        _mockCommandExecutor.Verify(x => x.ExecuteRangeChartCommand(timeframe, start, end, symbol), Times.Once);
+        _mockCommandExecutor.Verify(x => x.ExecuteRangeChartCommand(
+            It.Is<ChartRequest>(c => 
+                c.Symbol == chartRequest.Symbol &&
+                c.Timeframe == chartRequest.Timeframe &&
+                c.Start == chartRequest.Start &&
+                c.End == chartRequest.End)), Times.Once); // Vérification de l'appel avec l'objet correct
     }
+
 
     [Fact]
     public async Task Test_GetChartByDateAsync_Throw_Exception()
@@ -661,14 +690,14 @@ public class ApiProviderBaseTest
         var timeframe = Timeframe.OneHour;
         var start = new DateTime(2023, 1, 1);
         var end = new DateTime(2023, 1, 31);
-        _mockCommandExecutor.Setup(x => x.ExecuteRangeChartCommand(timeframe, start, end, symbol))
+        _mockCommandExecutor.Setup(x => x.ExecuteRangeChartCommand(It.IsAny<ChartRequest>()))
             .ThrowsAsync(new Exception());
 
         // Act & Assert
-        Func<Task> act = async () => await _apiHandler.GetChartByDateAsync(symbol, timeframe, start, end);
+        Func<Task> act = async () => await _apiHandler.GetChartByDateAsync(new ChartRequest());
         await act.Should().ThrowAsync<ApiProvidersException>();
 
-        _mockCommandExecutor.Verify(x => x.ExecuteRangeChartCommand(timeframe, start, end, symbol), Times.Once);
+        _mockCommandExecutor.Verify(x => x.ExecuteRangeChartCommand(It.IsAny<ChartRequest>()), Times.Once);
     }
 
     #endregion
@@ -722,15 +751,15 @@ public class ApiProviderBaseTest
             // ...initialize mock position data...
         };
         var price = 100.00m;
-        _mockCommandExecutor.Setup(x => x.ExecuteOpenTradeCommand(position, price))
+        _mockCommandExecutor.Setup(x => x.ExecuteOpenTradeCommand(position))
             .ReturnsAsync(position);
 
         // Act
-        var result = await _apiHandler.OpenPositionAsync(position, price);
+        var result = await _apiHandler.OpenPositionAsync(position);
 
         // Assert
         Assert.Equal(position, result);
-        _mockCommandExecutor.Verify(x => x.ExecuteOpenTradeCommand(position, price), Times.Once);
+        _mockCommandExecutor.Verify(x => x.ExecuteOpenTradeCommand(position), Times.Once);
         // You may also want to verify that position is added to CachePosition, if that's observable or can be checked.
     }
 
@@ -743,13 +772,13 @@ public class ApiProviderBaseTest
             // ...initialize mock position data...
         };
         var price = 100.00m;
-        _mockCommandExecutor.Setup(x => x.ExecuteOpenTradeCommand(position, price))
+        _mockCommandExecutor.Setup(x => x.ExecuteOpenTradeCommand(position))
             .ThrowsAsync(new Exception());
 
         // Act & Assert
         await Assert.ThrowsAsync<ApiProvidersException>(async () =>
-            await _apiHandler.OpenPositionAsync(position, price));
-        _mockCommandExecutor.Verify(x => x.ExecuteOpenTradeCommand(position, price), Times.Once);
+            await _apiHandler.OpenPositionAsync(position));
+        _mockCommandExecutor.Verify(x => x.ExecuteOpenTradeCommand(position), Times.Once);
         // Additional check can be done to ensure CachePosition doesn't contain the position after the exception.
     }
 
@@ -766,14 +795,14 @@ public class ApiProviderBaseTest
             // ...initialize mock position data...
         };
         var price = 100.00m;
-        _mockCommandExecutor.Setup(x => x.ExecuteUpdateTradeCommand(position, price))
+        _mockCommandExecutor.Setup(x => x.ExecuteUpdateTradeCommand(position))
             .ReturnsAsync(new Position());
 
         // Act
-        await _apiHandler.UpdatePositionAsync(price, position);
+        await _apiHandler.UpdatePositionAsync(position);
 
         // Assert
-        _mockCommandExecutor.Verify(x => x.ExecuteUpdateTradeCommand(position, price), Times.Once);
+        _mockCommandExecutor.Verify(x => x.ExecuteUpdateTradeCommand(position), Times.Once);
     }
 
     [Fact]
@@ -785,13 +814,13 @@ public class ApiProviderBaseTest
             // ...initialize mock position data...
         };
         var price = 100.00m;
-        _mockCommandExecutor.Setup(x => x.ExecuteUpdateTradeCommand(position, price))
+        _mockCommandExecutor.Setup(x => x.ExecuteUpdateTradeCommand(position))
             .ThrowsAsync(new Exception());
 
         // Act & Assert
         await Assert.ThrowsAsync<ApiProvidersException>(async () =>
-            await _apiHandler.UpdatePositionAsync(price, position));
-        _mockCommandExecutor.Verify(x => x.ExecuteUpdateTradeCommand(position, price), Times.Once);
+            await _apiHandler.UpdatePositionAsync(position));
+        _mockCommandExecutor.Verify(x => x.ExecuteUpdateTradeCommand(position), Times.Once);
     }
 
     #endregion
@@ -807,14 +836,14 @@ public class ApiProviderBaseTest
             // ...initialize mock position data...
         };
         var price = 100.00m;
-        _mockCommandExecutor.Setup(x => x.ExecuteCloseTradeCommand(position, price))
+        _mockCommandExecutor.Setup(x => x.ExecuteCloseTradeCommand(position))
             .ReturnsAsync(new Position());
 
         // Act
-        await _apiHandler.ClosePositionAsync(price, position);
+        await _apiHandler.ClosePositionAsync(position);
 
         // Assert
-        _mockCommandExecutor.Verify(x => x.ExecuteCloseTradeCommand(position, price), Times.Once);
+        _mockCommandExecutor.Verify(x => x.ExecuteCloseTradeCommand(position), Times.Once);
     }
 
     [Fact]
@@ -826,11 +855,11 @@ public class ApiProviderBaseTest
             // ...initialize mock position data...
         };
         var price = 100.00m;
-        _mockCommandExecutor.Setup(x => x.ExecuteCloseTradeCommand(position, price))
+        _mockCommandExecutor.Setup(x => x.ExecuteCloseTradeCommand(position))
             .ThrowsAsync(new Exception());
 
         // Act & Assert
-        var act = () => _apiHandler.ClosePositionAsync(price, position);
+        var act = () => _apiHandler.ClosePositionAsync(position);
         await act.Should().ThrowAsync<ApiProvidersException>();
     }
 
@@ -961,7 +990,7 @@ public class ApiProviderBaseTest
             OpenPrice = 100,
         };
 
-        _mockCommandExecutor.Setup(x => x.ExecuteOpenTradeCommand(It.IsAny<Position>(), It.IsAny<decimal>()))
+        _mockCommandExecutor.Setup(x => x.ExecuteOpenTradeCommand(It.IsAny<Position>()))
             .ReturnsAsync(new Position
             {
                 StrategyId = "1",
@@ -973,7 +1002,7 @@ public class ApiProviderBaseTest
         {
             StrategyId = "1",
             Id = "1"
-        }, 1);
+        });
 
 
         _apiHandler.PositionOpenedEvent += (sender, position1) =>
@@ -1060,35 +1089,6 @@ public class ApiProviderBaseTest
         caller.Should().BeTrue();
     }
 
-    [Fact]
-    public async void Test_PositionState_Update_WithProfit()
-    {
-        // Arrange
-        await Test_PositionState_Open();
-
-        var caller = false;
-        var position = new Position
-        {
-            StatusPosition = StatusPosition.Updated,
-            StrategyId = "1",
-            Id = "1",
-            Profit = 10,
-            StopLoss = 11,
-            TakeProfit = 12
-        };
-
-        _apiHandler.PositionUpdatedEvent += (sender, position1) =>
-        {
-            position1.Profit.Should().Be(10);
-            caller = true;
-        };
-
-        // Act
-        _mockCommandExecutor.Raise(x => x.ProfitRecordReceived += null, position);
-
-        // Assert
-        caller.Should().BeTrue();
-    }
 
     [Fact]
     public async Task Test_PositionState_Close()

@@ -16,7 +16,6 @@ public abstract class TcpStreamingConnector(Server server, ILogger logger)
     public event Action<Tick>? TickRecordReceived;
     public event Action<Position>? TradeRecordReceived;
     public event Action<AccountBalance>? BalanceRecordReceived;
-    public event Action<Position>? ProfitRecordReceived;
     public event Action<News>? NewsRecordReceived;
     public event Action? KeepAliveRecordReceived;
     public event Action<Candle>? CandleRecordReceived;
@@ -61,44 +60,32 @@ public abstract class TcpStreamingConnector(Server server, ILogger logger)
 
     protected virtual void OnTickRecordReceived(Tick obj)
     {
-        Logger.Verbose("New tick event {@Tick}", obj);
         TickRecordReceived?.Invoke(obj);
     }
 
     protected virtual void OnTradeRecordReceived(Position obj)
     {
-        Logger.Information("Position event {@obj}", obj);
         TradeRecordReceived?.Invoke(obj);
     }
 
     protected virtual void OnBalanceRecordReceived(AccountBalance obj)
     {
-        Logger.Verbose("Account balance event {@obj}", obj);
         BalanceRecordReceived?.Invoke(obj);
     }
 
 
-    protected virtual void OnProfitRecordReceived(Position obj)
-    {
-        Logger.Verbose("Profit record event {@obj}", obj);
-        ProfitRecordReceived?.Invoke(obj);
-    }
-
     protected virtual void OnNewsRecordReceived(News obj)
     {
-        Logger.Verbose("News event {@obj}", obj);
         NewsRecordReceived?.Invoke(obj);
     }
 
     protected virtual void OnKeepAliveRecordReceived()
     {
-        Logger.Verbose("Keep alive event");
         KeepAliveRecordReceived?.Invoke();
     }
 
     protected virtual void OnCandleRecordReceived(Candle obj)
     {
-        Logger.Verbose("Candle event {@obj}", obj);
         CandleRecordReceived?.Invoke(obj);
     }
 }

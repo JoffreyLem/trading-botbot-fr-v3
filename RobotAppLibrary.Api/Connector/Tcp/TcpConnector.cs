@@ -9,7 +9,7 @@ namespace RobotAppLibrary.Api.Connector.Tcp;
 
 public interface ITcpConnector : IConnectorBase
 {
-    Task<JsonDocument?> SendAndReceiveAsync(string messageToSend, bool logResponse = true);
+    Task<JsonDocument?> SendAndReceiveAsync(string messageToSend);
 }
 
 public class TcpConnector(Server server, ILogger logger)
@@ -20,13 +20,10 @@ public class TcpConnector(Server server, ILogger logger)
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     private long _lastCommandTimestamp;
 
-    public async Task<JsonDocument?> SendAndReceiveAsync(string messageToSend, bool logResponse = true)
+    public async Task<JsonDocument?> SendAndReceiveAsync(string messageToSend)
     {
         await _semaphore.WaitAsync();
-        var tcpLog = new TcpLog
-        {
-            RequestMessage = messageToSend
-        };
+
         try
         {
             var currentTimestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
@@ -37,8 +34,7 @@ public class TcpConnector(Server server, ILogger logger)
             await SendAsync(messageToSend).ConfigureAwait(false);
             _lastCommandTimestamp = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
 
-            var response =  await ReceiveAsync();
-            tcpLog.ResponseMessage = logResponse ? response : null;
+            var response =  await ReceiveAsync().ConfigureAwait(false);
 
             return response;
         }
@@ -49,7 +45,6 @@ public class TcpConnector(Server server, ILogger logger)
         }
         finally
         {
-            Logger.Information("Tcp log received : {@Tcp}", tcpLog);
             _semaphore.Release();
         }
     }

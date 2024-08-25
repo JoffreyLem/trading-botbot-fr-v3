@@ -20,9 +20,9 @@ public interface ICommandCreator
     string CreateTradesHistoryCommand();
     string CreateTradesOpenedTradesCommand();
     string CreateTradingHoursCommand(string symbol);
-    string CreateOpenTradeCommande(Position position, decimal price);
-    string CreateUpdateTradeCommande(Position position, decimal price);
-    string CreateCloseTradeCommande(Position position, decimal price);
+    string CreateOpenTradeCommande(Position? position);
+    string CreateUpdateTradeCommande(Position? position);
+    string CreateCloseTradeCommande(Position? position);
     string CreateSubscribeBalanceCommandStreaming();
     string CreateStopBalanceCommandStreaming();
     string CreateSubscribeCandleCommandStreaming(string symbol);
