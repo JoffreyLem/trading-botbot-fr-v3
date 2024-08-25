@@ -68,7 +68,6 @@ public class ResultCalculator
 
                 var drawdown = peakValue - profit;
 
-                // Only consider negative drawdowns
                 lastDrawdown = drawdown;
                 if (drawdown > drawdownMax) drawdownMax = drawdown;
             }

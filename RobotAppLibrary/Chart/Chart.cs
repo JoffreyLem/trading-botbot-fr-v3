@@ -84,8 +84,7 @@ public class Chart : List<Candle>, IChart
             }
 
             _tradeHourRecord = await _apiHandler.GetTradingHoursAsync(_symbol);
-            _logger.Information("Candle list {Timeframe} initialized {@Candle}", _timeframe, this.LastOrDefault());
-        }
+          }
         catch (Exception e)
         {
             throw new ChartException("Can't initialize candle list", e);

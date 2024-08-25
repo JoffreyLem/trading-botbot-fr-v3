@@ -17,7 +17,7 @@ public class BotBackgroundService(
         await foreach (var command in channelApiReader.ReadAllAsync(stoppingToken))
             try
             {
-                logger.Information("Strategy command received {Command}", command);
+                logger.Information("Strategy command received {Command}", command.GetType().Name);
                 await commandHandler.HandleApiCommand(command);
             }
             catch (Exception ex)
@@ -33,7 +33,6 @@ public class BotBackgroundService(
         await foreach (var command in channelStrategyReader.ReadAllAsync(stoppingToken))
             try
             {
-                logger.Information("Api command received {Command}", command);
                 await commandHandler.HandleStrategyCommand(command);
             }
             catch (Exception ex)

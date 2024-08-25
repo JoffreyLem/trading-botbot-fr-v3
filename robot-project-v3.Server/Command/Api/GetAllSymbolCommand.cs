@@ -2,6 +2,6 @@
 
 namespace robot_project_v3.Server.Command.Api;
 
-public class GetAllSymbolCommand : CommandBaseApi<List<SymbolInfoDto>>
+public class GetAllSymbolCommand : CommandBaseApi<List<SymbolInfoDto>, EmptyCommand>
 {
 }

@@ -130,7 +130,7 @@ public class StrategyBase : IStrategyBase
         _apiProvider.Disconnected += (_, _) => DisableStrategy(StrategyReasonDisabled.Api).GetAwaiter().GetResult();
 
         StrategyResult.ResultTresholdEvent +=
-            (_, _) => DisableStrategy(StrategyReasonDisabled.Treshold).GetAwaiter().GetResult();
+            OnStrategyResultOnResultTresholdEvent;
         _positionHandler.PositionOpenedEvent += (_, position) =>
             PositionOpenedEvent?.Invoke(this, new RobotEvent<Position>(position, Id));
         _positionHandler.PositionUpdatedEvent += (_, position) =>
@@ -146,6 +146,12 @@ public class StrategyBase : IStrategyBase
         InitIndicator();
 
         _apiProvider.SubscribePrice(Symbol);
+    }
+
+    private void OnStrategyResultOnResultTresholdEvent(object? o, EventTreshold eventTreshold)
+    {
+        _logger.Warning("Threshold detected {@Threshold}", eventTreshold);
+        DisableStrategy(StrategyReasonDisabled.Treshold).GetAwaiter().GetResult();
     }
 
     private void InitStrategyImplementation()

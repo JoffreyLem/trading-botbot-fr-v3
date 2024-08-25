@@ -7,6 +7,7 @@ using robot_project_v3.Server.Command;
 using robot_project_v3.Server.Command.Api;
 using robot_project_v3.Server.Command.Strategy;
 using robot_project_v3.Server.Dto;
+using robot_project_v3.Server.Exceptions;
 using robot_project_v3.Server.Hubs;
 using RobotAppLibrary.Api.Modeles;
 using RobotAppLibrary.Api.Providers;
@@ -56,23 +57,28 @@ public class CommandHandler(
         switch (command)
         {
             case DisconnectCommand disconnectCommand:
+                logger.Information("Api command {CommandName} received", disconnectCommand.GetType().Name);
                 await Disconnect(disconnectCommand);
                 break;
             case GetAllSymbolCommand getAllSymbolCommand:
+                logger.Information("Api command {CommandName} received",getAllSymbolCommand.GetType().Name);
                 await GetAllSymbol(getAllSymbolCommand);
                 break;
             case GetTypeProviderCommand getTypeHandlerCommand:
+                logger.Information("Api command {CommandName} received", getTypeHandlerCommand.GetType().Name);
                 GetTypeHandler(getTypeHandlerCommand);
                 break;
             case IsConnectedCommand isConnectedCommand:
+                logger.Information("Api command received {@Command}",isConnectedCommand.GetType().Name);
                 IsConnected(isConnectedCommand);
                 break;
             case ApiConnectCommand apiConnectCommand:
+                logger.Information("Api command received {@Command} {@Data}", apiConnectCommand.GetType().Name, apiConnectCommand.Data.User);
                 await Connect(apiConnectCommand);
                 break;
             default:
                 _logger.Error("Trying to use unhandled command {@Command}", command);
-                throw new CommandException("Internal error");
+                throw new UnhandledCommandException();
         }
     }
 
@@ -130,13 +136,12 @@ public class CommandHandler(
 
     private async Task Connect(ApiConnectCommand command)
     {
-        _logger.Information("Init handler to type {Enum}", command.ConnectDto.HandlerEnum);
         _apiProviderBase =
-            ApiProviderFactory.GetApiHandler(command.ConnectDto.HandlerEnum.GetValueOrDefault(), _logger);
+            ApiProviderFactory.GetApiHandler(command.Data.HandlerEnum.GetValueOrDefault(), _logger);
         var credentials = new Credentials
         {
-            User = command.ConnectDto.User,
-            Password = command.ConnectDto.Pwd
+            User = command.Data.User,
+            Password = command.Data.Pwd
         };
         await _apiProviderBase.ConnectAsync(credentials);
         _apiProviderBase.Connected += (_, _) => { };

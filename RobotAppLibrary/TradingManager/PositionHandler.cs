@@ -108,7 +108,7 @@ public class PositionHandler : IPositionHandler
             {
                 _logger.Information("Send position {Id} to handler for close", position.Id);
                 var closeprice = position.TypePosition == TypeOperation.Buy ? LastPrice.Ask : LastPrice.Bid;
-                position.StatusPosition = StatusPosition.Close;
+                position.ClosePrice = closeprice;
                 await _apiHandler.ClosePositionAsync(position);
             }
         }
@@ -224,7 +224,7 @@ public class PositionHandler : IPositionHandler
             PositionOpened = e;
             e.StatusPosition = StatusPosition.Open;
             PositionPending = null;
-            _logger.Information("Position opened : {EId}", e);
+            _logger.Information("Position opened : {@Position}", e);
             PositionOpenedEvent?.Invoke(this, e);
         }
     }
@@ -245,9 +245,9 @@ public class PositionHandler : IPositionHandler
         if (e.PositionStrategyReferenceId == PositionPending?.PositionStrategyReferenceId)
         {
             PositionPending = null;
-            _logger.Information("Position rejected : {EId}", e.Id);
             e.StatusPosition = StatusPosition.Rejected;
             PositionRejectedEvent?.Invoke(this, e);
+            _logger.Information("Position rejected : {Position}", e);
         }
     }
 
@@ -256,11 +256,19 @@ public class PositionHandler : IPositionHandler
     {
         if (PositionOpened is not null && e.PositionStrategyReferenceId == PositionOpened?.PositionStrategyReferenceId)
         {
+            bool shouldLog = PositionOpened.StopLoss != e.StopLoss || PositionOpened.TakeProfit != e.TakeProfit;
             PositionOpened.Profit = e.Profit;
             PositionOpened.StopLoss = e.StopLoss;
             PositionOpened.TakeProfit = e.TakeProfit;
-            _logger.Debug("Position updated : {EId}", e.Id);
             PositionUpdatedEvent?.Invoke(this, e);
+            if (shouldLog)
+            {
+               _logger.Information("Position updated {@Position}", e);
+            }
+            else
+            {
+                _logger.Debug("Position updated : {@Position}", e);
+            }
         }
     }
 
@@ -269,9 +277,9 @@ public class PositionHandler : IPositionHandler
     {
         if (PositionOpened is not null && PositionOpened?.PositionStrategyReferenceId == e.PositionStrategyReferenceId)
         {
-            _logger.Information("Position Closed : {@EId}", e);
-            PositionClosedEvent?.Invoke(this, e);
             PositionOpened = null;
+            PositionClosedEvent?.Invoke(this, e);
+            _logger.Information("Position Closed : {@Position}", e);
         }
     }
 }

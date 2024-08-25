@@ -30,7 +30,7 @@ public class ApiProviderService(ChannelWriter<CommandeBaseApiAbstract> channelAp
     {
         var connecCommand = new ApiConnectCommand
         {
-            ConnectDto = connectDto
+            Data = connectDto
         };
 
         await channelApiWriter.WriteAsync(connecCommand);
