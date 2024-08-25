@@ -15,4 +15,8 @@
         <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="8.0.1"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\RobotAppLibrary\RobotAppLibrary.csproj" />
+    </ItemGroup>
+
 </Project>

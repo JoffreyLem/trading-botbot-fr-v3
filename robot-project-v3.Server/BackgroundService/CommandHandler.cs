@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Runtime.Loader;
+using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
 using robot_project_v3.Database.Modeles;
@@ -38,10 +39,9 @@ public class CommandHandler(
     : ICommandHandler
 {
     private readonly ILogger _logger = logger.ForContext<CommandHandler>();
-    private readonly IMapper _mapper = mapper;
 
     private readonly Dictionary<string, IStrategyBase> _strategyList = new();
-    private readonly Dictionary<string, CustomLoadContext> _strategyListContext = new();
+    private readonly Dictionary<string, AssemblyLoadContext> _strategyListContext = new();
 
     private IApiProviderBase? _apiProviderBase;
 
@@ -119,7 +119,7 @@ public class CommandHandler(
     private async Task GetAllSymbol(GetAllSymbolCommand command)
     {
         CheckApiHandlerNotNull();
-        var symbols = _mapper.Map<List<SymbolInfoDto>>(await _apiProviderBase!.GetAllSymbolsAsync());
+        var symbols = mapper.Map<List<SymbolInfoDto>>(await _apiProviderBase!.GetAllSymbolsAsync());
 
         command.ResponseSource.SetResult(symbols);
     }
@@ -327,56 +327,47 @@ public class CommandHandler(
 
 
 
-    private (StrategyImplementationBase, CustomLoadContext) GenerateStrategy(StrategyFile strategyFileDto)
+    private (StrategyImplementationBase instance, AssemblyLoadContext loadContext) GenerateStrategy(StrategyFile strategyFileDto)
     {
         var sourceCode = Encoding.UTF8.GetString(strategyFileDto.Data);
         var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(sourceCode);
-
-        var context = new CustomLoadContext();
-        using var stream = new MemoryStream(compiledCode);
-        var assembly = context.LoadFromStream(stream);
-
-        var className = StrategyDynamiqCompiler.GetFirstClassName(sourceCode);
-
-        var type = assembly.GetType(className);
-        var instance = Activator.CreateInstance(type);
-
-        return ((StrategyImplementationBase)instance, context);
+        
+        return StrategyDynamiqCompiler.GenerateStrategyInstance(compiledCode.compiledAssembly);
     }
 
     private async void StrategyBaseOnPositionRejectedEvent(object? sender, RobotEvent<Position> e)
     {
-        var posDto = _mapper.Map<PositionDto>(e.EventField);
+        var posDto = mapper.Map<PositionDto>(e.EventField);
         await hubContext.Clients.All.ReceivePosition(posDto);
     }
 
     private async void StrategyBaseOnPositionClosedEvent(object? sender, RobotEvent<Position> e)
     {
-        var posDto = _mapper.Map<PositionDto>(e.EventField);
+        var posDto = mapper.Map<PositionDto>(e.EventField);
         await hubContext.Clients.All.ReceivePosition(posDto);
     }
 
     private async void StrategyBaseOnPositionUpdatedEvent(object? sender, RobotEvent<Position> e)
     {
-        var posDto = _mapper.Map<PositionDto>(e.EventField);
+        var posDto = mapper.Map<PositionDto>(e.EventField);
         await hubContext.Clients.All.ReceivePosition(posDto);
     }
 
     private async void StrategyBaseOnPositionOpenedEvent(object? sender, RobotEvent<Position> e)
     {
-        var posDto = _mapper.Map<PositionDto>(e.EventField);
+        var posDto = mapper.Map<PositionDto>(e.EventField);
         await hubContext.Clients.All.ReceivePosition(posDto);
     }
 
     private async void StrategyBaseOnCandleEvent(object? sender, RobotEvent<Candle> e)
     {
-        var candleDto = _mapper.Map<CandleDto>(e.EventField);
+        var candleDto = mapper.Map<CandleDto>(e.EventField);
         await hubContext.Clients.All.ReceiveCandle(candleDto);
     }
 
     private async void StrategyBaseOnTickEvent(object? sender, RobotEvent<Tick> e)
     {
-        var tickDto = _mapper.Map<TickDto>(e.EventField);
+        var tickDto = mapper.Map<TickDto>(e.EventField);
         await hubContext.Clients.All.ReceiveTick(tickDto);
     }
 
@@ -395,7 +386,7 @@ public class CommandHandler(
         {
             var strategyImplementation = GenerateStrategy(initStrategyCommandDto.Data.StrategyFileDto);
             var istrategySerrvice = new StrategyServiceFactory();
-            var strategyBase = new StrategyBase(initStrategyCommandDto.Data.Symbol, strategyImplementation.Item1,
+            var strategyBase = new StrategyBase(initStrategyCommandDto.Data.Symbol, strategyImplementation.instance,
                 _apiProviderBase,
                 logger, istrategySerrvice);
 
@@ -408,7 +399,7 @@ public class CommandHandler(
             strategyBase.StrategyDisabledEvent += StrategyBaseOnStrategyDisabled;
 
             _strategyList.Add(strategyBase.Id, strategyBase);
-            _strategyListContext.Add(strategyBase.Id, strategyImplementation.Item2);
+            _strategyListContext.Add(strategyBase.Id, strategyImplementation.loadContext);
 
             initStrategyCommandDto.ResponseSource.SetResult(new AcknowledgementResponse());
         }
@@ -425,7 +416,7 @@ public class CommandHandler(
 
     private void GetStrategyInfo(GetStrategyInfoCommand getStrategyInfoCommand, IStrategyBase strategy)
     {
-        getStrategyInfoCommand.ResponseSource.SetResult(_mapper.Map<StrategyInfoDto>(strategy));
+        getStrategyInfoCommand.ResponseSource.SetResult(mapper.Map<StrategyInfoDto>(strategy));
     }
 
     private IStrategyBase GetStrategyById(string id)
@@ -438,11 +429,9 @@ public class CommandHandler(
     private async Task CloseStrategy(CloseStrategyCommand closeStrategyCommand, IStrategyBase strategy)
     {
         await strategy.DisableStrategy(StrategyReasonDisabled.User);
+        StrategyDynamiqCompiler.UnloadStrategyInstance(null,  _strategyListContext[closeStrategyCommand.Id]);
         _strategyList.Remove(closeStrategyCommand.Id);
-        _strategyListContext[closeStrategyCommand.Id].Unload();
         _strategyListContext.Remove(closeStrategyCommand.Id);
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
         closeStrategyCommand.ResponseSource.SetResult(new AcknowledgementResponse());
     }
 
@@ -450,9 +439,9 @@ public class CommandHandler(
     {
         var globalResultDto = new GlobalResultsDto
         {
-            Result = _mapper.Map<ResultDto>(strategy.Results.Result),
-            Positions = _mapper.Map<List<PositionDto>>(strategy.Results.Positions.ToList()),
-            MonthlyResults = _mapper.Map<List<MonthlyResultDto>>(strategy.Results.MonthlyResults)
+            Result = mapper.Map<ResultDto>(strategy.Results.Result),
+            Positions = mapper.Map<List<PositionDto>>(strategy.Results.Positions.ToList()),
+            MonthlyResults = mapper.Map<List<MonthlyResultDto>>(strategy.Results.MonthlyResults)
         };
         strategyResultRequest.ResponseSource.SetResult(globalResultDto);
     }
@@ -463,7 +452,7 @@ public class CommandHandler(
 
         if (strategy.PositionOpened is not null)
         {
-            var position = _mapper.Map<PositionDto>(strategy.PositionOpened);
+            var position = mapper.Map<PositionDto>(strategy.PositionOpened);
             listPositionsDto.Add(position);
         }
 
@@ -503,7 +492,7 @@ public class CommandHandler(
             foreach (var (key, value) in _strategyList)
             {
                 var strategy = GetStrategyById(key);
-                var strategyInfoDto = _mapper.Map<StrategyInfoDto>(strategy);
+                var strategyInfoDto = mapper.Map<StrategyInfoDto>(strategy);
                 response.Add(strategyInfoDto);
             }
 

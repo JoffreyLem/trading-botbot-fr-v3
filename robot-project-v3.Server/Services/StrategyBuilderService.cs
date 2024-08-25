@@ -26,8 +26,6 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
     : IStrategyBuilderService
 {
     private readonly ILogger _logger = logger.ForContext<StrategyBuilderService>();
-    private readonly IMapper _mapper = mapper;
-    private readonly IStrategyFileRepository _strategyFileRepository = strategyFileRepository;
 
 
     public async Task<StrategyCompilationResponseDto> CreateNewStrategy(string data)
@@ -37,40 +35,14 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
         {
             var sourceCode = data;
             var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(sourceCode);
-
-            var context = new CustomLoadContext();
-            using var stream = new MemoryStream(compiledCode);
-            var assembly = context.LoadFromStream(stream);
-
-            var className = StrategyDynamiqCompiler.GetFirstClassName(sourceCode);
-
-            if (string.IsNullOrEmpty(className))
-            {
-                strategyCreateRsp.Compiled = false;
-                strategyCreateRsp.Errors.Add("Class name not found in file");
-                return strategyCreateRsp;
-            }
-
-            var type = assembly.GetType(className);
-            var instance = Activator.CreateInstance(type);
-
-            var nameValue = (string)type.GetProperty("Name")?.GetValue(instance);
-            var versionValue = (string)type.GetProperty("Version")?.GetValue(instance);
-
-            if (string.IsNullOrEmpty(nameValue) || string.IsNullOrEmpty(versionValue))
-            {
-                strategyCreateRsp.Compiled = false;
-                strategyCreateRsp.Errors.Add("Name or version not found");
-                return strategyCreateRsp;
-            }
-
+            
             var strategyFile = new StrategyFile
             {
-                Data = Encoding.UTF8.GetBytes(data), Name = nameValue, Version = versionValue,
+                Data = Encoding.UTF8.GetBytes(data), Name = compiledCode.name, Version = compiledCode.version,
                 LastDateUpdate = DateTime.UtcNow
             };
 
-            await _strategyFileRepository.AddAsync(strategyFile);
+            await strategyFileRepository.AddAsync(strategyFile);
 
             strategyCreateRsp.Compiled = true;
             strategyCreateRsp.StrategyFileDto = new StrategyFileDto
@@ -82,11 +54,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
                 Version = strategyFile.Version
             };
 
-            if (instance is IDisposable disposable) disposable.Dispose();
-
-            context.Unload();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+        
         }
         catch (CompilationException e)
         {
@@ -106,7 +74,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
     {
         try
         {
-            var data = await _strategyFileRepository.GetByIdAsync(id);
+            var data = await strategyFileRepository.GetByIdAsync(id);
 
             return new StrategyFileDto
             {
@@ -133,40 +101,13 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
 
             var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(sourceCode);
 
+            var strategyFileSelected = await strategyFileRepository.GetByIdAsync(id);
 
-            var context = new CustomLoadContext();
-            using var stream = new MemoryStream(compiledCode);
-            var assembly = context.LoadFromStream(stream);
-
-            var className = StrategyDynamiqCompiler.GetFirstClassName(sourceCode);
-            if (string.IsNullOrEmpty(className))
-            {
-                strategyCreateRsp.Compiled = false;
-                strategyCreateRsp.Errors.Add("Class name not found in file");
-                return strategyCreateRsp;
-            }
-
-            var type = assembly.GetType(className);
-            var instance = Activator.CreateInstance(type);
-
-            var nameValue = (string)type.GetProperty("Name")?.GetValue(instance);
-            var versionValue = (string)type.GetProperty("Version")?.GetValue(instance);
-
-            if (string.IsNullOrEmpty(nameValue) || string.IsNullOrEmpty(versionValue))
-            {
-                strategyCreateRsp.Compiled = false;
-                strategyCreateRsp.Errors.Add("Name or version not found");
-                return strategyCreateRsp;
-            }
-
-            var strategyFileSelected = await _strategyFileRepository.GetByIdAsync(id);
-
-            strategyFileSelected.Name = nameValue;
-            strategyFileSelected.Version = versionValue;
+            strategyFileSelected.Version = compiledCode.version;
             strategyFileSelected.LastDateUpdate = DateTime.UtcNow;
             strategyFileSelected.Data = Encoding.UTF8.GetBytes(sourceCode);
 
-            await _strategyFileRepository.UpdateAsync(strategyFileSelected);
+            await strategyFileRepository.UpdateAsync(strategyFileSelected);
 
             strategyCreateRsp.Compiled = true;
             strategyCreateRsp.StrategyFileDto = new StrategyFileDto
@@ -178,12 +119,6 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
                 Version = strategyFileSelected.Version
             };
 
-
-            if (instance is IDisposable disposable) disposable.Dispose();
-
-            context.Unload();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
         }
         catch (CompilationException e)
         {
@@ -203,7 +138,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
     {
         try
         {
-            var data = await _strategyFileRepository.GetAllAsync();
+            var data = await strategyFileRepository.GetAllAsync();
 
             return data.Select(x => new StrategyFileDto
             {
@@ -224,7 +159,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
     {
         try
         {
-            await _strategyFileRepository.DeleteAsync(id);
+            await strategyFileRepository.DeleteAsync(id);
         }
         catch (Exception e)
         {
