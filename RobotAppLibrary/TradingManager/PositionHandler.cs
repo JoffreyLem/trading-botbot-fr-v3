@@ -32,7 +32,7 @@ public class PositionHandler : IPositionHandler
     public double MaxLot { get; private set; }
     public int DefaultSl { get; set; } = 100;
     public int DefaultTp { get; set; } = 100;
-    public Position? PositionOpened { get; private set; }
+    public Position PositionOpened { get; private set; }
     public bool PositionInProgress => PositionOpened is not null || PositionPending is not null;
     public event EventHandler<Position>? PositionOpenedEvent;
     public event EventHandler<Position>? PositionUpdatedEvent;
@@ -69,6 +69,7 @@ public class PositionHandler : IPositionHandler
                 TypePosition = typePosition
             };
             PositionPending = positionModele;
+            _logger.Information("Position to open {@Position}", positionModele);
             await _apiHandler.OpenPositionAsync(positionModele);
         }
         catch (Exception e)
@@ -79,7 +80,7 @@ public class PositionHandler : IPositionHandler
     }
 
 
-    public async Task UpdatePositionAsync(Position? position)
+    public async Task UpdatePositionAsync(Position position)
     {
         try
         {
@@ -87,10 +88,10 @@ public class PositionHandler : IPositionHandler
                 if (PositionOpened?.StopLoss != position.StopLoss ||
                     PositionOpened?.TakeProfit != position.TakeProfit)
                 {
-                    _logger.Information("Send position {Id} for update", position.Id);
                     position.StopLoss = Math.Round(position.StopLoss, _symbolInfo.Precision);
                     position.TakeProfit = Math.Round(position.TakeProfit, _symbolInfo.Precision);
                     position.CurrentPrice = position.TypePosition == TypeOperation.Buy ? LastPrice.Ask : LastPrice.Bid;
+                    _logger.Information("Position to update {@Position}", position);
                     await _apiHandler.UpdatePositionAsync(position);
                 }
         }
@@ -100,15 +101,15 @@ public class PositionHandler : IPositionHandler
         }
     }
 
-    public async Task ClosePositionAsync(Position? position)
+    public async Task ClosePositionAsync(Position position)
     {
         try
         {
             if (position.StatusPosition is not StatusPosition.Close)
             {
-                _logger.Information("Send position {Id} to handler for close", position.Id);
                 var closeprice = position.TypePosition == TypeOperation.Buy ? LastPrice.Ask : LastPrice.Bid;
                 position.ClosePrice = closeprice;
+                _logger.Information("Position to close {@Position}", position);
                 await _apiHandler.ClosePositionAsync(position);
             }
         }

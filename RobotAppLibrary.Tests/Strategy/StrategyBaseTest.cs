@@ -64,7 +64,7 @@ public class StrategyBaseTest
 
 
         _strategyServiceFactoryMock
-            .Setup(x => x.GetStrategyResultService(It.IsAny<IApiProviderBase>(), It.IsAny<string>()))
+            .Setup(x => x.GetStrategyResultService(It.IsAny<IApiProviderBase>(), It.IsAny<string>(), It.IsAny<ILogger>()))
             .Returns(_strategyResultMock.Object);
 
         _strategyServiceFactoryMock.Setup(x =>

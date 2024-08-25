@@ -1,6 +1,6 @@
 ﻿using System.Threading.Channels;
-using robot_project_v3.Server.Command.Api;
-using robot_project_v3.Server.Command.Strategy;
+using robot_project_v3.Server.BackgroundService.Command.Api;
+using robot_project_v3.Server.BackgroundService.Command.Strategy;
 using RobotAppLibrary.Api.Providers.Exceptions;
 using ILogger = Serilog.ILogger;
 

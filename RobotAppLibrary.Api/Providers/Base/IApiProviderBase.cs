@@ -33,11 +33,11 @@ public interface IApiProviderBase : IDisposable
     public Task<List<Candle>> GetChartByDateAsync(ChartRequest chartRequest);
 
     public Task<Tick> GetTickPriceAsync(string symbol);
-    public Task<Position?> OpenPositionAsync(Position? position);
-    public Task UpdatePositionAsync(Position? position);
-    public Task ClosePositionAsync(Position? position);
+    public Task<Position?> OpenPositionAsync(Position position);
+    public Task UpdatePositionAsync(Position position);
+    public Task ClosePositionAsync(Position position);
     public Task<bool> CheckIfSymbolExistAsync(string symbol);
     public void SubscribePrice(string symbol);
     public void UnsubscribePrice(string symbol);
-    void RestoreSession(Position? position);
+    void RestoreSession(Position position);
 }

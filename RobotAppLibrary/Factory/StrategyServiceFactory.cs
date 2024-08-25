@@ -9,7 +9,7 @@ namespace RobotAppLibrary.Factory;
 
 public interface IStrategyServiceFactory
 {
-    IStrategyResult GetStrategyResultService(IApiProviderBase apiHandler, string positionRefenrece);
+    IStrategyResult GetStrategyResultService(IApiProviderBase apiHandler, string positionRefenrece, ILogger logger);
     ILotValueCalculator GetLotValueCalculator(IApiProviderBase apiHandler, ILogger logger, string symbol);
 
     IPositionHandler GetPositionHandler(ILogger logger, IApiProviderBase handler, string symbol,
@@ -20,9 +20,9 @@ public interface IStrategyServiceFactory
 
 public class StrategyServiceFactory : IStrategyServiceFactory
 {
-    public IStrategyResult GetStrategyResultService(IApiProviderBase apiHandler, string positionRefenrece)
+    public IStrategyResult GetStrategyResultService(IApiProviderBase apiHandler, string positionRefenrece, ILogger logger)
     {
-        return new StrategyResult(apiHandler, positionRefenrece);
+        return new StrategyResult(apiHandler, positionRefenrece, logger);
     }
 
     public ILotValueCalculator GetLotValueCalculator(IApiProviderBase apiHandler, ILogger logger, string symbol)

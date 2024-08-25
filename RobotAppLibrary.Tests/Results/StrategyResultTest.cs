@@ -3,6 +3,7 @@ using Moq;
 using RobotAppLibrary.Api.Providers.Base;
 using RobotAppLibrary.Modeles;
 using RobotAppLibrary.TradingManager;
+using Serilog;
 
 namespace RobotAppLibrary.Tests.Results;
 
@@ -11,10 +12,12 @@ public class StrategyResultTests
     private readonly Mock<IApiProviderBase> _apiProviderBaseMock;
     private readonly string _positionReference = "TestReference";
     private readonly StrategyResult _strategyResult;
+    private readonly Mock<ILogger> _loggerMock = new Mock<ILogger>();
 
     public StrategyResultTests()
     {
         _apiProviderBaseMock = new Mock<IApiProviderBase>();
+        _loggerMock.Setup(x => x.ForContext<StrategyResult>()).Returns(_loggerMock.Object);
         _apiProviderBaseMock.Setup(api => api.GetBalanceAsync()).ReturnsAsync(new AccountBalance { Balance = 1000 });
         _apiProviderBaseMock.Setup(api => api.GetAllPositionsByCommentAsync(It.IsAny<string>())).ReturnsAsync(
             new List<Position>
@@ -26,7 +29,7 @@ public class StrategyResultTests
                 }
             });
 
-        _strategyResult = new StrategyResult(_apiProviderBaseMock.Object, _positionReference);
+        _strategyResult = new StrategyResult(_apiProviderBaseMock.Object, _positionReference, _loggerMock.Object);
     }
 
     [Fact]

@@ -6,7 +6,7 @@ public interface IPositionHandlerBase
 {
     int DefaultSl { get; set; }
     int DefaultTp { get; set; }
-    Position? PositionOpened { get; }
+    Position PositionOpened { get; }
     bool PositionInProgress { get; }
 
 
@@ -14,8 +14,8 @@ public interface IPositionHandlerBase
         decimal sl = 0M,
         decimal tp = 0M, double? risk = null, long? expiration = 0L);
 
-    Task UpdatePositionAsync(Position? position);
-    Task ClosePositionAsync(Position? position);
+    Task UpdatePositionAsync(Position position);
+    Task ClosePositionAsync(Position position);
     decimal CalculateStopLoss(decimal pips, TypeOperation positionType);
     decimal CalculateTakeProfit(decimal pips, TypeOperation positionType);
 }

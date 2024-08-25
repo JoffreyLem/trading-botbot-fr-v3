@@ -20,9 +20,9 @@ public interface ICommandExecutor : IStreamingEvent, IConnectionEvent, IDisposab
     Task<List<Position>?> ExecuteTradesHistoryCommand(string positionReference);
     Task<Position?> ExecuteTradesOpenedTradesCommand(string positionReference);
     Task<TradeHourRecord> ExecuteTradingHoursCommand(string symbol);
-    Task<Position?> ExecuteOpenTradeCommand(Position? position);
-    Task<Position?> ExecuteUpdateTradeCommand(Position? position);
-    Task<Position?> ExecuteCloseTradeCommand(Position? position);
+    Task<Position?> ExecuteOpenTradeCommand(Position position);
+    Task<Position?> ExecuteUpdateTradeCommand(Position position);
+    Task<Position?> ExecuteCloseTradeCommand(Position position);
     bool ExecuteIsConnected();
     void ExecuteSubscribeBalanceCommandStreaming();
     void ExecuteStopBalanceCommandStreaming();

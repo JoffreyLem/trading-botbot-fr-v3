@@ -17,7 +17,7 @@ namespace RobotAppLibrary.Strategy;
 public interface IStrategyBase
 {
     GlobalResults Results { get; }
-    Position? PositionOpened { get; }
+    Position PositionOpened { get; }
     bool CanRun { get; set; }
     IList<Candle> Chart { get; }
     Task DisableStrategy(StrategyReasonDisabled strategyReasonDisabled, Exception? ex = null);
@@ -56,7 +56,7 @@ public class StrategyBase : IStrategyBase
             _apiProvider = apiProviderBase;
             _positionHandler =
                 strategyServiceFactory.GetPositionHandler(logger, apiProviderBase, Symbol, StrategyId);
-            StrategyResult = strategyServiceFactory.GetStrategyResultService(apiProviderBase, StrategyId);
+            StrategyResult = strategyServiceFactory.GetStrategyResultService(apiProviderBase, StrategyId, logger);
 
             Init();
         }
@@ -76,7 +76,7 @@ public class StrategyBase : IStrategyBase
     public IChart MainChart { get; set; } = null!;
     public bool CanRun { get; set; }
     public GlobalResults Results => StrategyResult.GlobalResults;
-    public Position? PositionOpened => _positionHandler.PositionOpened;
+    public Position PositionOpened => _positionHandler.PositionOpened;
     public IList<Candle> Chart => MainChart;
 
 
@@ -356,7 +356,7 @@ public class StrategyBase : IStrategyBase
     }
 
 
-    private async Task UpdateHandler(Position? position)
+    private async Task UpdateHandler(Position position)
     {
         try
         {
@@ -386,7 +386,7 @@ public class StrategyBase : IStrategyBase
         }
     }
 
-    private async Task CloseHandler(Position? position)
+    private async Task CloseHandler(Position position)
     {
         try
         {

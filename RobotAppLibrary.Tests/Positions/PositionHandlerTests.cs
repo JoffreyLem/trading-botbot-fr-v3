@@ -15,7 +15,7 @@ public class PositionsCommandTest
     private readonly Mock<ILotValueCalculator> _mockLotValueCalculator = new();
     private readonly PositionHandler _positionHandler;
 
-    private readonly Position? positionTest = new();
+    private readonly Position positionTest = new();
 
     private readonly string strategyId = "idTest";
     private readonly Tick tickRef = new() { Bid = (decimal?)1.11247, Ask = (decimal?)1.112450 };

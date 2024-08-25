@@ -12,7 +12,7 @@ namespace RobotAppLibrary.Api.Providers.Base;
 //TODO : test des states event avec les order ?
 public abstract class ApiProviderBase : IApiProviderBase
 {
-    internal readonly List<Position?> CachePosition = [];
+    internal readonly List<Position> CachePosition = [];
     protected readonly ILogger Logger;
     private Timer? _pingTimer;
     public DateTime LastPing;
@@ -290,7 +290,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
     }
 
-    public virtual async Task<Position?> OpenPositionAsync(Position? position)
+    public virtual async Task<Position?> OpenPositionAsync(Position position)
     {
         try
         {
@@ -309,7 +309,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
     }
 
-    public virtual async Task UpdatePositionAsync(Position? position)
+    public virtual async Task UpdatePositionAsync(Position position)
     {
         try
         {
@@ -325,7 +325,7 @@ public abstract class ApiProviderBase : IApiProviderBase
         }
     }
 
-    public virtual async Task ClosePositionAsync(Position? position)
+    public virtual async Task ClosePositionAsync(Position position)
     {
         try
         {
@@ -379,7 +379,7 @@ public abstract class ApiProviderBase : IApiProviderBase
     }
 
     // TODO : Peut être refacto ce fonctionnement ? 
-    public void RestoreSession(Position? position)
+    public void RestoreSession(Position position)
     {
         CachePosition.Add(position);
     }

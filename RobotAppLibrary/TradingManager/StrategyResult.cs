@@ -1,5 +1,6 @@
 ﻿using RobotAppLibrary.Api.Providers.Base;
 using RobotAppLibrary.Modeles;
+using Serilog;
 
 namespace RobotAppLibrary.TradingManager;
 
@@ -23,12 +24,15 @@ public class StrategyResult : IStrategyResult
 
     private readonly ResultCalculator _resultCalculator = new();
 
+    private readonly ILogger _logger;
+
     private AccountBalance _accountBalance = null!;
 
-    public StrategyResult(IApiProviderBase apiProviderBase, string positionReference)
+    public StrategyResult(IApiProviderBase apiProviderBase, string positionReference, ILogger logger)
     {
         _apiProviderBase = apiProviderBase;
         _positionReference = positionReference;
+        _logger = logger.ForContext<StrategyResult>();
         Init();
     }
 
@@ -87,32 +91,40 @@ public class StrategyResult : IStrategyResult
 
     private void UpdateResult(Position position)
     {
-        GlobalResults.Positions.Add(position);
-
-        GlobalResults.Result = _resultCalculator.CalculateResults(GlobalResults.Positions);
-
-        var posDate = position.DateClose.GetValueOrDefault();
-        var selectedGroupedResult =
-            GlobalResults.MonthlyResults.FirstOrDefault(x =>
-                x.Date.Year == posDate.Year && x.Date.Month == posDate.Month);
-
-        if (selectedGroupedResult is null)
+        try
         {
-            var groupedResult = new MonthlyResult
+            GlobalResults.Positions.Add(position);
+
+            GlobalResults.Result = _resultCalculator.CalculateResults(GlobalResults.Positions);
+
+            var posDate = position.DateClose.GetValueOrDefault();
+            var selectedGroupedResult =
+                GlobalResults.MonthlyResults.FirstOrDefault(x =>
+                    x.Date.Year == posDate.Year && x.Date.Month == posDate.Month);
+
+            if (selectedGroupedResult is null)
             {
-                Date = new DateTime(posDate.Year, posDate.Month, 1),
-                Result = _resultCalculator.CalculateResults([position])
-            };
+                var groupedResult = new MonthlyResult
+                {
+                    Date = new DateTime(posDate.Year, posDate.Month, 1),
+                    Result = _resultCalculator.CalculateResults([position])
+                };
 
-            groupedResult.Positions.Add(position);
+                groupedResult.Positions.Add(position);
 
-            GlobalResults.MonthlyResults.Add(groupedResult);
+                GlobalResults.MonthlyResults.Add(groupedResult);
+            }
+            else
+            {
+                selectedGroupedResult.Positions.Add(position);
+                selectedGroupedResult.Result = _resultCalculator.CalculateResults(selectedGroupedResult.Positions);
+            }
         }
-        else
+        catch (Exception e)
         {
-            selectedGroupedResult.Positions.Add(position);
-            selectedGroupedResult.Result = _resultCalculator.CalculateResults(selectedGroupedResult.Positions);
+            _logger.Error(e,"Erreur de calcul résultats.");
         }
+       
     }
 
     private void TresholdCheck()

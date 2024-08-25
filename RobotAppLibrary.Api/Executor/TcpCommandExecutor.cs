@@ -168,7 +168,7 @@ public class TcpCommandExecutor : ICommandExecutor
         return ResponseAdapter.AdaptTradingHoursResponse(rsp);
     }
 
-    public virtual async Task<Position?> ExecuteOpenTradeCommand(Position? position)
+    public virtual async Task<Position?> ExecuteOpenTradeCommand(Position position)
     {
         var command = string.Empty;
         Position? positionResponse = null;
@@ -190,7 +190,7 @@ public class TcpCommandExecutor : ICommandExecutor
         
     }
 
-    public virtual async Task<Position?> ExecuteUpdateTradeCommand(Position? position)
+    public virtual async Task<Position?> ExecuteUpdateTradeCommand(Position position)
     {
         var command = string.Empty;
         Position? positionResponse = null;
@@ -212,7 +212,7 @@ public class TcpCommandExecutor : ICommandExecutor
 
     }
 
-    public virtual async Task<Position?> ExecuteCloseTradeCommand(Position? position)
+    public virtual async Task<Position?> ExecuteCloseTradeCommand(Position position)
     {
         var command = string.Empty;
         Position? positionResponse = null;

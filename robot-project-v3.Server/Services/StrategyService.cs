@@ -1,6 +1,6 @@
 ﻿using System.Threading.Channels;
 using robot_project_v3.Database.Repositories;
-using robot_project_v3.Server.Command.Strategy;
+using robot_project_v3.Server.BackgroundService.Command.Strategy;
 using robot_project_v3.Server.Dto;
 using ILogger = Serilog.ILogger;
 
