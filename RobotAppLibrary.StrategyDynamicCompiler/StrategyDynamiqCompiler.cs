@@ -22,6 +22,8 @@ public static class StrategyDynamiqCompiler
 
             var syntaxTree = CSharpSyntaxTree.ParseText(sourceCode);
 
+            PerformSecurityChecks(syntaxTree, compileErrors);
+
             var dependencyContext = DependencyContext.Default;
             var runtimeAssemblies = dependencyContext.RuntimeLibraries
                 .SelectMany(library => library.GetDefaultAssemblyNames(dependencyContext))
@@ -195,6 +197,80 @@ public static class StrategyDynamiqCompiler
         finally
         {
             UnloadStrategyInstance(strategy.instance, strategy.loadContext);
+        }
+    }
+
+    private static void PerformSecurityChecks(SyntaxTree syntaxTree, List<Diagnostic> compileErrors)
+    {
+        var root = syntaxTree.GetRoot();
+
+        // Liste pour les types et namespaces interdits
+        var disallowedTypes = new HashSet<string> { "System.Diagnostics.Process", "System.Reflection", "dynamic" };
+        var disallowedNamespaces = new HashSet<string> { "Newtonsoft.Json", "System.Net.Http", "System.IO" };
+        var fileSystemPrefixes = new HashSet<string> { "File", "Directory", "Path" };
+
+        // Parcourir l'arbre de syntaxe une seule fois
+        foreach (var node in root.DescendantNodes())
+        {
+            // Vérifier les directives 'using' pour les namespaces interdits
+            if (node is Microsoft.CodeAnalysis.CSharp.Syntax.UsingDirectiveSyntax usingDirective)
+            {
+                var namespaceName = usingDirective.Name.ToString();
+                if (disallowedNamespaces.Any(ns => namespaceName.StartsWith(ns)))
+                {
+                    compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
+                            "SEC006",
+                            "Vérification de sécurité",
+                            $"L'utilisation du namespace '{namespaceName}' est interdite.",
+                            "Sécurité",
+                            DiagnosticSeverity.Error,
+                            true),
+                        usingDirective.GetLocation()));
+                }
+            }
+
+            // Vérifier l'utilisation d'identifiants pour des types dangereux
+            if (node is Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax identifierName)
+            {
+                var identifierText = identifierName.Identifier.Text;
+
+                if (disallowedTypes.Contains(identifierText))
+                {
+                    compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
+                            "SEC002",
+                            "Vérification de sécurité",
+                            $"L'utilisation de '{identifierText}' est interdite pour des raisons de sécurité.",
+                            "Sécurité",
+                            DiagnosticSeverity.Error,
+                            true),
+                        identifierName.GetLocation()));
+                }
+
+                if (fileSystemPrefixes.Any(prefix => identifierText.StartsWith(prefix)))
+                {
+                    compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
+                            "SEC005",
+                            "Vérification de sécurité",
+                            $"L'utilisation de '{identifierText}' est restreinte pour des raisons de sécurité.",
+                            "Sécurité",
+                            DiagnosticSeverity.Warning,
+                            true),
+                        identifierName.GetLocation()));
+                }
+            }
+
+            // Vérifier l'utilisation du mot clé 'unsafe'
+            if (node is Microsoft.CodeAnalysis.CSharp.Syntax.UnsafeStatementSyntax)
+            {
+                compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
+                        "SEC003",
+                        "Vérification de sécurité",
+                        "L'utilisation de 'unsafe' est interdite pour des raisons de sécurité.",
+                        "Sécurité",
+                        DiagnosticSeverity.Error,
+                        true),
+                    node.GetLocation()));
+            }
         }
     }
 }
