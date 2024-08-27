@@ -32,10 +32,10 @@ namespace RobotAppLibrary.Indicators.Base
             var dataEnumerable = Update(candles);
             var data = dataEnumerable as T[] ?? dataEnumerable.ToArray();
 
-            Clear(); // Nettoie le tableau existant
-            EnsureCapacity(data.Length); // Assure que la capacité du tableau est suffisante
-            Array.Copy(data, _items, data.Length); // Copie les nouveaux éléments dans le tableau
-            _count = data.Length; // Met à jour le nombre d'éléments
+            Clear();
+            EnsureCapacity(data.Length); 
+            Array.Copy(data, _items, data.Length); 
+            _count = data.Length; 
         }
 
         protected abstract IEnumerable<T> Update(List<Candle> data);
@@ -71,6 +71,7 @@ namespace RobotAppLibrary.Indicators.Base
 
         public void Dispose()
         {
+            ArrayPool.Return(_items, true);
             Dispose(true);
             GC.SuppressFinalize(this);
         }

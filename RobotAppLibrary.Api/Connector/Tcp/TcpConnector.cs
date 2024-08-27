@@ -15,8 +15,6 @@ public interface ITcpConnector : IConnectorBase
 public class TcpConnector(Server server, ILogger logger)
     : TcpClientBase(server.Address, server.MainPort, logger), ITcpConnector
 {
-    private static readonly Regex PasswordRegex = new("\"password\":\".*?\"", RegexOptions.Compiled);
-    private static readonly Regex ApiKeyRegex = new("\"ApiKey\":\".*?\"", RegexOptions.Compiled);
     private readonly SemaphoreSlim _semaphore = new(1, 1);
     private long _lastCommandTimestamp;
 

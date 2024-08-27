@@ -76,15 +76,12 @@ public class Chart : List<Candle>, IChart
             LastPrice = await _apiHandler.GetTickPriceAsync(_symbol);
             if (data is { Count: > 0 })
             {
-                foreach (var candle in data.TakeLast(2000).ToList()) Add(candle);
+                foreach (var candle in data.TakeLast(2000)) Add(candle);
                 this.Validate();
-                data.Clear();
-                data.TrimExcess();
-                data = null;
             }
 
             _tradeHourRecord = await _apiHandler.GetTradingHoursAsync(_symbol);
-          }
+        }
         catch (Exception e)
         {
             throw new ChartException("Can't initialize candle list", e);
@@ -157,7 +154,7 @@ public class Chart : List<Candle>, IChart
     private DateTime GetReferenceTime(DateTime utcTime)
     {
         var timeframeValue = _timeframe.GetMinuteFromTimeframe();
-
+        
         if (_timeframe < Timeframe.Daily) return GetMinuteReference(utcTime, timeframeValue);
         return _timeframe switch
         {
