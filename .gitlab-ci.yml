@@ -49,8 +49,6 @@ create_docker_image:
 deploy_with_compose:
   stage: deploy
   image: docker/compose:latest
-  services:
-    - docker:dind
   script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker-compose -f docker-compose.yml up -d
