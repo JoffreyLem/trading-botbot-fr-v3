@@ -2,9 +2,9 @@ import React, { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { StrategyService } from "../../services/StrategyHandlerService.ts";
 import { useErrorHandler } from "../../hooks/UseErrorHandler.tsx";
-import { StrategyInfoDto } from "../../modeles/dto.ts";
 import { StrategyContext } from "../../contexts/StrategyProvider.tsx";
 import Spinner from "../../components/Spinner.tsx";
+import {StrategyInfoDto} from "../../modeles/dto.ts";
 
 const StrategyList: React.FC = () => {
   const [allStrategy, setAllStrategy] = useState<StrategyInfoDto[]>([]);

@@ -9,22 +9,22 @@ RUN curl -sL https://deb.nodesource.com/setup_lts.x | bash -
 RUN apt-get install -y nodejs
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["frontv2.client/nuget.config", "frontv2.client/"]
-COPY ["Robot.Server/Robot.Server.csproj", "Robot.Server/"]
-COPY ["frontv2.client/frontv2.client.esproj", "frontv2.client/"]
+COPY ["robot-project-v3.client/nuget.config", "frontv2.client/"]
+COPY ["robot-project-v3.Server/robot-project-v3.Server.csproj", "Robot.Server/"]
+COPY ["robot-project-v3.client/robot-project-v3.client.esproj", "frontv2.client/"]
 COPY . .
-RUN dotnet restore "./Robot.Server/./Robot.Server.csproj"
+RUN dotnet restore "./robot-project-v3.Server/./robot-project-v3.Server.csproj"
 
-WORKDIR "/src/frontv2.client"
+WORKDIR "/src/robot-project-v3.client"
 RUN npm i @rollup/rollup-linux-x64-gnu
 
-WORKDIR "/src/Robot.Server"
-RUN dotnet build "./Robot.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/robot-project-v3.Server"
+RUN dotnet build "./robot-project-v3.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
 
-RUN dotnet publish "./Robot.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./robot-project-v3.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
 WORKDIR /app
@@ -35,4 +35,4 @@ ENV API_URL=https://robot.botbot.fr/
 ENV SECURE=true
 EXPOSE 7000
 
-ENTRYPOINT ["dotnet", "Robot.Server.dll"]
+ENTRYPOINT ["dotnet", "robot-project-v3.Server.dll"]

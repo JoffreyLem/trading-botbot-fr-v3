@@ -1,4 +1,3 @@
-image: mcr.microsoft.com/dotnet/sdk:8.0
 variables:
   STACK_NAME: robot-app-v2
 
@@ -7,13 +6,19 @@ stages:
   - build
   - deploy
 
-test:
-  stage: test
+before_script:
+  - unset DOCKER_HOST
+  
+default:
+  image: mcr.microsoft.com/dotnet/sdk:8.0
   cache:
-    key: install-cache
+    key: nuget-and-node-cache
     paths:
       - ~/.nuget/packages/
       - node_modules/
+
+test:
+  stage: test
   before_script:
     - apt-get update && apt-get install -y curl
     - curl -sL https://deb.nodesource.com/setup_20.x | bash -
@@ -24,39 +29,40 @@ test:
   script:
     - dotnet build --no-restore
     - dotnet test --no-build --no-restore
+  artifacts:
+    paths:
+      - .  
+    expire_in: 1 hour
 
 create_docker_image:
   stage: build
-  variables:
-    GIT_STRATEGY: none
   image: docker:latest
-  cache:
-    key: docker-cache
-    paths:
-      - /var/lib/docker
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker build --build-arg DATABASE_CA_CERTIFICATE=${DATABASE_CA_CERTIFICATE} -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA $CI_REGISTRY_IMAGE:latest
     - docker push $CI_REGISTRY_IMAGE:latest
   needs: [ "test" ]
   dependencies:
     - test
-  only:
-    - main
+  artifacts:
+    paths:
+      - docker-compose.yml
 
-deploy_with_compose:
+deploy:
   stage: deploy
-  image: docker/compose:latest
+  image: docker:latest
   script:
-    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
-    - docker-compose -f docker-compose.yml up -d
-  only:
-    - main
-  needs: [ "create_docker_image" ]
+    - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
+    - docker-compose down 
+    - docker-compose pull
+    - docker-compose up -d --build
+  needs: [ "create_docker_image" ] 
   dependencies:
     - create_docker_image
+  only:
+    - main
   environment:
     name: production
-    url: https://robot-v2.botbot.fr
+    url: https://robot.botbot.fr

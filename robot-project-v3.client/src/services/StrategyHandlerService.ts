@@ -17,8 +17,8 @@ export class StrategyService {
     });
   }
 
-  static async getAllStrategy(): Promise<StrategyInitDto[]> {
-    return await ApiMiddlewareService.callApi<StrategyInitDto[]>(
+  static async getAllStrategy(): Promise<StrategyInfoDto[]> {
+    return await ApiMiddlewareService.callApi<StrategyInfoDto[]>(
       `${basePath}/all`,
       {
         method: "GET",

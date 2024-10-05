@@ -6,8 +6,7 @@ import { useErrorHandler } from "../../hooks/UseErrorHandler.tsx";
 import { StrategyService } from "../../services/StrategyHandlerService.ts";
 import {
   StrategyFileDto,
-  StrategyInfoDto,
-  StrategyInitDto,
+  StrategyInitDto, SymbolInfoDto,
 } from "../../modeles/dto.ts";
 import { ApiProviderService } from "../../services/ApiProviderService.ts";
 import Spinner from "../../components/Spinner.tsx";
@@ -21,7 +20,7 @@ const StrategyForm: React.FC = () => {
   });
 
   const [allStrategy, setAllStrategy] = useState<StrategyFileDto[]>([]);
-  const [allSymbol, setAllSymbol] = useState<StrategyInfoDto[]>([]);
+  const [allSymbol, setAllSymbol] = useState<SymbolInfoDto[]>([]);
 
   const [isLoading, setIsLoading] = useState(false);
   const { handleRefresh } = useContext(StrategyContext);

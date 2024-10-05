@@ -15,6 +15,7 @@ const StrategyDataInfo: React.FC<StrategyFormProps> = ({ strategyInfo }) => {
   }, [strategyInfo]);
 
   const handleCanRunChange = () => {
+    // @ts-ignore
     StrategyService.setCanRun(strategyInfo.id, !formData?.canRun)
       .then(() => {
         setFormData({
