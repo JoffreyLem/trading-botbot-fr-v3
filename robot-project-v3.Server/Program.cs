@@ -3,8 +3,10 @@ using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using Destructurama;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using robot_project_v3.Database;
+using robot_project_v3.Database.DbContext;
 using robot_project_v3.Mail;
 using robot_project_v3.Server;
 using robot_project_v3.Server.BackgroundService;
@@ -120,6 +122,13 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<StrategyContext>();
+    db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
 app.UseExceptionHandler();
