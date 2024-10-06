@@ -12,7 +12,7 @@ using robot_project_v3.Database.DbContext;
 namespace robot_project_v3.Database.Migrations
 {
     [DbContext(typeof(StrategyContext))]
-    [Migration("20240816135713_Initial")]
+    [Migration("20241006132452_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
