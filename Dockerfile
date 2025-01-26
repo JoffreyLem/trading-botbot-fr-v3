@@ -23,7 +23,7 @@ RUN dotnet build "./robot-project-v3.Server.csproj" -c $BUILD_CONFIGURATION -o /
 
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-
+ENV DOTNET_DEV_CERTS__DISABLE=1
 RUN dotnet publish "./robot-project-v3.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 FROM base AS final
