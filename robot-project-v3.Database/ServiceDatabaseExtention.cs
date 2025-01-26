@@ -13,26 +13,10 @@ public static class ServiceDatabaseExtension
     public static IServiceCollection AddStrategyDbContext(this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
-
-        services.AddDbContext<StrategyContext>(options =>
-            options
-                .UseMySql(connectionString, new MariaDbServerVersion(ServerVersion.AutoDetect(connectionString)),
-                    builder =>
-                        builder.EnableRetryOnFailure(
-                            2,
-                            TimeSpan.FromSeconds(10),
-                            null))
-                .LogTo(message =>
-                {
-                    Log.Logger.Error(message);
-                    Console.WriteLine(message);
-                }, LogLevel.Error)
-                .EnableDetailedErrors());
+        services.AddSingleton<MongoDbContext>();
 
         services.AddSingleton<IStrategyFileRepository, StrategyFileRepository>();
-
-
+        
         return services;
     }
 }

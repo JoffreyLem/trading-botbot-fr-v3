@@ -329,7 +329,7 @@ public class CommandHandler(
 
     private (StrategyImplementationBase instance, AssemblyLoadContext loadContext) GenerateStrategy(StrategyFile strategyFileDto)
     {
-        var sourceCode = Encoding.UTF8.GetString(strategyFileDto.Data);
+        var sourceCode = strategyFileDto.Data;
         var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(sourceCode);
         
         return StrategyDynamiqCompiler.GenerateStrategyInstance(compiledCode.compiledAssembly);

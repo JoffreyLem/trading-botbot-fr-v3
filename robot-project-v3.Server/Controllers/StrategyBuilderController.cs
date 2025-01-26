@@ -41,14 +41,14 @@ public class StrategyBuilderController(IStrategyBuilderService strategyBuilderSe
 
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(StrategyFileDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetStrategy(int id)
+    public async Task<IActionResult> GetStrategy(string id)
     {
         var strategies = await strategyBuilderService.GetStrategyFile(id);
         return Ok(strategies);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteStrategyFile(int id)
+    public async Task<IActionResult> DeleteStrategyFile(string id)
     {
         await strategyBuilderService.DeleteStrategyFile(id);
         return NoContent();
@@ -56,7 +56,7 @@ public class StrategyBuilderController(IStrategyBuilderService strategyBuilderSe
 
     [HttpPut("{id}")]
     [ProducesResponseType(typeof(StrategyCompilationResponseDto), StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateStrategyFile([FromRoute] int id, IFormFile file)
+    public async Task<IActionResult> UpdateStrategyFile([FromRoute] string id, IFormFile file)
     {
         if (file == null || file.Length == 0) return BadRequest("Fichier vide ou non fourni.");
 

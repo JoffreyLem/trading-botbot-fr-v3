@@ -1,13 +1,17 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 
 namespace robot_project_v3.Database.Modeles;
 
 public class StrategyFile
 {
-    [Key] public int Id { get; set; }
-
+    [Key]
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; }
     public string Name { get; set; }
     public string Version { get; set; }
-    public byte[] Data { get; set; }
+    public string Data { get; set; }
     public DateTime LastDateUpdate { get; set; }
 }

@@ -29,7 +29,7 @@ public class StrategyService(
 
     public async Task InitStrategy(StrategyInitDto strategyInitDto)
     {
-        var strategyFile = await strategyFileRepository.GetByIdAsync(int.Parse(strategyInitDto.StrategyFileId));
+        var strategyFile = await strategyFileRepository.GetByIdAsync(strategyInitDto.StrategyFileId);
         var initStrategyCommand = new InitStrategyCommand
         {
             Data = new InitStrategyDto()

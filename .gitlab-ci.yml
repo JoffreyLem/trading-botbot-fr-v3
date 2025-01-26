@@ -4,11 +4,12 @@ variables:
 stages:
   - test
   - build
+  - publish_nuget
   - deploy
 
 before_script:
   - unset DOCKER_HOST
-  
+
 default:
   image: mcr.microsoft.com/dotnet/sdk:8.0
   cache:
@@ -29,10 +30,6 @@ test:
   script:
     - dotnet build --no-restore
     - dotnet test --no-build --no-restore
-  artifacts:
-    paths:
-      - .  
-    expire_in: 1 hour
 
 create_docker_image:
   stage: build
@@ -46,19 +43,39 @@ create_docker_image:
   needs: [ "test" ]
   dependencies:
     - test
+  only:
+    - main
   artifacts:
     paths:
       - docker-compose.yml
+
+publish_nuget_package:
+  stage: publish_nuget
+  script:
+    - dotnet restore
+    - find . -name "RobotAppLibrary*.csproj" -exec dotnet pack {} -c Release -o ./packages --property:Version=$CI_COMMIT_TAG \;
+    - dotnet nuget push ./packages/*.nupkg -k $CI_JOB_TOKEN -s $CI_SERVER_PROTOCOL://$CI_SERVER_HOST/api/v4/projects/$CI_PROJECT_ID/packages/nuget/index.json
+  only:
+    - tags
+  dependencies:
+    - test
+  artifacts:
+    paths:
+      - ./packages/*.nupkg
+    expire_in: 1 day
+
+
+
 
 deploy:
   stage: deploy
   image: docker:latest
   script:
     - echo $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin $CI_REGISTRY
-    - docker-compose down 
+    - docker-compose down
     - docker-compose pull
     - docker-compose up -d --build
-  needs: [ "create_docker_image" ] 
+  needs: [ "create_docker_image" ]
   dependencies:
     - create_docker_image
   only:

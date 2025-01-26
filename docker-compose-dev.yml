@@ -1,18 +1,17 @@
 version: '3.7'
 
 services:
-  mariadb:
-    image: mariadb:latest
+  mongodb:
+    image: mongo:latest
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: example
-      MYSQL_DATABASE: mydb
-      MYSQL_USER: user
-      MYSQL_PASSWORD: password
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: mydb
     ports:
-      - "3308:3306"
+      - "27017:27017"
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - mongodb_data:/data/db
   
   seq:
     image: datalust/seq
@@ -26,4 +25,4 @@ services:
       - "5341:5341"
 
 volumes:
-  mariadb_data:
+  mongodb_data:

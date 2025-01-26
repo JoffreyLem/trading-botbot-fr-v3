@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+﻿using MongoDB.Driver;
 using robot_project_v3.Database.DbContext;
 using robot_project_v3.Database.Modeles;
 
@@ -8,55 +7,43 @@ namespace robot_project_v3.Database.Repositories;
 public interface IStrategyFileRepository
 {
     Task<List<StrategyFile>> GetAllAsync();
-
-    Task<StrategyFile> GetByIdAsync(int id);
+    Task<StrategyFile?> GetByIdAsync(string id);
     Task AddAsync(StrategyFile strategyFile);
     Task UpdateAsync(StrategyFile strategyFile);
-    Task DeleteAsync(int id);
+    Task DeleteAsync(string id);
 }
 
-public class StrategyFileRepository(IServiceScopeFactory scopeFactory) : IStrategyFileRepository
+public class StrategyFileRepository : IStrategyFileRepository
 {
-    public async Task<List<StrategyFile>> GetAllAsync()
+    private readonly IMongoCollection<StrategyFile> _strategyFiles;
+
+    public StrategyFileRepository(MongoDbContext context)
     {
-        using var scope = scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<StrategyContext>();
-        return await dbContext.StrategyFiles.ToListAsync();
+        _strategyFiles = context.StrategyFiles;
     }
 
-
-    public async Task<StrategyFile> GetByIdAsync(int id)
+    public async Task<List<StrategyFile>> GetAllAsync()
     {
-        using var scope = scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<StrategyContext>();
-        return await dbContext.StrategyFiles.FindAsync(id);
+        return await _strategyFiles.Find(_ => true).ToListAsync();
+    }
+
+    public async Task<StrategyFile?> GetByIdAsync(string id)
+    {
+        return await _strategyFiles.Find(s => s.Id == id).FirstOrDefaultAsync();
     }
 
     public async Task AddAsync(StrategyFile strategyFile)
     {
-        using var scope = scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<StrategyContext>();
-        dbContext.StrategyFiles.Add(strategyFile);
-        await dbContext.SaveChangesAsync();
+        await _strategyFiles.InsertOneAsync(strategyFile);
     }
 
     public async Task UpdateAsync(StrategyFile strategyFile)
     {
-        using var scope = scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<StrategyContext>();
-        dbContext.StrategyFiles.Update(strategyFile);
-        await dbContext.SaveChangesAsync();
+        await _strategyFiles.ReplaceOneAsync(s => s.Id == strategyFile.Id, strategyFile);
     }
 
-    public async Task DeleteAsync(int id)
+    public async Task DeleteAsync(string id)
     {
-        using var scope = scopeFactory.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<StrategyContext>();
-        var strategyFile = await dbContext.StrategyFiles.FindAsync(id);
-        if (strategyFile != null)
-        {
-            dbContext.StrategyFiles.Remove(strategyFile);
-            await dbContext.SaveChangesAsync();
-        }
+        await _strategyFiles.DeleteOneAsync(s => s.Id == id);
     }
 }
