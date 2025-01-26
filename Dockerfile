@@ -33,6 +33,6 @@ ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS="http://*:8000;"
 ENV API_URL=https://robot.botbot.fr/
 ENV SECURE=true
-EXPOSE 7000
+EXPOSE 8000
 
 ENTRYPOINT ["dotnet", "robot-project-v3.Server.dll"]
