@@ -30,9 +30,9 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS="http://*:8000;"
+ENV ASPNETCORE_URLS="http://*:7500;"
 ENV API_URL=https://robot.botbot.fr/
 ENV SECURE=true
-EXPOSE 8000
+EXPOSE 7500
 
 ENTRYPOINT ["dotnet", "robot-project-v3.Server.dll"]
