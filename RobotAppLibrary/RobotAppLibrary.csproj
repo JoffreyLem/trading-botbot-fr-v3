@@ -12,8 +12,4 @@
         <ProjectReference Include="..\RobotAppLibrary.Utils\RobotAppLibrary.Utils.csproj"/>
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Backtest\" />
-    </ItemGroup>
-
 </Project>

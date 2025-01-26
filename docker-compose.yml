@@ -14,7 +14,7 @@ services:
       - SmtpSettings__User=botbotProject@gmail.com
       - SmtpSettings__Password=${SMTP_PASSWORD}
       - SmtpSettings__DefaultEmail=lemery.joffrey@outlook.fr
-      - ConnectionStrings__DefaultConnection=server=mariadb_ssl;Database=robot;Uid=admin;Pwd=${DATABASE_PASSWORD};sslmode=required;
+      - MongoDb__ConnectionString=${MONGODB_CONNECTIONSTRING}
       - Seq__ApiKey=${SEQ_APIKEY}
       - NODE_ENV=production
       - API_URL=https://robot.botbot.fr/

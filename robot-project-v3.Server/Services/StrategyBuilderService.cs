@@ -13,13 +13,13 @@ public interface IStrategyBuilderService
 {
     Task<StrategyCompilationResponseDto> CreateNewStrategy(string data);
 
-    Task<StrategyFileDto> GetStrategyFile(int id);
+    Task<StrategyFileDto> GetStrategyFile(string id);
 
     Task<List<StrategyFileDto>> GetAllStrategyFile();
 
-    Task DeleteStrategyFile(int id);
+    Task DeleteStrategyFile(string id);
 
-    Task<StrategyCompilationResponseDto> UpdateStrategyFile(int id, string data);
+    Task<StrategyCompilationResponseDto> UpdateStrategyFile(string id, string data);
 }
 
 public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFileRepository strategyFileRepository)
@@ -33,12 +33,11 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
         var strategyCreateRsp = new StrategyCompilationResponseDto();
         try
         {
-            var sourceCode = data;
-            var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(sourceCode);
+            var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(data);
             
             var strategyFile = new StrategyFile
             {
-                Data = Encoding.UTF8.GetBytes(data), Name = compiledCode.name, Version = compiledCode.version,
+                Data = data, Name = compiledCode.name, Version = compiledCode.version,
                 LastDateUpdate = DateTime.UtcNow
             };
 
@@ -48,7 +47,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
             strategyCreateRsp.StrategyFileDto = new StrategyFileDto
             {
                 Id = strategyFile.Id,
-                Data = Encoding.UTF8.GetString(strategyFile.Data),
+                Data = strategyFile.Data,
                 LastDateUpdate = strategyFile.LastDateUpdate,
                 Name = strategyFile.Name,
                 Version = strategyFile.Version
@@ -70,7 +69,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
         return strategyCreateRsp;
     }
 
-    public async Task<StrategyFileDto> GetStrategyFile(int id)
+    public async Task<StrategyFileDto> GetStrategyFile(string id)
     {
         try
         {
@@ -79,7 +78,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
             return new StrategyFileDto
             {
                 Id = data.Id,
-                Data = Encoding.UTF8.GetString(data.Data),
+                Data = data.Data,
                 LastDateUpdate = data.LastDateUpdate,
                 Name = data.Name,
                 Version = data.Version
@@ -92,20 +91,19 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
         }
     }
 
-    public async Task<StrategyCompilationResponseDto> UpdateStrategyFile(int id, string data)
+    public async Task<StrategyCompilationResponseDto> UpdateStrategyFile(string id, string data)
     {
         var strategyCreateRsp = new StrategyCompilationResponseDto();
         try
         {
-            var sourceCode = data;
-
-            var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(sourceCode);
+            
+            var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(data);
 
             var strategyFileSelected = await strategyFileRepository.GetByIdAsync(id);
 
             strategyFileSelected.Version = compiledCode.version;
             strategyFileSelected.LastDateUpdate = DateTime.UtcNow;
-            strategyFileSelected.Data = Encoding.UTF8.GetBytes(sourceCode);
+            strategyFileSelected.Data = data;
 
             await strategyFileRepository.UpdateAsync(strategyFileSelected);
 
@@ -113,7 +111,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
             strategyCreateRsp.StrategyFileDto = new StrategyFileDto
             {
                 Id = strategyFileSelected.Id,
-                Data = Encoding.UTF8.GetString(strategyFileSelected.Data),
+                Data = strategyFileSelected.Data,
                 LastDateUpdate = strategyFileSelected.LastDateUpdate,
                 Name = strategyFileSelected.Name,
                 Version = strategyFileSelected.Version
@@ -155,7 +153,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
         }
     }
 
-    public async Task DeleteStrategyFile(int id)
+    public async Task DeleteStrategyFile(string id)
     {
         try
         {
