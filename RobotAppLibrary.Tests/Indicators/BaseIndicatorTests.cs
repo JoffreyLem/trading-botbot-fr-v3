@@ -87,6 +87,129 @@ public class BaseIndicatorTests
             indicator[i].Value.Should().Be((double)newCandles.ElementAt(i).Close);
     }
 
+      [Fact]
+    public void HasCrossed_ShouldDetectUpwardCross()
+    {
+        // Arrange
+        var candles = new List<Candle>
+        {
+            new Candle { Close = 100 },
+            new Candle { Close = 95 },
+            new Candle { Close = 105 } // Croisement haussier
+        };
+
+        var indicator = new TestIndicator();
+        indicator.UpdateIndicator(candles);
+
+        // Act
+        var result = indicator.HasCrossed(
+            candles,
+            indicatorSelector: r =>(decimal) r.Value,
+            priceSelector: c => c.Close,
+            checkUpward: true
+        );
+
+        // Assert
+        result.Should().BeTrue("the indicator crossed upward over the candles' close price.");
+    }
+
+    [Fact]
+    public void HasCrossed_ShouldDetectDownwardCross()
+    {
+        // Arrange
+        var candles = new List<Candle>
+        {
+            new Candle { Close = 100 },
+            new Candle { Close = 105 },
+            new Candle { Close = 95 } // Croisement baissier
+        };
+
+        var indicator = new TestIndicator();
+        indicator.UpdateIndicator(candles);
+
+        // Act
+        var result = indicator.HasCrossed(
+            candles,
+            indicatorSelector: r =>(decimal) r.Value,
+            priceSelector: c => c.Close,
+            checkUpward: false
+        );
+
+        // Assert
+        result.Should().BeTrue("the indicator crossed downward below the candles' close price.");
+    }
+
+    [Fact]
+    public void HasCrossed_ShouldReturnFalse_WhenNoCrossOccurs()
+    {
+        // Arrange
+        var candles = new List<Candle>
+        {
+            new Candle { Close = 100 },
+            new Candle { Close = 100 },
+            new Candle { Close = 100 } // Pas de croisement
+        };
+
+        var indicator = new TestIndicator();
+        indicator.UpdateIndicator(candles);
+
+        // Act
+        var result = indicator.HasCrossed(
+            candles,
+            indicatorSelector: r =>(decimal) r.Value,
+            priceSelector: c => c.Close,
+            checkUpward: true
+        );
+
+        // Assert
+        result.Should().BeFalse("no upward cross occurred in the given data.");
+    }
+
+    [Fact]
+    public void HasCrossed_ShouldDetectCrossWithLookBackSteps()
+    {
+        // Arrange
+        var candles = new List<Candle>
+        {
+            new Candle { Close = 100 },
+            new Candle { Close = 95 },
+            new Candle { Close = 105 }, // Croisement haussier
+            new Candle { Close = 110 }
+        };
+
+        var indicator = new TestIndicator();
+        indicator.UpdateIndicator(candles);
+
+        // Act
+        var result = indicator.HasCrossed(
+            candles,
+            indicatorSelector: r =>(decimal) r.Value,
+            priceSelector: c => c.Close,
+            checkUpward: true,
+            lookBackSteps: 1
+        );
+
+        // Assert
+        result.Should().BeTrue("an upward cross occurred within the look-back period.");
+    }
+
+    [Fact]
+    public void HasCrossed_ShouldHandleEmptyData()
+    {
+        // Arrange
+        var candles = new List<Candle>();
+        var indicator = new TestIndicator();
+
+        // Act
+        Action act = () => indicator.HasCrossed(
+            candles,
+            indicatorSelector: r =>(decimal) r.Value,
+            priceSelector: c => c.Close
+        );
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>("the data is insufficient to determine a crossover.");
+    }
 
     private IEnumerable<Candle> GenerateCandles(int count)
     {

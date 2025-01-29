@@ -88,6 +88,43 @@ namespace RobotAppLibrary.Indicators.Base
                 _disposed = true;
             }
         }
+        
+        public bool HasCrossed(
+            List<Candle> candles,
+            Func<T, decimal> indicatorSelector,
+            Func<Candle, decimal> priceSelector,
+            bool checkUpward = true,
+            int lookBackSteps = 0)
+        {
+            if (_count < 2 || candles.Count < 2)
+                throw new InvalidOperationException("Not enough data to determine a crossover.");
+
+            var maxSteps = Math.Min(lookBackSteps, _count - 2);
+            for (var step = maxSteps; step >= 0; step--)
+            {
+
+                var previousIndicatorValue = indicatorSelector(_items[_count - 2 - step]);
+                var currentIndicatorValue = indicatorSelector(_items[_count - 1 - step]);
+
+                var previousPrice = priceSelector(candles[candles.Count - 2 - step]);
+                var currentPrice = priceSelector(candles[candles.Count - 1 - step]);
+
+                if (checkUpward)
+                {
+                    if (previousIndicatorValue <= previousPrice && currentIndicatorValue > currentPrice)
+                        return true;
+                }
+                else
+                {
+                    if (previousIndicatorValue >= previousPrice && currentIndicatorValue < currentPrice)
+                        return true;
+                }
+            }
+
+            // Aucun croisement trouvé
+            return false;
+        }
+
 
         ~BaseIndicator()
         {
