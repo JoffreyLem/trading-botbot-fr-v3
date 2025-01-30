@@ -24,14 +24,19 @@ public interface IChartAggregate : IChartBase
     }
 }
 
-public interface IChart : IChartAggregate
+public interface IChartEvent
+{
+    event Func<Tick, Task>? OnTickEvent;
+    event Func<Candle, Task>? OnCandleEvent;
+}
+
+public interface IChart : IChartEvent, IChartAggregate
 {
     Tick LastPrice { get; }
 
     public Candle LastCandle => this[^2];
     public Candle CurrentCandle => this.Last();
-    event Func<Tick, Task>? OnTickEvent;
-    event Func<Candle, Task>? OnCandleEvent;
+
 }
 
 public class Chart : List<Candle>, IChart

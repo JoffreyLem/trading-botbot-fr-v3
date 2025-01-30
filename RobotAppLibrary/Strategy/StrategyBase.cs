@@ -157,6 +157,7 @@ public class StrategyBase : IStrategyBase
     private void InitStrategyImplementation()
     {
         _strategyImplementationBase.Logger = _logger;
+        _strategyImplementationBase.Chart = Chart;
         _strategyImplementationBase.CalculateStopLossFunc = _positionHandler.CalculateStopLoss;
         _strategyImplementationBase.CalculateTakeProfitFunc = _positionHandler.CalculateTakeProfit;
         _strategyImplementationBase.OpenPositionAction = OpenPosition;
@@ -205,8 +206,8 @@ public class StrategyBase : IStrategyBase
         {
             if (fieldInfo.GetValue(_strategyImplementationBase) is not IIndicator indicator)
             {
-                indicator = Activator.CreateInstance(fieldInfo.FieldType) as IIndicator ??
-                            throw new InvalidOperationException();
+                
+                indicator = Activator.CreateInstance(fieldInfo.FieldType) as IIndicator ;
                 fieldInfo.SetValue(_strategyImplementationBase, indicator);
                 indicator.Name = fieldInfo.Name;
             }
