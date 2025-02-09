@@ -12,7 +12,7 @@ public abstract class StrategyImplementationBase
     internal Func<decimal, TypeOperation, decimal> CalculateStopLossFunc = null!;
     internal Func<decimal, TypeOperation, decimal> CalculateTakeProfitFunc = null!;
     public ILogger? Logger;
-    public IList<Candle> Chart;
+    
     internal Func<TypeOperation, decimal, decimal, double, double, long, Task> OpenPositionAction = null!;
     public virtual string Name => GetType().Name;
     public virtual string? Version => "0.0.1";
