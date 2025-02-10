@@ -188,6 +188,7 @@ public class StrategyBase : IStrategyBase
 
         if (chartFields.All(f => f.GetCustomAttribute<MainChartAttribute>() == null))
             throw new StrategyException("No main chart defined.");
+        
 
         foreach (var fieldInfo in chartFields)
         {
@@ -196,6 +197,8 @@ public class StrategyBase : IStrategyBase
                 throw new StrategyException("One of the charts does not have a timeframe attribute.");
 
             var chart = _strategyServiceFactory.GetChart(_logger, _apiProvider, Symbol, timeframeAttribute.Timeframe);
+            
+            fieldInfo.SetValue(_strategyImplementationBase, chart);
 
             if (fieldInfo.GetCustomAttribute<MainChartAttribute>() != null)
             {

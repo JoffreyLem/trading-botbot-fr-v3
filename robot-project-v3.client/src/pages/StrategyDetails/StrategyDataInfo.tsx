@@ -3,18 +3,21 @@ import React, { useEffect, useState } from "react";
 import { StrategyService } from "../../services/StrategyHandlerService.ts";
 import { StrategyInfoDto } from "../../modeles/dto.ts";
 import { StrategyFormProps } from "./StrategyFormProps.tsx";
+import Spinner from "../../components/Spinner.tsx";
 
 const StrategyDataInfo: React.FC<StrategyFormProps> = ({ strategyInfo }) => {
   const [formData, setFormData] = useState<StrategyInfoDto | undefined>(
     strategyInfo,
   );
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     setFormData(strategyInfo);
   }, [strategyInfo]);
 
   const handleCanRunChange = () => {
+    setIsLoading(true);
     // @ts-ignore
     StrategyService.setCanRun(strategyInfo.id, !formData?.canRun)
       .then(() => {
@@ -23,7 +26,10 @@ const StrategyDataInfo: React.FC<StrategyFormProps> = ({ strategyInfo }) => {
           canRun: !formData?.canRun,
         } as StrategyInfoDto);
       })
-      .catch((err) => setError(err.message));
+      .catch((err) => setError(err.message))
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   if (error) {
@@ -65,6 +71,7 @@ const StrategyDataInfo: React.FC<StrategyFormProps> = ({ strategyInfo }) => {
         <label htmlFor="canRun" className="font-medium text-gray-700">
           Can Run
         </label>
+        {isLoading && <Spinner />}
         <input
           type="checkbox"
           className="form-checkbox h-5 w-5 text-blue-600"

@@ -2,6 +2,7 @@
 using System.Runtime.Loader;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.DependencyModel;
 using RobotAppLibrary.Chart;
 using RobotAppLibrary.Indicators.Base;
@@ -20,6 +21,8 @@ public static class StrategyDynamicCompiler
         try
         {
             var syntaxTree = CSharpSyntaxTree.ParseText(sourceCode);
+            
+            syntaxTree = AddUsingsToSyntaxTree(syntaxTree);
             PerformSecurityChecks(syntaxTree, compileErrors);
 
             var compilation = CreateCompilation(syntaxTree);
@@ -66,7 +69,6 @@ public static class StrategyDynamicCompiler
             .Select(assembly => MetadataReference.CreateFromFile(assembly.Location))
             .ToList();
 
-        references.Add(MetadataReference.CreateFromFile(Assembly.Load("System").Location));
         return [..references];
     }
 
@@ -183,5 +185,24 @@ public static class StrategyDynamicCompiler
     private static Diagnostic CreateDiagnostic(string id, string message, DiagnosticSeverity severity)
     {
         return Diagnostic.Create(new DiagnosticDescriptor(id, "Vérification", message, "Sécurité", severity, true), Location.None);
+    }
+    
+    private static SyntaxTree AddUsingsToSyntaxTree(SyntaxTree syntaxTree)
+    {
+        var root = syntaxTree.GetRoot() as CompilationUnitSyntax;
+    
+        var requiredUsings = new[]
+        {
+            "System", "System.Private.CoreLib", "System.Runtime", "System.Collections.Generic", "System.Linq"
+        };
+
+        var existingUsings = root.Usings.Select(u => u.Name.ToString()).ToHashSet();
+
+        var newUsings = requiredUsings
+            .Where(u => !existingUsings.Contains(u))
+            .Select(u => SyntaxFactory.UsingDirective(SyntaxFactory.ParseName(u)));
+
+        var newRoot = root.AddUsings(newUsings.ToArray());
+        return syntaxTree.WithRootAndOptions(newRoot, syntaxTree.Options);
     }
 }
