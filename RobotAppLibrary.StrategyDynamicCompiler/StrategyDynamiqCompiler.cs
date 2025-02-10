@@ -2,7 +2,6 @@
 using System.Runtime.Loader;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.DependencyModel;
 using RobotAppLibrary.Chart;
 using RobotAppLibrary.Indicators.Base;
@@ -11,64 +10,31 @@ using RobotAppLibrary.Strategy;
 
 namespace RobotAppLibrary.StrategyDynamicCompiler;
 
-public static class StrategyDynamiqCompiler
+public static class StrategyDynamicCompiler
 {
-    public static (byte[] compiledAssembly, string? name, string? version) TryCompileSourceCode(string sourceCode,
-        bool verifyAssembly = true)
+    public static (byte[] compiledAssembly, string? name, string? version) TryCompileSourceCode(
+        string sourceCode, bool verifyAssembly = true)
     {
+        var compileErrors = new List<Diagnostic>();
+
         try
         {
-            var compileErrors = new List<Diagnostic>();
-
             var syntaxTree = CSharpSyntaxTree.ParseText(sourceCode);
-
             PerformSecurityChecks(syntaxTree, compileErrors);
 
-            var dependencyContext = DependencyContext.Default;
-            var runtimeAssemblies = dependencyContext.RuntimeLibraries
-                .SelectMany(library => library.GetDefaultAssemblyNames(dependencyContext))
-                .Select(Assembly.Load)
-                .Select(assembly => MetadataReference.CreateFromFile(assembly.Location)).ToList();
-
-            var systemRuntimeLocation = Assembly.Load(new AssemblyName("System")).Location;
-            runtimeAssemblies.Add(MetadataReference.CreateFromFile(systemRuntimeLocation));
-
-            var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-                .WithOptimizationLevel(OptimizationLevel.Release)
-                .WithOverflowChecks(false);
-
-            var compilation = CSharpCompilation.Create("StrategyDynamicAssembly")
-                .AddReferences(runtimeAssemblies)
-                .AddSyntaxTrees(syntaxTree)
-                .WithOptions(compilationOptions);
-
+            var compilation = CreateCompilation(syntaxTree);
             using var ms = new MemoryStream();
             var compileResult = compilation.Emit(ms);
 
-            if (compileResult.Success)
+            if (!compileResult.Success)
             {
-                var dataToReturn = ms.ToArray();
-
-                if (verifyAssembly)
-                {
-                    VerifyAssembly(dataToReturn, compileErrors, out var nameValue, out var versionValue);
-
-                    if (compileErrors.Any())
-                    {
-                        throw new CompilationException("La vérification de l'assembly a échoué.",
-                            compileErrors.Where(error => error.Severity == DiagnosticSeverity.Error));
-                    }
-
-                    return (dataToReturn, nameValue, versionValue);
-                }
-
-                return (dataToReturn, null, null);
+                compileErrors.AddRange(compileResult.Diagnostics);
+                throw new CompilationException("La compilation a échoué.", 
+                    compileErrors.Where(e => e.Severity == DiagnosticSeverity.Error));
             }
 
-            compileErrors.AddRange(compileResult.Diagnostics);
-
-            throw new CompilationException("La compilation a échoué.",
-                compileErrors.Where(error => error.Severity == DiagnosticSeverity.Error));
+            var compiledData = ms.ToArray();
+            return verifyAssembly ? VerifyCompiledAssembly(compiledData, compileErrors) : (compiledData, null, null);
         }
         finally
         {
@@ -77,51 +43,61 @@ public static class StrategyDynamiqCompiler
         }
     }
 
+    private static CSharpCompilation CreateCompilation(SyntaxTree syntaxTree)
+    {
+        var references = GetAssemblyReferences();
+        var compilationOptions = new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+            .WithOptimizationLevel(OptimizationLevel.Release)
+            .WithOverflowChecks(false)
+            .WithAllowUnsafe(false);
+
+        return CSharpCompilation.Create("StrategyDynamicAssembly")
+            .AddReferences(references)
+            .AddSyntaxTrees(syntaxTree)
+            .WithOptions(compilationOptions);
+    }
+
+    private static List<MetadataReference> GetAssemblyReferences()
+    {
+        var dependencyContext = DependencyContext.Default;
+        var references = dependencyContext.RuntimeLibraries
+            .SelectMany(library => library.GetDefaultAssemblyNames(dependencyContext))
+            .Select(Assembly.Load)
+            .Select(assembly => MetadataReference.CreateFromFile(assembly.Location))
+            .ToList();
+
+        references.Add(MetadataReference.CreateFromFile(Assembly.Load("System").Location));
+        return [..references];
+    }
+
     public static (StrategyImplementationBase instance, AssemblyLoadContext loadContext) GenerateStrategyInstance(
         byte[] assemblyBytes)
     {
-        if (assemblyBytes == null || assemblyBytes.Length == 0)
+        if (assemblyBytes is not { Length: > 0 })
             throw new ArgumentException("Assembly bytes cannot be null or empty.", nameof(assemblyBytes));
 
-        var assemblyLoadContext = new AssemblyLoadContext("StrategyAssemblyContext", isCollectible: true);
-
+        var loadContext = new AssemblyLoadContext("StrategyAssemblyContext", isCollectible: true);
         Assembly assembly;
-        using (var ms = new MemoryStream(assemblyBytes))
-        {
-            assembly = assemblyLoadContext.LoadFromStream(ms);
-        }
 
-        var derivedType = assembly.GetTypes().FirstOrDefault(t =>
-            t.IsSubclassOf(typeof(StrategyImplementationBase)) && !t.IsAbstract);
+        using (var ms = new MemoryStream(assemblyBytes))
+            assembly = loadContext.LoadFromStream(ms);
+
+        var derivedType = assembly.GetTypes()
+            .FirstOrDefault(t => t.IsSubclassOf(typeof(StrategyImplementationBase)) && !t.IsAbstract);
 
         if (derivedType == null)
-        {
-            assemblyLoadContext.Unload();
-            throw new InvalidOperationException(
-                "No non-abstract derived type of StrategyImplementationBase found in the assembly.");
-        }
+            throw new InvalidOperationException("Aucune classe dérivée valide trouvée.");
 
-        var instance = Activator.CreateInstance(derivedType) as StrategyImplementationBase;
+        var instance = Activator.CreateInstance(derivedType) as StrategyImplementationBase 
+            ?? throw new InvalidOperationException($"Impossible d'instancier {derivedType.FullName}.");
 
-        if (instance == null)
-        {
-            assemblyLoadContext.Unload();
-            throw new InvalidOperationException(
-                $"Failed to create an instance of the derived type {derivedType.FullName}.");
-        }
-
-        return (instance, assemblyLoadContext);
+        return (instance, loadContext);
     }
 
     public static void UnloadStrategyInstance(StrategyImplementationBase? instance, AssemblyLoadContext? loadContext)
     {
-        if (instance != null)
-        {
-            if (instance is IDisposable disposable)
-            {
-                disposable.Dispose();
-            }
-        }
+        if (instance is IDisposable disposable)
+            disposable.Dispose();
 
         if (loadContext != null)
         {
@@ -132,145 +108,80 @@ public static class StrategyDynamiqCompiler
         }
     }
 
-
-    private static void VerifyAssembly(
-        byte[] assemblyBytes,
-        List<Diagnostic> compileErrors,
-        out string nameValue,
-        out string versionValue)
+    private static (byte[] compiledAssembly, string? name, string? version) VerifyCompiledAssembly(
+        byte[] assemblyBytes, List<Diagnostic> compileErrors)
     {
-        var strategy = GenerateStrategyInstance(assemblyBytes);
-
+        var (instance, loadContext) = GenerateStrategyInstance(assemblyBytes);
         try
         {
-            nameValue = "";
-            versionValue = "";
+            var derivedType = instance.GetType();
+            string name = GetRequiredProperty(instance, "Name", "STRAT003", compileErrors);
+            string version = GetRequiredProperty(instance, "Version", "STRAT004", compileErrors);
+            ValidateMainChart(derivedType, compileErrors);
 
-            var derivedType = strategy.instance.GetType();
+            if (compileErrors.Any(e => e.Severity == DiagnosticSeverity.Error))
+                throw new CompilationException("La vérification de l'assembly a échoué.", compileErrors);
 
-            if ((!derivedType.IsSubclassOf(typeof(StrategyImplementationBase))))
-            {
-                compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
-                    "STRAT001", "Vérification de l'assembly", "No derived types of StrategyImplementationBase found.",
-                    "Vérification", DiagnosticSeverity.Error, true), Location.None));
-                return;
-            }
-
-            var chartFields = derivedType
-                .GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-                .Where(f => typeof(IChart).IsAssignableFrom(f.FieldType)).ToList();
-
-            if (chartFields.All(f => f.GetCustomAttribute<MainChartAttribute>() == null))
-            {
-                compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
-                    "STRAT002", "Vérification de l'assembly", $"No main chart defined in class {derivedType.Name}.",
-                    "Vérification", DiagnosticSeverity.Error, true), Location.None));
-            }
-
-            var nameProperty = derivedType.GetProperty("Name", BindingFlags.Public | BindingFlags.Instance);
-            var versionProperty = derivedType.GetProperty("Version", BindingFlags.Public | BindingFlags.Instance);
-
-            if (nameProperty is null)
-            {
-                compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
-                    "STRAT003", "Vérification de l'assembly",
-                    $"Property 'Name' is missing in class {derivedType.Name}.",
-                    "Vérification", DiagnosticSeverity.Error, true), Location.None));
-            }
-            else
-            {
-                nameValue = strategy.instance.Name;
-            }
-
-            if (versionProperty is null)
-            {
-                compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
-                    "STRAT004", "Vérification de l'assembly",
-                    $"Property 'Version' is missing in class {derivedType.Name}.",
-                    "Vérification", DiagnosticSeverity.Error, true), Location.None));
-            }
-            else
-            {
-                versionValue = strategy.instance.Version;
-            }
+            return (assemblyBytes, name, version);
         }
         finally
         {
-            UnloadStrategyInstance(strategy.instance, strategy.loadContext);
+            UnloadStrategyInstance(instance, loadContext);
         }
+    }
+
+    private static string GetRequiredProperty(object instance, string propertyName, string errorCode, List<Diagnostic> errors)
+    {
+        var property = instance.GetType().GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+        if (property == null)
+        {
+            errors.Add(CreateDiagnostic(errorCode, $"La propriété '{propertyName}' est absente.", DiagnosticSeverity.Error));
+            return string.Empty;
+        }
+        return property.GetValue(instance)?.ToString() ?? string.Empty;
+    }
+
+    private static void ValidateMainChart(Type derivedType, List<Diagnostic> compileErrors)
+    {
+        var hasMainChart = derivedType
+            .GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
+            .Any(f => typeof(IChart).IsAssignableFrom(f.FieldType) && f.GetCustomAttribute<MainChartAttribute>() != null);
+
+        if (!hasMainChart)
+            compileErrors.Add(CreateDiagnostic("STRAT002", $"Aucun 'MainChart' défini dans {derivedType.Name}.", DiagnosticSeverity.Error));
     }
 
     private static void PerformSecurityChecks(SyntaxTree syntaxTree, List<Diagnostic> compileErrors)
     {
-        var root = syntaxTree.GetRoot();
-
-        // Liste pour les types et namespaces interdits
-        var disallowedTypes = new HashSet<string> { "System.Diagnostics.Process", "System.Reflection", "dynamic" };
         var disallowedNamespaces = new HashSet<string> { "Newtonsoft.Json", "System.Net.Http", "System.IO" };
+        var disallowedTypes = new HashSet<string> { "System.Diagnostics.Process", "System.Reflection", "dynamic" };
         var fileSystemPrefixes = new HashSet<string> { "File", "Directory", "Path" };
 
-        // Parcourir l'arbre de syntaxe une seule fois
-        foreach (var node in root.DescendantNodes())
+        foreach (var node in syntaxTree.GetRoot().DescendantNodes())
         {
-            // Vérifier les directives 'using' pour les namespaces interdits
             if (node is Microsoft.CodeAnalysis.CSharp.Syntax.UsingDirectiveSyntax usingDirective)
             {
                 var namespaceName = usingDirective.Name.ToString();
                 if (disallowedNamespaces.Any(ns => namespaceName.StartsWith(ns)))
-                {
-                    compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
-                            "SEC006",
-                            "Vérification de sécurité",
-                            $"L'utilisation du namespace '{namespaceName}' est interdite.",
-                            "Sécurité",
-                            DiagnosticSeverity.Error,
-                            true),
-                        usingDirective.GetLocation()));
-                }
+                    compileErrors.Add(CreateDiagnostic("SEC006", $"Le namespace '{namespaceName}' est interdit.", DiagnosticSeverity.Error));
             }
-
-            // Vérifier l'utilisation d'identifiants pour des types dangereux
-            if (node is Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax identifierName)
+            else if (node is Microsoft.CodeAnalysis.CSharp.Syntax.IdentifierNameSyntax identifierName)
             {
                 var identifierText = identifierName.Identifier.Text;
-
                 if (disallowedTypes.Contains(identifierText))
-                {
-                    compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
-                            "SEC002",
-                            "Vérification de sécurité",
-                            $"L'utilisation de '{identifierText}' est interdite pour des raisons de sécurité.",
-                            "Sécurité",
-                            DiagnosticSeverity.Error,
-                            true),
-                        identifierName.GetLocation()));
-                }
-
-                if (fileSystemPrefixes.Any(prefix => identifierText.StartsWith(prefix)))
-                {
-                    compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
-                            "SEC005",
-                            "Vérification de sécurité",
-                            $"L'utilisation de '{identifierText}' est restreinte pour des raisons de sécurité.",
-                            "Sécurité",
-                            DiagnosticSeverity.Warning,
-                            true),
-                        identifierName.GetLocation()));
-                }
+                    compileErrors.Add(CreateDiagnostic("SEC002", $"'{identifierText}' est interdit pour des raisons de sécurité.", DiagnosticSeverity.Error));
+                else if (fileSystemPrefixes.Any(prefix => identifierText.StartsWith(prefix)))
+                    compileErrors.Add(CreateDiagnostic("SEC005", $"L'utilisation de '{identifierText}' est restreinte.", DiagnosticSeverity.Warning));
             }
-
-            // Vérifier l'utilisation du mot clé 'unsafe'
-            if (node is Microsoft.CodeAnalysis.CSharp.Syntax.UnsafeStatementSyntax)
+            else if (node is Microsoft.CodeAnalysis.CSharp.Syntax.UnsafeStatementSyntax)
             {
-                compileErrors.Add(Diagnostic.Create(new DiagnosticDescriptor(
-                        "SEC003",
-                        "Vérification de sécurité",
-                        "L'utilisation de 'unsafe' est interdite pour des raisons de sécurité.",
-                        "Sécurité",
-                        DiagnosticSeverity.Error,
-                        true),
-                    node.GetLocation()));
+                compileErrors.Add(CreateDiagnostic("SEC003", "L'utilisation de 'unsafe' est interdite.", DiagnosticSeverity.Error));
             }
         }
+    }
+
+    private static Diagnostic CreateDiagnostic(string id, string message, DiagnosticSeverity severity)
+    {
+        return Diagnostic.Create(new DiagnosticDescriptor(id, "Vérification", message, "Sécurité", severity, true), Location.None);
     }
 }

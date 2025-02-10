@@ -330,9 +330,9 @@ public class CommandHandler(
     private (StrategyImplementationBase instance, AssemblyLoadContext loadContext) GenerateStrategy(StrategyFile strategyFileDto)
     {
         var sourceCode = strategyFileDto.Data;
-        var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(sourceCode);
+        var compiledCode = StrategyDynamicCompiler.TryCompileSourceCode(sourceCode);
         
-        return StrategyDynamiqCompiler.GenerateStrategyInstance(compiledCode.compiledAssembly);
+        return StrategyDynamicCompiler.GenerateStrategyInstance(compiledCode.compiledAssembly);
     }
 
     private async void StrategyBaseOnPositionRejectedEvent(object? sender, RobotEvent<Position> e)
@@ -429,7 +429,7 @@ public class CommandHandler(
     private async Task CloseStrategy(CloseStrategyCommand closeStrategyCommand, IStrategyBase strategy)
     {
         await strategy.DisableStrategy(StrategyReasonDisabled.User);
-        StrategyDynamiqCompiler.UnloadStrategyInstance(null,  _strategyListContext[closeStrategyCommand.Id]);
+        StrategyDynamicCompiler.UnloadStrategyInstance(null,  _strategyListContext[closeStrategyCommand.Id]);
         _strategyList.Remove(closeStrategyCommand.Id);
         _strategyListContext.Remove(closeStrategyCommand.Id);
         closeStrategyCommand.ResponseSource.SetResult(new AcknowledgementResponse());

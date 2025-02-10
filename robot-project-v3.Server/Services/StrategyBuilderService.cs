@@ -33,7 +33,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
         var strategyCreateRsp = new StrategyCompilationResponseDto();
         try
         {
-            var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(data);
+            var compiledCode = StrategyDynamicCompiler.TryCompileSourceCode(data);
             
             var strategyFile = new StrategyFile
             {
@@ -97,7 +97,7 @@ public class StrategyBuilderService(ILogger logger, IMapper mapper, IStrategyFil
         try
         {
             
-            var compiledCode = StrategyDynamiqCompiler.TryCompileSourceCode(data);
+            var compiledCode = StrategyDynamicCompiler.TryCompileSourceCode(data);
 
             var strategyFileSelected = await strategyFileRepository.GetByIdAsync(id);
 

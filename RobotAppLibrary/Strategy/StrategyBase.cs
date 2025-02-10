@@ -74,7 +74,22 @@ public class StrategyBase : IStrategyBase
     public string StrategyId => $"{StrategyName}-{Version}-{Symbol}";
     public bool StrategyDisabled { get; set; }
     public IChart MainChart { get; set; } = null!;
-    public bool CanRun { get; set; }
+    
+    private bool _canRun;
+
+    public bool CanRun
+    {
+        get => _canRun;
+        set
+        {
+            if (value)
+            {
+                RunHandler();
+            }
+            _canRun = value;
+        }
+    }
+
     public GlobalResults Results => StrategyResult.GlobalResults;
     public Position PositionOpened => _positionHandler.PositionOpened;
     public IList<Candle> Chart => MainChart;
