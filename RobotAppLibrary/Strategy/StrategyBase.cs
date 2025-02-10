@@ -352,6 +352,7 @@ public class StrategyBase : IStrategyBase
         catch (Exception e)
         {
             _logger.Error(e, "Error on run");
+            _logger.Error(e.InnerException, "");
         }
     }
 
