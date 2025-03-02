@@ -393,6 +393,7 @@ public abstract class ApiProviderBase : IApiProviderBase
     private void TcpConnectorOnDisconnected(object? sender, EventArgs e)
     {
         Logger.Information("Disconnected from {Connector}", sender);
+        _pingTimer?.Dispose();
         Disconnected?.Invoke(this, EventArgs.Empty);
     }
     

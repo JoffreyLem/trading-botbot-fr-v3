@@ -162,8 +162,8 @@ public abstract class TcpClientBase : IConnectorBase, IDisposable
     {
         if (IsConnected)
         {
-            _apiReadStream?.CompleteAsync();
-            _apiWriteStream?.CompleteAsync();
+            _apiReadStream?.Complete();
+            _apiWriteStream?.Complete();
             _client.Close();
             OnDisconnected();
         }
