@@ -4,6 +4,7 @@ using RobotAppLibrary.Api.Providers.Base;
 using RobotAppLibrary.Chart;
 using RobotAppLibrary.Factory;
 using RobotAppLibrary.LLM;
+using RobotAppLibrary.LLM.Interfaces;
 using RobotAppLibrary.Modeles;
 using RobotAppLibrary.Strategy;
 using RobotAppLibrary.Tests.Strategy.Context;

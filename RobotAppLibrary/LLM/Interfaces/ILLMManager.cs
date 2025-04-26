@@ -1,4 +1,4 @@
-namespace RobotAppLibrary.LLM;
+namespace RobotAppLibrary.LLM.Interfaces;
 
 public interface ILLMManager
 {

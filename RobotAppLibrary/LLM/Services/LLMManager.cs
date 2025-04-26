@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RobotAppLibrary.LLM.Gemini.Configuration;
 using RobotAppLibrary.LLM.Gemini.Repositories;
+using RobotAppLibrary.LLM.Interfaces;
 using Serilog;
 
 namespace RobotAppLibrary.LLM;

@@ -5,6 +5,7 @@ using RobotAppLibrary.Chart;
 using RobotAppLibrary.Factory;
 using RobotAppLibrary.Indicators.Base;
 using RobotAppLibrary.LLM;
+using RobotAppLibrary.LLM.Interfaces;
 using RobotAppLibrary.Modeles;
 using RobotAppLibrary.Modeles.Attribute;
 using RobotAppLibrary.TradingManager;

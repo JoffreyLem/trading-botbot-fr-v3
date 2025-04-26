@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using RobotAppLibrary.LLM.Gemini.Configuration;
 using RobotAppLibrary.LLM.Gemini.Handlers;
 using RobotAppLibrary.LLM.Gemini.Repositories;
+using RobotAppLibrary.LLM.Interfaces;
 
 namespace RobotAppLibrary.LLM.Gemini.Extensions;
 

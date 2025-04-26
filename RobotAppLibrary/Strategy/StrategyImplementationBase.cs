@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using RobotAppLibrary.Chart;
 using RobotAppLibrary.LLM;
+using RobotAppLibrary.LLM.Interfaces;
 using RobotAppLibrary.Modeles;
 using Serilog;
 

@@ -1,6 +1,7 @@
 using RobotAppLibrary.Api.Providers.Base;
 using RobotAppLibrary.Chart;
 using RobotAppLibrary.LLM;
+using RobotAppLibrary.LLM.Interfaces;
 using RobotAppLibrary.Modeles;
 using RobotAppLibrary.TradingManager;
 using RobotAppLibrary.TradingManager.Interfaces;
