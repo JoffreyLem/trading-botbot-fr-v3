@@ -3,10 +3,8 @@ using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using Destructurama;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Web;
 using robot_project_v3.Database;
-using robot_project_v3.Database.DbContext;
 using robot_project_v3.Mail;
 using robot_project_v3.Server;
 using robot_project_v3.Server.BackgroundService;
@@ -15,13 +13,11 @@ using robot_project_v3.Server.BackgroundService.Command.Strategy;
 using robot_project_v3.Server.Hubs;
 using robot_project_v3.Server.Mapper;
 using robot_project_v3.Server.Services;
+using RobotAppLibrary.Extensions;
 using Serilog;
 using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Exceptions;
-using Serilog.Formatting.Compact;
-using Serilog.Formatting.Elasticsearch;
-using Serilog.Sinks.Seq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +35,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddHealthChecks();
 builder.Services.AddExceptionHandler<CustomExceptionHandler>();
 builder.Services.AddProblemDetails();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin",
@@ -109,6 +106,7 @@ var channelStrategy =
 builder.Services.AddSingleton(channelStrategy.Reader);
 builder.Services.AddSingleton(channelStrategy.Writer);
 
+builder.Services.AddRobotAppLibrary(builder.Configuration);
 
 builder.Services.AddSignalR();
 

@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using RobotAppLibrary.Chart;
+using RobotAppLibrary.LLM;
 using RobotAppLibrary.Modeles;
 using Serilog;
 
@@ -22,6 +23,7 @@ public abstract class StrategyImplementationBase
 
     protected internal int DefaultSl { get; set; }
     protected internal int DefaultTp { get; set; }
+    protected internal Func<LLM.Model.LLM, ILLMRepository>? GetLLM { get; set; }
 
     public abstract void Run();
 

@@ -33,11 +33,4 @@
         <ProjectReference Include="..\RobotAppLibrary\RobotAppLibrary.csproj"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Folder Include="Backtest\"/>
-        <Folder Include="Factory\"/>
-        <Folder Include="Hubs\"/>
-        <Folder Include="Utils\"/>
-    </ItemGroup>
-
 </Project>

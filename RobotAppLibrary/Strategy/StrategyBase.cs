@@ -4,6 +4,7 @@ using RobotAppLibrary.Api.Providers.Base;
 using RobotAppLibrary.Chart;
 using RobotAppLibrary.Factory;
 using RobotAppLibrary.Indicators.Base;
+using RobotAppLibrary.LLM;
 using RobotAppLibrary.Modeles;
 using RobotAppLibrary.Modeles.Attribute;
 using RobotAppLibrary.TradingManager;
@@ -31,6 +32,7 @@ public class StrategyBase : IStrategyBase
     private readonly IPositionHandler _positionHandler;
     private readonly StrategyImplementationBase _strategyImplementationBase;
     private readonly IStrategyServiceFactory _strategyServiceFactory;
+    private readonly ILLMManager _lmManager;
 
     internal readonly List<IIndicator> MainIndicatorList = new();
 
@@ -39,8 +41,12 @@ public class StrategyBase : IStrategyBase
     internal readonly Dictionary<Timeframe, List<IIndicator>> SecondaryIndicatorList = new();
     public readonly IStrategyResult StrategyResult;
 
-    public StrategyBase(string symbol, StrategyImplementationBase strategyImplementationBase,
-        IApiProviderBase apiProviderBase, ILogger logger, IStrategyServiceFactory strategyServiceFactory)
+    public StrategyBase(
+        string symbol,
+        StrategyImplementationBase strategyImplementationBase,
+        IApiProviderBase apiProviderBase, 
+        ILogger logger, 
+        IStrategyServiceFactory strategyServiceFactory)
     {
         try
         {
@@ -57,7 +63,7 @@ public class StrategyBase : IStrategyBase
             _positionHandler =
                 strategyServiceFactory.GetPositionHandler(logger, apiProviderBase, Symbol, StrategyId);
             StrategyResult = strategyServiceFactory.GetStrategyResultService(apiProviderBase, StrategyId, logger);
-
+            _lmManager = strategyServiceFactory.GetLLMManager();
             Init();
         }
         catch (Exception e)
@@ -175,6 +181,7 @@ public class StrategyBase : IStrategyBase
         _strategyImplementationBase.CalculateStopLossFunc = _positionHandler.CalculateStopLoss;
         _strategyImplementationBase.CalculateTakeProfitFunc = _positionHandler.CalculateTakeProfit;
         _strategyImplementationBase.OpenPositionAction = OpenPosition;
+        _strategyImplementationBase.GetLLM = _lmManager.GetLLM;
         _positionHandler.DefaultSl = _strategyImplementationBase.DefaultSl;
         _positionHandler.DefaultTp = _strategyImplementationBase.DefaultTp;
     }
