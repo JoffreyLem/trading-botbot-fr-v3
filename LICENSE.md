@@ -81,6 +81,10 @@ Tout litige relatif à l'interprétation ou à l'exécution de la présente lice
 
 Ce projet est un projet personnel d'apprentissage ("Lab Project") développé à des fins éducatives privées. Il est actuellement inactif et archivé. Le code est rendu visible uniquement à des fins de démonstration de compétences techniques.
 
+**NOTE IMPORTANTE** : Ce projet (v3) fait suite à une version antérieure (v2) disponible publiquement sur GitHub à l'adresse suivante : https://github.com/JoffreyLem/trading-botbot-fr-v2
+
+Cette version v3 représente une réécriture complète et une évolution majeure du projet initial. Les deux versions sont soumises aux mêmes restrictions de licence.
+
 **LA VISIBILITÉ DU CODE NE CONSTITUE EN AUCUN CAS UNE LICENCE OUVERTE OU UNE AUTORISATION D'UTILISATION.**
 
 ### 9. RÉVOCATION

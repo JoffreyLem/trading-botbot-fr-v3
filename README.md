@@ -11,6 +11,21 @@ Ce projet est un **laboratoire personnel** développé dans le cadre de mon appr
 - 🎯 **Le trading algorithmique** - Une passion de longue date qui m'a motivé à créer des outils d'analyse et d'automatisation
 - 💻 **Le développement logiciel** - Notamment l'apprentissage approfondi du C# (.NET) et de React/TypeScript
 
+### 📚 Historique et évolution
+
+**Version 3** - Ce projet représente une **réécriture complète** et une évolution majeure de mon projet initial de trading bot. 
+
+La **version 2** du projet est disponible publiquement sur GitHub : [trading-botbot-fr-v2](https://github.com/JoffreyLem/trading-botbot-fr-v2)
+
+Cette version v3 apporte :
+- Une architecture complètement repensée avec Clean Architecture
+- Migration de JavaScript vers TypeScript pour le frontend
+- Ajout de SignalR pour la communication temps réel
+- Compilation dynamique de stratégies avec isolation via `AssemblyLoadContext`
+- Meilleure séparation des responsabilités entre les différents projets
+- Enrichissement des logs et gestion centralisée des exceptions
+- Interface utilisateur moderne avec React et TailwindCSS
+
 ### Objectifs d'apprentissage
 
 Ce projet m'a permis de développer et consolider mes compétences sur :
