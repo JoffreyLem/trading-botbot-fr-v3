@@ -7,16 +7,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\RobotAppLibrary.Api\RobotAppLibrary.Api.csproj"/>
-        <ProjectReference Include="..\RobotAppLibrary.Modeles\RobotAppLibrary.Modeles.csproj"/>
-        <ProjectReference Include="..\RobotAppLibrary.Utils\RobotAppLibrary.Utils.csproj"/>
+      <Folder Include="Repositories\Gemini\Handlers\" />
+      <Folder Include="Repositories\Gemini\Mappings\" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.15" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
       <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.3" />
+      <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
     </ItemGroup>
 
 </Project>

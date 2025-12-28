@@ -1,5 +1,7 @@
 using RobotAppLibrary.Api.Providers.Base;
 using RobotAppLibrary.Chart;
+using RobotAppLibrary.LLM;
+using RobotAppLibrary.LLM.Interfaces;
 using RobotAppLibrary.Modeles;
 using RobotAppLibrary.TradingManager;
 using RobotAppLibrary.TradingManager.Interfaces;
@@ -16,9 +18,11 @@ public interface IStrategyServiceFactory
         string positionReferene);
 
     IChart GetChart(ILogger logger, IApiProviderBase apiHandler, string symbol, Timeframe timeframe);
+
+    ILLMManager GetLLMManager();
 }
 
-public class StrategyServiceFactory : IStrategyServiceFactory
+public class StrategyServiceFactory(IServiceProvider serviceProvider) : IStrategyServiceFactory
 {
     public IStrategyResult GetStrategyResultService(IApiProviderBase apiHandler, string positionRefenrece, ILogger logger)
     {
@@ -40,5 +44,10 @@ public class StrategyServiceFactory : IStrategyServiceFactory
     public IChart GetChart(ILogger logger, IApiProviderBase apiHandler, string symbol, Timeframe timeframe)
     {
         return new Chart.Chart(apiHandler, logger, timeframe, symbol);
+    }
+
+    public ILLMManager GetLLMManager()
+    {
+        return new LLMManager(serviceProvider);
     }
 }

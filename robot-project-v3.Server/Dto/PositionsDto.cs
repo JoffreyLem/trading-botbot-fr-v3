@@ -1,6 +1,4 @@
-﻿using System.ComponentModel;
-
-namespace robot_project_v3.Server.Dto;
+﻿namespace robot_project_v3.Server.Dto;
 
 public class PositionDto
 {

@@ -1,5 +1,4 @@
 ﻿using System.Runtime.Loader;
-using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.SignalR;
 using robot_project_v3.Database.Modeles;
@@ -35,7 +34,8 @@ public class CommandHandler(
     IHubContext<HubInfoClient, IHubInfoClient> hubContext,
     ILogger logger,
     IMapper mapper,
-    IEmailService _emailService)
+    IEmailService _emailService,
+    IServiceProvider serviceProvider)
     : ICommandHandler
 {
     private readonly ILogger _logger = logger.ForContext<CommandHandler>();
@@ -385,7 +385,7 @@ public class CommandHandler(
         try
         {
             var strategyImplementation = GenerateStrategy(initStrategyCommandDto.Data.StrategyFileDto);
-            var istrategySerrvice = new StrategyServiceFactory();
+            var istrategySerrvice = new StrategyServiceFactory(serviceProvider);
             var strategyBase = new StrategyBase(initStrategyCommandDto.Data.Symbol, strategyImplementation.instance,
                 _apiProviderBase,
                 logger, istrategySerrvice);

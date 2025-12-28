@@ -97,9 +97,16 @@ public class BaseIndicatorTests
             new Candle { Close = 95 },
             new Candle { Close = 105 } // Croisement haussier
         };
+        
+        var candles2 = new List<Candle>
+        {
+            new Candle { Close = 80 },
+            new Candle { Close = 90 },
+            new Candle { Close = 110 } 
+        };
 
         var indicator = new TestIndicator();
-        indicator.UpdateIndicator(candles);
+        indicator.UpdateIndicator(candles2);
 
         // Act
         var result = indicator.HasCrossed(
@@ -119,13 +126,20 @@ public class BaseIndicatorTests
         // Arrange
         var candles = new List<Candle>
         {
-            new Candle { Close = 100 },
-            new Candle { Close = 105 },
-            new Candle { Close = 95 } // Croisement baissier
+            new Candle { Close = 120 },
+            new Candle { Close = 110 },
+            new Candle { Close = 100 } 
+        };
+        
+        var candles2 = new List<Candle>
+        {
+            new Candle { Close = 130 },
+            new Candle { Close = 120 },
+            new Candle { Close = 90 } 
         };
 
         var indicator = new TestIndicator();
-        indicator.UpdateIndicator(candles);
+        indicator.UpdateIndicator(candles2);
 
         // Act
         var result = indicator.HasCrossed(
@@ -176,9 +190,18 @@ public class BaseIndicatorTests
             new Candle { Close = 105 }, // Croisement haussier
             new Candle { Close = 110 }
         };
+        
+        // Arrange
+        var candles2 = new List<Candle>
+        {
+            new Candle { Close = 80 },
+            new Candle { Close = 90 },
+            new Candle { Close = 110 }, // Croisement haussier
+            new Candle { Close = 105 }
+        };
 
         var indicator = new TestIndicator();
-        indicator.UpdateIndicator(candles);
+        indicator.UpdateIndicator(candles2);
 
         // Act
         var result = indicator.HasCrossed(

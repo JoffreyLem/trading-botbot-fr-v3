@@ -3,6 +3,8 @@ using Moq;
 using RobotAppLibrary.Api.Providers.Base;
 using RobotAppLibrary.Chart;
 using RobotAppLibrary.Factory;
+using RobotAppLibrary.LLM;
+using RobotAppLibrary.LLM.Interfaces;
 using RobotAppLibrary.Modeles;
 using RobotAppLibrary.Strategy;
 using RobotAppLibrary.Tests.Strategy.Context;
@@ -37,6 +39,7 @@ public class StrategyBaseTest
     private readonly Mock<IPositionHandler> _positionHandlerMock = new();
     private readonly Mock<IStrategyResult> _strategyResultMock = new();
     private readonly Mock<IStrategyServiceFactory> _strategyServiceFactoryMock = new();
+    private readonly Mock<ILLMManager> _llmManagerMock = new();
 
 
     public StrategyBaseTest()
@@ -71,6 +74,8 @@ public class StrategyBaseTest
                 x.GetPositionHandler(It.IsAny<ILogger>(), It.IsAny<IApiProviderBase>(), It.IsAny<string>(),
                     It.IsAny<string>()))
             .Returns(_positionHandlerMock.Object);
+        
+        _strategyServiceFactoryMock.Setup(x => x.GetLLMManager()).Returns(_llmManagerMock.Object);
 
 
         InitIndicatorForTest();
@@ -227,11 +232,12 @@ public class StrategyBaseTest
         var callerTick = false;
         var callerCandle = false;
 
-        strategyImpl.RunEvent += (sender, args) => callerRun = true;
 
         var strategyImplBase = new StrategyBase("EURUSD", strategyImpl, _apiHandlerMock.Object, _loggerMock.Object,
             _strategyServiceFactoryMock.Object);
         strategyImplBase.CanRun = canRun;
+        
+        strategyImpl.RunEvent += (sender, args) => callerRun = true;
         strategyImplBase.TickEvent += (sender, @event) => callerTick = true;
         strategyImplBase.CandleEvent += (sender, @event) => callerCandle = true;
 
@@ -328,11 +334,11 @@ public class StrategyBaseTest
         var callerTick = false;
         var callerCandle = false;
 
-        strategyImpl.RunEvent += (sender, args) => callerRun = true;
-
+        
         var strategyImplBase = new StrategyBase("EURUSD", strategyImpl, _apiHandlerMock.Object, _loggerMock.Object,
             _strategyServiceFactoryMock.Object);
         strategyImplBase.CanRun = canRun;
+        strategyImpl.RunEvent += (sender, args) => callerRun = true;
         strategyImplBase.TickEvent += (sender, @event) => callerTick = true;
         strategyImplBase.CandleEvent += (sender, @event) => callerCandle = true;
 
